@@ -106,6 +106,12 @@ const DEFAULT_DATA = {
     { id: "n6", title: "Point guard habits", text: "Scan before the catch. Pass to a teammate's advantage. Use either hand. Stay balanced. Cut or relocate after passing. Communicate early using the team's terminology. Recognize when to score as well as when to pass." },
     { id: "n7", title: "Coach and parent check-in", text: "Ask his Rens coach: \"What one skill or habit would make Tristan more effective in your system?\" Make that the next priority. Praise decisions, effort, and improvement. Let Tristan choose a favorite drill regularly, and keep the log brief.\n\nSolo adjustment: Practice passing accuracy and footwork with safe wall targets; self-toss for shooting. Save live decision work for sessions with teammates or a coach. Do not treat cones as a substitute for reading a defender." },
   ],
+  rewards: [
+    { id: "r1", title: "Pick Sunday's film clip", xp: 100, note: "Tristan chooses what we watch together." },
+    { id: "r2", title: "Family movie night", xp: 300, note: "Tristan picks the movie." },
+    { id: "r3", title: "New training gear", xp: 600, note: "Choose something together." },
+    { id: "r4", title: "Special basketball outing", xp: 1000, note: "A pro or college game, or a day out." },
+  ],
   logs: {},
   weekly: {},
   profile: {

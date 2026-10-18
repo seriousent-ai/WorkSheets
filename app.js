@@ -17,6 +17,7 @@ function load() {
   try { s = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
   if (!s || !Array.isArray(s.days)) s = JSON.parse(JSON.stringify(DEFAULT_DATA));
   s.logs ||= {}; s.weekly ||= {}; s.videos ||= []; s.links ||= []; s.notes ||= [];
+  s.rewards ||= JSON.parse(JSON.stringify(DEFAULT_DATA.rewards));
   s.profile ||= {};
   s.profile.why ??= "I'm a point guard. I make my teammates better and I get better every single day.";
   s.profile.name ||= "Tristan";
@@ -77,9 +78,49 @@ const MESSAGES = [
   "Dream big. Train smart. Rest well.",
   "Read the defender, then make the play.",
 ];
-const LEVELS = [[0, "Rookie", "🌱"], [5, "Starter", "🏀"], [15, "Playmaker", "🎯"], [30, "Floor General", "🧠"], [60, "All-Star", "⭐"], [100, "Legend", "👑"]];
+const LEVELS = [[0, "Rookie", "🌱"], [5, "Ball Handler", "🏀"], [15, "Playmaker", "🎯"], [30, "Floor General", "🧠"], [60, "All-Star", "⭐"], [100, "Franchise PG", "👑"]];
 const dayOfYear = () => Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 864e5);
 
+function xpTotal() {
+  let x = 0;
+  for (const k in S.logs) {
+    const l = S.logs[k];
+    x += Object.keys(l.done || {}).length * 10;
+    if (l.complete) x += 50;
+    if (l.energy) x += 5;
+    if (l.learned || l.improve || l.challenge) x += 5;
+  }
+  for (const k in S.weekly) {
+    const w = S.weekly[k];
+    if (w.right || w.shoot) x += 25;
+    if (w.improved || w.adjust) x += 15;
+  }
+  return x;
+}
+const SKILLS = [["handle", "Ball handling", "🏀", /handl/], ["pass", "Passing and reads", "🎯", /pass/], ["shoot", "Shooting", "🔥", /shoot/], ["finish", "Finishing and defense", "💪", /finish|defen/], ["iq", "Court IQ", "🧠", /film|discuss|review|check-in|decision/]];
+const SK_LV = [0, 30, 80, 150, 250, 400, 600];
+function skillPoints() {
+  const titles = {}, pts = {};
+  S.days.forEach((d) => d.blocks.forEach((b) => (titles[b.id] = b.title.toLowerCase())));
+  for (const k in S.logs) for (const id in S.logs[k].done || {}) {
+    const sk = SKILLS.find((s) => s[3].test(titles[id] || ""));
+    if (sk) pts[sk[0]] = (pts[sk[0]] || 0) + 10;
+  }
+  return pts;
+}
+function skillLevel(p) {
+  let l = 1;
+  SK_LV.forEach((t, i) => { if (p >= t) l = i + 1; });
+  const nxt = SK_LV[l];
+  return { l, pct: nxt ? ((p - SK_LV[l - 1]) / (nxt - SK_LV[l - 1])) * 100 : 100 };
+}
+const sortedRewards = () => [...S.rewards].sort((p, q) => p.xp - q.xp);
+function nextReward(xp) {
+  const list = sortedRewards();
+  const next = list.find((r) => r.xp > xp);
+  const prev = [...list].reverse().find((r) => r.xp <= xp);
+  return next ? { next, pct: ((xp - (prev ? prev.xp : 0)) / (next.xp - (prev ? prev.xp : 0))) * 100 } : null;
+}
 const completeDates = () => Object.keys(S.logs).filter((k) => S.logs[k].complete);
 function sessionsInWeek(monKey) {
   const mon = parseKey(monKey);
@@ -168,8 +209,10 @@ function viewToday() {
   const pct = day.blocks.length ? (doneN / day.blocks.length) * 100 : 0;
   const total = completeDates().length;
   const lv = levelInfo(total);
+  const xp = xpTotal();
+  const nr = nextReward(xp);
   const hr = new Date().getHours();
-  const greet = hr < 12 ? "Good morning" : hr < 18 ? "Good afternoon" : "Good evening";
+  const greet = hr < 12 ? "Good Morning" : hr < 18 ? "Good Afternoon" : "Good Evening";
   const isToday = ui.day === todayIdx();
   const times = blockTimes(day);
   const msg = MESSAGES[dayOfYear() % MESSAGES.length];
@@ -181,19 +224,25 @@ function viewToday() {
   <h1 class="large">${greet}, ${esc(S.profile.name)}</h1>
   <p class="sub">${esc(msg)}</p>
   <div class="stats">
-    <div class="stat"><b>${total}</b><span>Sessions</span></div>
+    <div class="stat"><b>${xp}</b><span>XP points</span></div>
     <div class="stat"><b>${weekStreak()} 🔥</b><span>Week streak</span></div>
     <div class="stat"><b>${lv.cur[2]}</b><span>${esc(lv.cur[1])}</span></div>
   </div>
   <div class="level"><div class="progress"><i style="width:${lv.pct}%"></i></div>
-    <p class="small">${lv.next ? `${lv.toGo} more session${lv.toGo === 1 ? "" : "s"} to reach <b>${esc(lv.next[1])}</b> ${lv.next[2]}` : "You reached the top level. Legend."}</p></div>
-  <div class="seg">${seg}</div>
+    <p class="small">${lv.next ? `${lv.toGo} more session${lv.toGo === 1 ? "" : "s"} to reach <b>${esc(lv.next[1])}</b> ${lv.next[2]}` : "You reached the top level. Franchise PG."}</p></div>
+  ${nr ? `<div class="reward"><div class="rtitle">🎁 Next reward: <b>${esc(nr.next.title)}</b></div><div class="progress"><i style="width:${nr.pct}%"></i></div><p class="small" style="margin:6px 0 0">${nr.next.xp - xp} XP to go · each block is +10, a full session +50</p></div>` : ""}
+  <h2 class="section">Point guard skills</h2>
+  <div class="group">${SKILLS.map(([k, name, em]) => { const sp = skillPoints()[k] || 0; const sl = skillLevel(sp); return `<div class="row"><div style="font-size:24px">${em}</div><div class="grow"><div class="title strong">${name}</div><div class="progress" style="margin-top:6px"><i style="width:${sl.pct}%"></i></div></div><span class="pill blue">Lv ${sl.l}</span></div>`; }).join("")}</div>
+  <p class="small">Finish blocks to level up each skill. The best point guards build all five.</p>
+  <div class="seg" style="margin-top:16px">${seg}</div>
   <div class="hero">
-    <div class="eyebrow">${isToday ? "Today" : esc(day.name)} · ${fmtShort(parseKey(date))}</div>
-    <div class="big">${esc(day.theme)}</div>
-    <div class="detail">${doneN} of ${day.blocks.length} blocks done · ${day.blocks.reduce((a, b) => a + (Number(b.minutes) || 0), 0)} min</div>
-    <div class="progress"><i style="width:${pct}%"></i></div>
-    ${pct === 100 ? `<p class="win">Session complete. Great work, ${esc(S.profile.name)}! 💪</p>` : ""}
+    <div class="herorow"><div class="grow">
+      <div class="eyebrow">${isToday ? "Today" : esc(day.name)} · ${fmtShort(parseKey(date))}</div>
+      <div class="big">${esc(day.theme)}</div>
+      <div class="detail">${doneN} of ${day.blocks.length} blocks · ${day.blocks.reduce((a, b) => a + (Number(b.minutes) || 0), 0)} min</div>
+    </div>
+    <svg class="ring" viewBox="0 0 72 72" aria-label="${Math.round(pct)} percent done"><circle cx="36" cy="36" r="30" class="rt"/><circle cx="36" cy="36" r="30" class="rf ${pct === 100 ? "full" : ""}" stroke-dasharray="188.5" stroke-dashoffset="${(188.5 * (1 - pct / 100)).toFixed(1)}"/><text x="36" y="41" text-anchor="middle">${Math.round(pct)}%</text></svg></div>
+    ${pct === 100 ? `<p class="win">Session complete. That's how point guards are made, ${esc(S.profile.name)}! 💪</p>` : ""}
   </div>
   ${day.cue ? `<div class="cue"><b>Coaching cue</b><br>${esc(day.cue)}</div>` : ""}
   <h2 class="section">Session <button data-a="editDay">Edit day</button></h2>
@@ -321,6 +370,9 @@ function viewLog() {
   <div class="group">${[["improved", "What improved?"], ["hard", "What was difficult?"], ["fun", "What was fun?"], ["adjust", "Next week's one adjustment"]].map(([k, l]) => `<div class="row"><div class="grow"><div class="detail">${l}</div><div class="title">${esc(w[k]) || "–"}</div></div></div>`).join("")}
     <div class="row"><div class="grow">Organized basketball this week</div><div class="detail">${val("hours", " hrs")}</div></div>
     <div class="row"><div class="grow">Physical rest day</div><div class="detail">${val("rest")}</div></div></div>
+  <h2 class="section">Rewards <button data-a="addReward">Add</button></h2>
+  <div class="group">${sortedRewards().map((r) => { const got = xpTotal() >= r.xp; return `<div class="row tap" data-a="editReward" data-id="${r.id}" style="opacity:${got ? 1 : 0.55}"><div style="font-size:28px">${got ? "🎁" : "🔒"}</div><div class="grow"><div class="title strong">${esc(r.title)}</div><div class="detail">${r.xp} XP${r.note ? " · " + esc(r.note) : ""}</div></div>${got ? '<span class="pill blue">Unlocked</span>' : ""}</div>`; }).join("") || '<div class="empty">No rewards yet. Tap Add.</div>'}</div>
+  <p class="small">Earn XP: +10 per finished block, +50 per finished session, +25 for a skill check, plus small bonuses for notes and reflections.</p>
   <h2 class="section">Achievements</h2>
   <div class="group">${ach.map(([e, t, d, got]) => `<div class="row" style="opacity:${got ? 1 : 0.4}"><div style="font-size:28px;filter:${got ? "none" : "grayscale(1)"}">${e}</div><div class="grow"><div class="title strong">${t}</div><div class="detail">${d}</div></div>${got ? '<span class="pill blue">Earned</span>' : ""}</div>`).join("")}</div>`;
 }
@@ -338,10 +390,11 @@ function viewGuide() {
   <div class="group">${S.notes.map((n) => `<div class="row tap" data-a="editNote" data-id="${n.id}"><div class="grow"><div class="title strong">${esc(n.title)}</div><div class="detail" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${esc(n.text)}</div></div><span class="chev">›</span></div>`).join("")}</div>
   <h2 class="section">Your data</h2>
   <div class="group">
+    <div class="row tap" data-a="share"><div class="grow">Send backup (AirDrop, Messages)</div><span class="chev">›</span></div>
     <div class="row tap" data-a="export"><div class="grow">Export backup</div><span class="chev">›</span></div>
     <div class="row tap" data-a="import"><div class="grow">Import backup</div><span class="chev">›</span></div>
     <div class="row tap" data-a="reset"><div class="grow" style="color:var(--red)">Reset to original plan</div></div></div>
-  <p class="small">Everything is saved on this device. Uploaded video clips stay on this device and are not part of the backup file. Install: in Safari tap Share, then Add to Home Screen.</p>`;
+  <p class="small">Everything is saved on this device. Uploaded video clips stay on this device and are not part of the backup file. Each device keeps its own copy. To move progress or changes between devices, use Send backup on one and Import backup on the other. Install: in Safari tap Share, then Add to Home Screen.</p>`;
 }
 
 /* ---------- render ---------- */
@@ -527,6 +580,21 @@ function weekForm(title, fields, req) {
   const w = (S.weekly[wk] ||= {});
   openForm({ title, fields: fields.map(([k, label, type, ph]) => ({ k, label, type: type || "text", value: w[k], ph })), required: req, save(f) { Object.assign(w, f); } });
 }
+function formReward(id) {
+  const r = S.rewards.find((x) => x.id === id) || {};
+  openForm({
+    title: id ? "Edit reward" : "Add reward",
+    fields: [{ k: "title", label: "Reward", value: r.title, ph: "Family movie night" }, { k: "xp", label: "XP needed", type: "number", value: r.xp, ph: "300" }, { k: "note", label: "Notes", value: r.note }],
+    required: ["title", "xp"],
+    save(f) {
+      let x = S.rewards.find((y) => y.id === id);
+      if (!x) { x = { id: uid("r") }; S.rewards.push(x); }
+      Object.assign(x, { title: f.title, xp: Math.max(0, parseInt(f.xp, 10) || 0), note: f.note });
+    },
+    del: id ? () => { S.rewards = S.rewards.filter((y) => y.id !== id); } : null,
+    delLabel: "Delete reward",
+  });
+}
 function formProfile() {
   const p = S.profile;
   openForm({
@@ -572,14 +640,32 @@ function formNote(id) {
 }
 
 /* ---------- actions ---------- */
+const CHEERS = ["Nice rep!", "Locked in!", "Let's go!", "Strong work!", "That's how it's done!", "Keep it rolling!"];
+function xpPop(text) {
+  const p = window.__pt || { x: innerWidth / 2, y: innerHeight / 2 };
+  const s = document.createElement("div");
+  s.className = "xp-pop"; s.textContent = text;
+  s.style.left = p.x + "px"; s.style.top = p.y + "px";
+  document.body.appendChild(s);
+  setTimeout(() => s.remove(), 1100);
+}
 function toggleBlock(id) {
   const day = S.days[ui.day];
   const lg = logOf(dateOf(ui.day));
   const wasComplete = !!lg.complete;
+  const before = xpTotal();
   lg.done[id] = !lg.done[id];
   if (!lg.done[id]) delete lg.done[id];
   lg.complete = day.blocks.length > 0 && day.blocks.every((b) => lg.done[b.id]);
-  if (lg.complete && !wasComplete) { celebrate(); toast("Session complete! 💪"); }
+  const gain = xpTotal() - before;
+  if (gain > 0) {
+    xpPop("+" + gain + " XP");
+    if (navigator.vibrate) navigator.vibrate(15);
+    if (!(lg.complete && !wasComplete)) toast(CHEERS[Math.floor(Math.random() * CHEERS.length)]);
+  }
+  if (lg.complete && !wasComplete) { celebrate(); toast("Session complete! +50 XP 💪"); }
+  const crossed = S.rewards.filter((r) => r.xp > before && r.xp <= xpTotal());
+  if (crossed.length) setTimeout(() => { celebrate(); toast("Reward unlocked: " + crossed[0].title + " 🎁"); }, 1200);
 }
 function download(name, text) {
   const a = document.createElement("a");
@@ -614,9 +700,18 @@ const ACTIONS = {
   editSkill: () => weekForm("Saturday skill check", [["right", "Right-hand passes on target (of 10)", "number"], ["left", "Left-hand passes on target (of 10)", "number"], ["shoot", "Shots made (of 25)", "number"], ["ft", "Free throws made (of 10)", "number"], ["lost", "Balls lost on cone course", "number"], ["good", "Good game reads", "number"]]),
   editReflect: () => weekForm("Weekly reflection", [["improved", "What improved?"], ["hard", "What was difficult?"], ["fun", "What was fun?"], ["adjust", "Next week's one adjustment"], ["hours", "Organized basketball hours", "number"], ["rest", "Physical rest day"]]),
   editProfile: formProfile,
+  addReward: () => formReward(),
+  editReward: (d) => formReward(d.id),
   addNote: () => formNote(),
   editNote: (d) => formNote(d.id),
   export: () => { download(`training-backup-${dateKey(new Date())}.json`, JSON.stringify(S, null, 2)); toast("Backup saved to downloads."); },
+  share: async () => {
+    const file = new File([JSON.stringify(S, null, 2)], `training-backup-${dateKey(new Date())}.json`, { type: "application/json" });
+    try {
+      if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: "Training backup" }); return; }
+    } catch (e) { return; }
+    download(file.name, JSON.stringify(S, null, 2)); toast("Backup saved to downloads.");
+  },
   import: () => {
     const i = document.createElement("input"); i.type = "file"; i.accept = "application/json,.json";
     i.onchange = async () => {
@@ -637,6 +732,7 @@ const ACTIONS = {
 };
 let delArmed = false;
 document.addEventListener("click", async (e) => {
+  window.__pt = { x: e.clientX, y: e.clientY };
   if (e.target.classList.contains("scrim")) return closeForm();
   const t = e.target.closest("[data-a]");
   if (!t) return;
