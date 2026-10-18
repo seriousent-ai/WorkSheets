@@ -18,6 +18,7 @@ function load() {
   if (!s || !Array.isArray(s.days)) s = JSON.parse(JSON.stringify(DEFAULT_DATA));
   s.logs ||= {}; s.weekly ||= {}; s.videos ||= []; s.links ||= []; s.notes ||= [];
   s.rewards ||= JSON.parse(JSON.stringify(DEFAULT_DATA.rewards));
+  s.planTs ||= 0;
   s.profile ||= {};
   s.profile.why ??= "I'm a point guard. I make my teammates better and I get better every single day.";
   s.profile.name ||= "Tristan";
@@ -26,8 +27,12 @@ function load() {
   return s;
 }
 let S = load();
-function persist() {
+function saveLocal() {
   try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { toast("Storage is full. Export a backup in Guide."); }
+}
+function persist() {
+  saveLocal();
+  Sync.schedule();
 }
 
 /* video files live in IndexedDB so big clips don't fill localStorage */
@@ -388,6 +393,16 @@ function viewGuide() {
     <div class="row tap" data-a="editProfile"><div class="grow">Edit profile and My Why</div><span class="chev">›</span></div></div>
   <h2 class="section">The plan <button data-a="addNote">Add</button></h2>
   <div class="group">${S.notes.map((n) => `<div class="row tap" data-a="editNote" data-id="${n.id}"><div class="grow"><div class="title strong">${esc(n.title)}</div><div class="detail" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${esc(n.text)}</div></div><span class="chev">›</span></div>`).join("")}</div>
+  <h2 class="section">Sync between devices</h2>
+  <div class="group">
+    ${!Sync.ready ? `<div class="row"><div class="grow detail">Sync is not set up in this build.</div></div>` : Sync.code ? `
+    <div class="row"><div class="grow"><div class="detail">Family code</div><div class="title strong" style="font-family:ui-monospace,Menlo,monospace;font-size:17px;overflow-wrap:anywhere;user-select:all">${esc(Sync.pretty(Sync.code))}</div><div class="detail" data-sync-status>${esc(Sync.statusText())}</div></div></div>
+    <div class="row tap" data-a="syncShare"><div class="grow">Share code</div><span class="chev">›</span></div>
+    <div class="row tap" data-a="syncNow"><div class="grow">Sync now</div><span class="chev">›</span></div>
+    <div class="row tap" data-a="syncOff"><div class="grow" style="color:var(--red)">Turn off sync on this device</div></div>` : `
+    <div class="row tap" data-a="syncCreate"><div class="grow"><div class="title strong">Create a family code</div><div class="detail">Start here on one device, then join from the others.</div></div><span class="chev">›</span></div>
+    <div class="row tap" data-a="syncJoin"><div class="grow"><div class="title strong">Join with a family code</div><div class="detail">Enter the code from your other device.</div></div><span class="chev">›</span></div>`}
+  </div>
   <h2 class="section">Your data</h2>
   <div class="group">
     <div class="row tap" data-a="share"><div class="grow">Send backup (AirDrop, Messages)</div><span class="chev">›</span></div>
@@ -705,6 +720,28 @@ const ACTIONS = {
   addNote: () => formNote(),
   editNote: (d) => formNote(d.id),
   export: () => { download(`training-backup-${dateKey(new Date())}.json`, JSON.stringify(S, null, 2)); toast("Backup saved to downloads."); },
+  syncCreate: async () => {
+    toast("Creating your family code…");
+    try { await Sync.create(); render(); toast("Sync is on. Join from your other devices with this code."); } catch (e) { toast("Could not reach the sync service."); }
+  },
+  syncJoin: () => openForm({
+    title: "Join family",
+    fields: [{ k: "code", label: "Family code", value: "", ph: "xxxx-xxxx-xxxx-xxxx-xxxx" }],
+    required: ["code"],
+    async save(f) {
+      try { await Sync.join(f.code); toast("Joined. Your plan and progress are syncing."); } catch (e) { toast(e.message || "Could not join."); }
+    },
+  }),
+  syncShare: async () => {
+    const text = Sync.pretty(Sync.code);
+    try { if (navigator.share) { await navigator.share({ title: "Training family code", text }); return; } } catch (e) { return; }
+    try { await navigator.clipboard.writeText(text); toast("Code copied."); } catch (e) { toast(text); }
+  },
+  syncNow: () => { Sync.sync(); toast("Syncing…"); },
+  syncOff: () => {
+    if (!ACTIONS._offArmed) { ACTIONS._offArmed = true; toast("Tap again to turn off sync on this device."); setTimeout(() => (ACTIONS._offArmed = false), 4000); return; }
+    ACTIONS._offArmed = false; Sync.off(); toast("Sync is off on this device.");
+  },
   share: async () => {
     const file = new File([JSON.stringify(S, null, 2)], `training-backup-${dateKey(new Date())}.json`, { type: "application/json" });
     try {
@@ -753,4 +790,5 @@ document.addEventListener("click", async (e) => {
 });
 
 render();
+Sync.start();
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js").catch(() => {});
