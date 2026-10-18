@@ -211,3 +211,6 @@ button:disabled { cursor: default; }
 .ring .rf.full { stroke: #30d158; }
 .ring text { transform: rotate(90deg); transform-origin: 36px 36px; fill: #fff; font: 700 15px -apple-system, "SF Pro Text", sans-serif; }
 .hero .win { color: #6ee58a; }
+.brand > div { min-width: 0; }
+.brand b, .brand span { overflow-wrap: anywhere; }
+main { padding-top: calc(env(safe-area-inset-top) + 16px); }
