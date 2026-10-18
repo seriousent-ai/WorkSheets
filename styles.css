@@ -184,3 +184,7 @@ button:disabled { cursor: default; }
 .field .checks label.row { display: flex; text-transform: none; font-size: 17px; color: var(--label); margin: 0; }
 .checks input { flex: none; width: 22px; height: 22px; padding: 0; }
 .row .grow > .title.strong + .detail { margin-top: 2px; }
+.brand { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
+.brand img { width: 40px; height: 40px; object-fit: contain; border-radius: 10px; }
+.brand b { display: block; font-size: 15px; line-height: 1.1; }
+.brand span { font-size: 13px; color: var(--label2); }

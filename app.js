@@ -20,6 +20,8 @@ function load() {
   s.profile ||= {};
   s.profile.why ??= "I'm a point guard. I make my teammates better and I get better every single day.";
   s.profile.name ||= "Tristan";
+  s.profile.team ??= "NY Rens";
+  s.profile.league ??= "12U Jr. EYBL";
   return s;
 }
 let S = load();
@@ -151,6 +153,12 @@ function blockTimes(day) {
 }
 function fmtTime(sec) { return `${Math.floor(sec / 60)}:${pad(Math.max(0, sec % 60))}`; }
 
+function brand() {
+  const p = S.profile;
+  const logo = p.logo || "icons/team-logo.png";
+  return `<div class="brand"><img src="${esc(logo)}" alt="" onerror="this.remove()"><div><b>${esc(p.team)}</b><span>${esc(p.league)}</span></div></div>`;
+}
+
 function viewToday() {
   const day = S.days[ui.day];
   const date = dateOf(ui.day);
@@ -169,6 +177,7 @@ function viewToday() {
   const vids = day.videoIds.map((id) => S.videos.find((v) => v.id === id)).filter(Boolean);
   const mood = [["😫", 1], ["😕", 2], ["😐", 3], ["🙂", 4], ["🔥", 5]];
   return `
+  ${brand()}
   <h1 class="large">${greet}, ${esc(S.profile.name)}</h1>
   <p class="sub">${esc(msg)}</p>
   <div class="stats">
@@ -319,6 +328,7 @@ function viewLog() {
 function viewGuide() {
   const p = S.profile;
   return `
+  ${brand()}
   <h1 class="large">Guide</h1>
   <p class="sub">${esc(p.subtitle)}</p>
   <div class="why"><b>My Why</b><p>${esc(p.why)}</p></div>
@@ -521,9 +531,28 @@ function formProfile() {
   const p = S.profile;
   openForm({
     title: "Profile",
-    fields: [{ k: "name", label: "Name", value: p.name }, { k: "subtitle", label: "Team and level", value: p.subtitle }, { k: "priority", label: "Priority", type: "textarea", value: p.priority }, { k: "why", label: "My Why", type: "textarea", value: p.why, ph: "Why I train" }],
+    fields: [{ k: "name", label: "Name", value: p.name }, { k: "team", label: "Team", value: p.team }, { k: "league", label: "League / age group", value: p.league }, { k: "logo", label: "Team logo (choose an image)", type: "file", accept: "image/*" }, { k: "subtitle", label: "Team and level", value: p.subtitle }, { k: "priority", label: "Priority", type: "textarea", value: p.priority }, { k: "why", label: "My Why", type: "textarea", value: p.why, ph: "Why I train" }],
     required: ["name"],
-    save(f) { Object.assign(p, f); },
+    extra: p.logo ? [{ label: "Remove logo", fn: () => { delete p.logo; } }] : [],
+    async save(f) {
+      const file = f.logo; delete f.logo;
+      Object.assign(p, f);
+      if (file) p.logo = await shrinkImage(file);
+    },
+  });
+}
+function shrinkImage(file) {
+  return new Promise((res) => {
+    const img = new Image();
+    img.onload = () => {
+      const s = Math.min(1, 256 / Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      res(c.toDataURL("image/png"));
+    };
+    img.onerror = () => res(undefined);
+    img.src = URL.createObjectURL(file);
   });
 }
 function formNote(id) {

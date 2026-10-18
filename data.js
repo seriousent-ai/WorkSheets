@@ -110,6 +110,8 @@ const DEFAULT_DATA = {
   weekly: {},
   profile: {
     name: "Tristan",
+    team: "NY Rens",
+    league: "12U Jr. EYBL",
     subtitle: "12U NY Rens Jr. EYBL | Age 12 | Intermediate | Point guard development",
     priority: "Read the floor, pass accurately with either hand, protect the ball, and build a dependable shot. Develop finishing, defense, and communication alongside those skills.",
   },
