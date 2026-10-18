@@ -1,0 +1,9 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Each family's data lives under a long secret code. Listing all families is not allowed.
+    match /families/{familyId}/items/{itemId} {
+      allow read, write: if true;
+    }
+  }
+}
