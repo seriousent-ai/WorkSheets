@@ -188,3 +188,8 @@ button:disabled { cursor: default; }
 .brand img { width: 40px; height: 40px; object-fit: contain; border-radius: 10px; }
 .brand b { display: block; font-size: 15px; line-height: 1.1; }
 .brand span { font-size: 13px; color: var(--label2); }
+.brand { gap: 14px; margin-top: 8px; }
+.brand img, .logo-add { width: 72px; height: 72px; object-fit: contain; border-radius: 16px; flex: none; }
+.brand b { font-size: 22px; font-weight: 700; }
+.brand span { font-size: 15px; }
+.logo-add { background: var(--fill); color: var(--blue); font-size: 13px; font-weight: 600; line-height: 1.2; }

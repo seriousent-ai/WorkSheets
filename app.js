@@ -156,7 +156,7 @@ function fmtTime(sec) { return `${Math.floor(sec / 60)}:${pad(Math.max(0, sec % 
 function brand() {
   const p = S.profile;
   const logo = p.logo || "icons/team-logo.png";
-  return `<div class="brand"><img src="${esc(logo)}" alt="" onerror="this.remove()"><div><b>${esc(p.team)}</b><span>${esc(p.league)}</span></div></div>`;
+  return `<div class="brand"><img src="${esc(logo)}" alt="${esc(p.team)} logo" onerror="this.outerHTML='<button class=&quot;logo-add&quot; data-a=&quot;editProfile&quot;>Add<br>logo</button>'"><div><b>${esc(p.team)}</b><span>${esc(p.league)}</span></div></div>`;
 }
 
 function viewToday() {
