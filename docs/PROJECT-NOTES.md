@@ -46,11 +46,30 @@ Everything (days, blocks, videos, links, notes, rewards, profile, logs) can be a
   (falls back to copying the text).
 - **First-run welcome** on a fresh device (no logs, no family code): name, "My Why", then offer to create a family code, join, or skip.
   `profile.onboarded` syncs, so a device that joins a family does not see it again.
-- **Parent lock (optional, device-local)**: Guide, Parent lock. A 4-digit passcode (hash in `localStorage["tristan-lock"]`, not synced)
-  gates `EDIT_ACTIONS` (plan, videos, links, rewards, notes, profile, backup/reset, sync controls, passcode changes) for 10 minutes after entry.
-  Checking blocks and logging stay open. "Forgot passcode" accepts the family code. It is a speed bump, not strong security.
-- **iPad / wide screens**: Today uses two columns (session left, progress right) at 900 px and wider. Other tabs stay in one column.
-- Not done yet: landscape-specific phone layout for the guided screen beyond the ring shrinking to fit; two-column Log.
+- The parent passcode that was built in Phase 3 was removed in Phase 4 (not wanted).
+- **iPad / wide screens**: Today and Log use two columns at 900 px and wider.
+
+## Phase 4: fine-tuning (done)
+- Deploy fix: the Pages workflow now copies every file the page loads (it had left out `sync.js` and `firebase-config.js`) and names the offline cache after the commit.
+- Light-mode contrast raised to WCAG AA (tokens `--label2`, `--blue-text`, `--green-text`, `--red-text`); an axe audit on every tab at iPhone SE size reports no violations in light or dark.
+- The selected day resets when the app returns on a new day; landscape guided layout; reward unlocks announced together; Home Screen label is "Rens Training".
+
+## Phase 5: interactive features (done)
+- **Sound, voice, haptics** (Guide, preferences stored locally): swish on a finished block, chime on level-up or reward, spoken cues in the guided timer (start, halfway, one minute, ten seconds, time up).
+- **Counters in the guided session**: shooting blocks get five spot buttons with Made/Missed (stored in `logs[date].shots[spot] = {m, x}`); other blocks get a +1 / minus rep counter (`logs[date].reps[blockId]`). Totals appear in the finish summary.
+- **Note for Tristan** (Guide): one note, synced through the plan (`S.note`), shown on Today until "Got it".
+- **Weekly challenge** (+25 XP), **morning check-in** (body today, sleep hours, +5 XP each), **personal bests** on the Log tab.
+- **Film study**: five questions from the plan, self-scored, +20 XP, saved in the day's log (`logs[date].film`).
+- **Calendar export**: Week tab builds a standard `.ics` file (events with alerts) for 1 or 4 weeks and opens the share sheet or downloads it.
+- **Reminder notification** (best effort): fires only while the page can run (installed to the Home Screen, newer iOS); the calendar alerts are the reliable reminder.
+
+## Phase 6: bundle (done)
+- **Player card**: overall rating and five skill ratings from skill points (`45 + 50 * (1 - exp(-points / 250))`), tier by level (bronze, silver, gold, diamond), jersey number in the profile, shareable PNG.
+- **Four-week cycle**: `profile.cycleStart` (a Monday); Today shows the cycle week and focus, and from week 2 a comparison with the week 1 baseline. Guide can restart the cycle.
+- **Hours guardrail**: counts organized basketball hours (training sessions plus team practice or games logged in the daily log) against the plan's 10-hour weekly ceiling with warnings at 8 and over 10, and a rest-day nudge.
+- **Shot chart**: heat map of the five spots from tracked shots (last 4 weeks or all time).
+- **Playbook**: 12 habit cards from the plan, unlocked every 120 XP; new cards appear in the finish summary.
+- Launch splash with the Rens logo.
 
 ## Motivation system
 - XP: +10 per finished block, +50 per finished session, +5 per video watched, +5 energy rating, +5 notes, +25 skill check, +15 reflection.

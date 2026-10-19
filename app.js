@@ -20,6 +20,7 @@ function load() {
   s.logs ||= {}; s.weekly ||= {}; s.videos ||= []; s.links ||= []; s.notes ||= [];
   s.rewards ||= JSON.parse(JSON.stringify(DEFAULT_DATA.rewards));
   s.planTs ||= 0;
+  s.profile.cycleStart ||= dateKey(mondayOf(new Date()));
   s.profile ||= {};
   s.profile.why ??= "I'm a point guard. I make my teammates better and I get better every single day.";
   s.profile.name ||= "Tristan";
@@ -63,7 +64,7 @@ const idb = {
 };
 
 /* ---------- state ---------- */
-const ui = { film: null, welcome: null, summary: null, tab: "today", day: todayIdx(), openVideo: null, weekOffset: 0, guided: null, openBlocks: {}, form: null };
+const ui = { card: false, chartRange: "4w", chartSpot: null, film: null, welcome: null, summary: null, tab: "today", day: todayIdx(), openVideo: null, weekOffset: 0, guided: null, openBlocks: {}, form: null };
 const dateOf = (i) => dateKey(addDays(mondayOf(new Date()), i));
 const logOf = (date) => (S.logs[date] ||= { done: {} });
 
@@ -104,6 +105,8 @@ const ICON_PATHS = {
   check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
   heart: '<path d="M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.6-7 10-7 10z"/>',
   moon: '<path d="M20 14.5A8 8 0 019.5 4 8 8 0 1020 14.5z"/>',
+  card: '<rect x="5" y="3" width="14" height="18" rx="2.5"/><circle cx="12" cy="10" r="2.5"/><path d="M8 17c.8-2 2.2-3 4-3s3.2 1 4 3"/>',
+  book: '<path d="M5 4h12a2 2 0 012 2v14H7a2 2 0 01-2-2z"/><path d="M5 18a2 2 0 012-2h12"/>',
   flag: '<path d="M5 21V4M5 5h12l-2 4 2 4H5"/>',
 };
 function badge(name, cls = "") {
@@ -332,6 +335,148 @@ function scheduleReminder() {
   if (ms > 0 && ms < 2147483000) remindTimer = setTimeout(showReminder, ms);
 }
 
+/* ---------- four-week cycle ---------- */
+const CYCLE = [["Learn the drills and record a baseline.", "Keep passing distances and shooting spots the same every time."], ["Repeat the same work with better accuracy, balance and eyes-up control.", "Same drills, cleaner."], ["If control is steady, add movement or light defensive pressure.", "Raise only one difficulty at a time."], ["Add live reads and compare the same baseline measures.", "Review the results with your coach."]];
+function cycleInfo() {
+  const thisMon = mondayOf(new Date());
+  const diff = Math.round((thisMon - parseKey(S.profile.cycleStart)) / (7 * 864e5));
+  return { n: ((diff % 4) + 4) % 4 + 1, diff, base: dateKey(addDays(thisMon, -7 * (((diff % 4) + 4) % 4))) };
+}
+function cycleCard() {
+  const c = cycleInfo();
+  const [t, s] = CYCLE[c.n - 1];
+  let cmp = "";
+  if (c.n > 1) {
+    const b = S.weekly[c.base] || {}, w = S.weekly[weekKeyNow()] || {};
+    const rows = [["right", "Right-hand passes"], ["left", "Left-hand passes"], ["shoot", "Shots made"], ["ft", "Free throws"]].filter(([k]) => b[k] !== undefined && b[k] !== "" && w[k] !== undefined && w[k] !== "");
+    if (rows.length) cmp = `<div class="cyc-cmp"><b>Since your week 1 baseline</b>${rows.map(([k, l]) => `<span>${l}: ${b[k]} → <em class="${Number(w[k]) >= Number(b[k]) ? "up" : "down"}">${w[k]}</em></span>`).join("")}</div>`;
+  }
+  return `<div class="cycle"><div class="cyc-top"><b>Cycle week ${c.n} of 4</b><span class="cyc-dots">${[1, 2, 3, 4].map((i) => `<i class="${i < c.n ? "d" : ""} ${i === c.n ? "c" : ""}"></i>`).join("")}</span></div><p>${esc(t)}</p><p class="cyc-sub">${esc(s)}</p>${cmp}</div>`;
+}
+
+/* ---------- hours guardrail ---------- */
+function weekLoad(monKey) {
+  const mon = parseKey(monKey);
+  let total = 0, active = 0;
+  for (let i = 0; i < 7; i++) {
+    const l = S.logs[dateKey(addDays(mon, i))];
+    if (!l) continue;
+    const team = Number(l.team) || 0;
+    const own = l.minutes ? Number(l.minutes) || 0 : l.complete && i < 6 && S.days[i] ? S.days[i].blocks.reduce((p, b) => p + (Number(b.minutes) || 0), 0) : 0;
+    total += team + own;
+    if (team || own || l.complete) active++;
+  }
+  return { hours: total / 60, active };
+}
+function hoursCard(monKey, compact) {
+  const { hours, active } = weekLoad(monKey);
+  const state = hours > 10 ? "over" : hours >= 8 ? "near" : "ok";
+  const msg = hours > 10 ? "Over the 10-hour weekly ceiling. Take a lighter day and a full rest day." : hours >= 8 ? "Getting close to the 10-hour weekly ceiling. Plan a rest day." : active >= 7 ? "Every day this week had basketball. Keep one day fully off." : "Within the plan's 10-hour weekly ceiling.";
+  if (compact && state === "ok" && active < 7) return "";
+  return `<div class="hours ${state}"><div class="hrs-top"><b>Organized basketball this week</b><span>${hours.toFixed(1)} of 10 h</span></div><div class="progress"><i style="width:${Math.min(100, (hours / 10) * 100)}%"></i></div><p>${msg}</p></div>`;
+}
+
+/* ---------- shot chart ---------- */
+const SPOT_XY = { lc: [34, 198], lw: [62, 110], top: [150, 62], rw: [238, 110], rc: [266, 198] };
+function shotAgg(range) {
+  const out = {};
+  const cutoff = Date.now() - 28 * 864e5;
+  for (const k in S.logs) {
+    if (range !== "all" && parseKey(k).getTime() < cutoff) continue;
+    const sh = S.logs[k].shots;
+    if (!sh) continue;
+    for (const s in sh) { const o = (out[s] ||= { m: 0, x: 0 }); o.m += sh[s].m; o.x += sh[s].x; }
+  }
+  return out;
+}
+function shotChartHtml() {
+  const range = ui.chartRange || "4w";
+  const agg = shotAgg(range);
+  let M = 0, X = 0;
+  Object.values(agg).forEach((o) => { M += o.m; X += o.x; });
+  const sel = ui.chartSpot;
+  const spots = SPOTS.map(([id, name]) => {
+    const o = agg[id] || { m: 0, x: 0 }, att = o.m + o.x, pct = att ? o.m / att : null;
+    const cls = pct === null ? "none" : pct >= 0.5 ? "hi" : pct >= 0.35 ? "mid" : "lo";
+    const [x, y] = SPOT_XY[id];
+    return `<g class="spot ${cls} ${sel === id ? "sel" : ""}" data-a="chartSpot" data-s="${id}" role="button" tabindex="0" aria-label="${name}: ${att ? o.m + " of " + att : "no shots yet"}"><circle cx="${x}" cy="${y}" r="25"/><text x="${x}" y="${y + 2}" text-anchor="middle" class="sp1">${pct === null ? "–" : Math.round(pct * 100) + "%"}</text><text x="${x}" y="${y + 15}" text-anchor="middle" class="sp2">${att ? o.m + "/" + att : ""}</text></g>`;
+  }).join("");
+  const det = sel ? (() => { const o = agg[sel] || { m: 0, x: 0 }, att = o.m + o.x; return `<p class="chart-note"><b>${SPOTS.find((s) => s[0] === sel)[1]}</b>: ${att ? `${o.m} of ${att} made (${Math.round((o.m / att) * 100)}%)` : "no shots tracked yet"}</p>`; })() : "";
+  return `<h2 class="section">Shot chart</h2><div class="group chartcard">
+    <div class="seg" style="margin:0 0 8px"><button class="${range === "4w" ? "on" : ""}" data-a="chartRange" data-r="4w">Last 4 weeks</button><button class="${range === "all" ? "on" : ""}" data-a="chartRange" data-r="all">All time</button></div>
+    <svg class="court" viewBox="0 0 300 250" role="group" aria-label="Shooting spots"><rect x="112" y="150" width="76" height="86" class="ln"/><path d="M120 150a30 30 0 0160 0" class="ln"/><path d="M34 236V170A128 128 0 00266 170V236" class="ln"/><rect x="132" y="233" width="36" height="3" class="bb"/><circle cx="150" cy="223" r="6" class="ln"/><path d="M10 236H290" class="ln"/>${spots}</svg>
+    <p class="chart-note">${M + X ? `${M} of ${M + X} shots made (${Math.round((M / (M + X)) * 100)}%). Track shots in the guided Shoot block.` : "Track shots in the guided Shoot block and this chart fills in."}</p>${det}</div>`;
+}
+
+/* ---------- player card ---------- */
+const TIERS = ["bronze", "bronze", "silver", "silver", "gold", "diamond"];
+function ratings() {
+  const pts = skillPoints(), r = {};
+  SKILLS.forEach(([k]) => { r[k] = 45 + Math.round(50 * (1 - Math.exp(-(pts[k] || 0) / 250))); });
+  return { r, ovr: Math.round(SKILLS.reduce((p, [k]) => p + r[k], 0) / SKILLS.length) };
+}
+function cardData() {
+  const total = completeDates().length, lv = levelInfo(total), { r, ovr } = ratings();
+  return { r, ovr, lv, total, xp: xpTotal(), tier: TIERS[LEVELS.findIndex((l) => l[1] === lv.cur[1])] || "bronze", name: S.profile.name, num: S.profile.number ? "#" + String(S.profile.number).replace(/^#/, "") : "" };
+}
+function cardHtml() {
+  const c = cardData();
+  const logo = S.profile.logo || "icons/team-logo.png";
+  return `<div class="pcard ${c.tier}"><div class="pc-top"><img src="${esc(logo)}" alt="" onerror="this.remove()"><div class="pc-ovr"><b>${c.ovr}</b><span>OVR</span></div></div>
+    <div class="pc-name">${esc(c.name)}</div><div class="pc-sub">PG · ${esc(S.profile.team)} ${esc(S.profile.league)}${c.num ? " · " + esc(c.num) : ""}</div>
+    <div class="pc-rate">${SKILLS.map(([k, name]) => `<div class="pc-row"><span>${name}</span><div class="pc-bar"><i style="width:${Math.round(((c.r[k] - 40) / 60) * 100)}%"></i></div><b>${c.r[k]}</b></div>`).join("")}</div>
+    <div class="pc-foot"><span>${badge(c.lv.cur[2], "xs")} ${esc(c.lv.cur[1])}</span><span>${c.total} sessions</span><span>${c.xp} XP</span></div></div>`;
+}
+async function cardImage() {
+  const c = cardData();
+  const W = 1080, H = 1500, cv = document.createElement("canvas");
+  cv.width = W; cv.height = H;
+  const g = cv.getContext("2d");
+  const rr = (x, y, w, h, r) => { g.beginPath(); if (g.roundRect) g.roundRect(x, y, w, h, r); else g.rect(x, y, w, h); };
+  const tier = { bronze: ["#e0a070", "#8a5230"], silver: ["#e8ebf0", "#9aa1ad"], gold: ["#ffe27a", "#c98f0a"], diamond: ["#b7f0ff", "#4aa8e8"] }[c.tier];
+  const bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, "#22345f"); bg.addColorStop(1, "#0b1122");
+  g.fillStyle = bg; g.fillRect(0, 0, W, H);
+  const bd = g.createLinearGradient(0, 0, W, H); bd.addColorStop(0, tier[0]); bd.addColorStop(1, tier[1]);
+  g.fillStyle = bd; rr(60, 60, W - 120, H - 120, 56); g.fill();
+  const inner = g.createLinearGradient(0, 60, 0, H); inner.addColorStop(0, "#16264a"); inner.addColorStop(1, "#0a1020");
+  g.fillStyle = inner; rr(80, 80, W - 160, H - 160, 44); g.fill();
+  try { const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = S.profile.logo || "icons/team-logo.png"; }); g.drawImage(img, 140, 140, 200, 200); } catch (e) {}
+  const t = (s, x, y, size, color, weight = 700, align = "left") => { g.font = `${weight} ${size}px -apple-system, "SF Pro Display", Helvetica, Arial, sans-serif`; g.fillStyle = color; g.textAlign = align; g.fillText(s, x, y); };
+  t(String(c.ovr), W - 140, 290, 190, tier[0], 800, "right"); t("OVR", W - 140, 345, 44, "rgba(255,255,255,.75)", 600, "right");
+  const nm = c.name; t(nm, 140, 470, nm.length > 18 ? 66 : 84, "#ffffff", 800);
+  t(`PG · ${S.profile.team} ${S.profile.league}${c.num ? " · " + c.num : ""}`, 140, 530, 38, "rgba(255,255,255,.75)", 500);
+  let y = 640;
+  SKILLS.forEach(([k, name]) => { t(name, 140, y, 40, "#ffffff", 600); t(String(c.r[k]), W - 140, y, 46, tier[0], 800, "right"); g.fillStyle = "rgba(255,255,255,.14)"; rr(140, y + 22, W - 280, 22, 11); g.fill(); g.fillStyle = tier[0]; rr(140, y + 22, Math.max(24, (W - 280) * ((c.r[k] - 40) / 60)), 22, 11); g.fill(); y += 130; });
+  t(c.lv.cur[1], 140, H - 170, 52, tier[0], 800); t(`${c.total} sessions · ${c.xp} XP`, W - 140, H - 170, 38, "rgba(255,255,255,.8)", 500, "right");
+  t("Made with the Rens training app", W / 2, H - 100, 28, "rgba(255,255,255,.45)", 500, "center");
+  return new Promise((res) => cv.toBlob(res, "image/png"));
+}
+
+/* ---------- playbook cards ---------- */
+const PLAYBOOK = [
+  ["Scan before the catch", "Look at the defense and your teammates before the ball reaches you, so you already know your next move.", "Wednesday footwork: catch, check the floor, then pass."],
+  ["Eyes up", "Keep your head up while you dribble. You cannot pass to someone you cannot see.", "Walk-and-dribble with your eyes on a spot on the wall."],
+  ["Stay balanced", "Land on two feet, bend your knees, keep your head over your hips.", "Jump stops: stop, hold the landing for two seconds."],
+  ["Use either hand", "A pass or a finish with your weaker hand keeps defenders guessing.", "Ten left-hand push passes at a target."],
+  ["Control first, then speed", "Fast only works when the ball stays under control.", "Cone course: slow and clean, then add speed."],
+  ["Pass to a teammate's advantage", "Deliver the ball where your teammate can catch and use it, not just where they are standing.", "Lead a moving partner with a bounce pass into their path."],
+  ["Read the defender", "The defender's feet and hands tell you whether to pass, shoot or drive.", "2-on-1 drill: decide when the defender commits."],
+  ["Protect the ball", "Keep your body between the ball and the defender and use your off arm.", "Protected dribble against light pressure."],
+  ["Cut or relocate after passing", "A pass is not the end of the play. Move to open space and be ready to get it back.", "Pass, cut, catch, shoot."],
+  ["Communicate early", "Call the play, the screen or the open man before it happens, using your team's words.", "Call every pass out loud in practice."],
+  ["Stay between the ball and the basket", "On defense, keep yourself in the lane the ball needs to travel.", "Mirror drill with a partner."],
+  ["Know when to score", "Great point guards also take the open shot or the open lane when it is there.", "Look to score first in the 2-on-1 finish."],
+];
+const pbUnlockAt = (i) => i * 120;
+function playbookHtml() {
+  const xp = xpTotal();
+  const got = PLAYBOOK.filter((_, i) => xp >= pbUnlockAt(i)).length;
+  return `<h2 class="section">Playbook <span class="cnt">${got} of ${PLAYBOOK.length}</span></h2><div class="group pbwrap"><div class="pbgrid">${PLAYBOOK.map((c, i) => { const on = xp >= pbUnlockAt(i); return on ? `<button class="pbcard" data-a="pbOpen" data-i="${i}">${badge("book", "xs")}<b>${esc(c[0])}</b></button>` : `<div class="pbcard locked" aria-label="Locked, unlocks at ${pbUnlockAt(i)} XP">${badge("lock", "xs off")}<b>Unlocks at ${pbUnlockAt(i)} XP</b></div>`; }).join("")}</div></div>`;
+}
+function openInfo(title, html) {
+  $("#modal").innerHTML = `<div class="scrim"><div class="sheet" role="dialog" aria-label="${esc(title)}"><header><button data-a="close">Close</button><b>${esc(title)}</b><span style="min-width:56px"></span></header>${html}</div></div>`;
+}
+
 const CHALLENGES = ["Make 8 of 10 free throws", "20 left-hand passes on target in one session", "Zero lost balls on the cone course", "Hit 7 of 10 from my best spot", "10 minutes of left-hand dribbling, 4 days", "Watch a game and spot 3 good passes"];
 const weekKeyNow = () => dateKey(mondayOf(new Date()));
 const noteSeen = () => { try { return localStorage.getItem("tristan-note-seen"); } catch (e) { return null; } };
@@ -408,7 +553,7 @@ function viewToday() {
     </div>
     <svg class="ring" viewBox="0 0 72 72" aria-label="${Math.round(pct)} percent done"><circle cx="36" cy="36" r="30" class="rt"/><circle cx="36" cy="36" r="30" class="rf ${pct === 100 ? "full" : ""}" stroke-dasharray="188.5" stroke-dashoffset="${(188.5 * (1 - pct / 100)).toFixed(1)}"/><text x="36" y="41" text-anchor="middle">${Math.round(pct)}%</text></svg></div>
     ${pct === 100 ? `<p class="win">Session complete. That's how point guards are made, ${esc(firstName(S.profile.name))}!</p>` : day.blocks.length ? `<button class="startbtn" data-a="gStart">${startLabel}</button>` : ""}
-    <div class="herometa"><span>${xp} XP</span><span>${esc(lv.cur[1])}</span><span>${weekStreak()} week streak</span></div>
+    <div class="herometa"><span>${xp} XP</span><span>${esc(lv.cur[1])}</span><span>${weekStreak()} week streak</span><span>Cycle ${cycleInfo().n}/4</span></div>
   </div>
   <h2 class="section">Session <button data-a="editDay">Edit day</button></h2>
   <div class="group">
@@ -435,6 +580,9 @@ function viewToday() {
   <div class="group"><div class="row"><div class="emojis grow">${mood.map(([e, v]) => `<button class="${lg.energy === v ? "on" : ""}" data-a="energy" data-v="${v}" aria-label="Energy ${v}">${e}</button>`).join("")}</div></div>
   ${lg.improve || lg.challenge ? `<div class="row"><div class="grow">${lg.improve ? `<div class="detail"><b>Improved:</b> ${esc(lg.improve)}</div>` : ""}${lg.challenge ? `<div class="detail"><b>Challenge:</b> ${esc(lg.challenge)}</div>` : ""}</div></div>` : ""}</div>
   <h2 class="section">Your progress</h2>
+  ${cycleCard()}
+  <button class="cardbtn" data-a="cardOpen">${badge("card")}<div class="grow"><b>Player card</b><span>Overall ${ratings().ovr} · ${esc(levelInfo(completeDates().length).cur[1])}</span></div><span class="chev">›</span></button>
+  ${hoursCard(weekKeyNow(), true)}
   <div class="stats">
     <div class="stat"><b>${xp}</b><span>XP points</span></div>
     <div class="stat"><b>${weekStreak()}</b><span>Week streak</span></div>
@@ -469,6 +617,7 @@ function viewWeek() {
     const p = d.blocks.length ? c / d.blocks.length : 0;
     return `<button class="wd ${i === todayIdx() ? "today" : ""}" data-a="openDay" data-i="${i}" aria-label="${esc(d.name)} ${Math.round(p * 100)} percent"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="14" class="rt"/><circle cx="18" cy="18" r="14" class="rf ${l.complete ? "full" : ""}" stroke-dasharray="88" stroke-dashoffset="${(88 * (1 - p)).toFixed(1)}"/>${l.complete ? '<path d="M11.5 18.5l4.2 4.2 8.8-9" class="ck"/>' : ""}</svg><span>${esc(d.name.slice(0, 3))}</span></button>`;
   }).join("")}</div>
+  ${hoursCard(weekKeyNow(), false)}
   <h2 class="section">Days</h2>
   <div class="group">${S.days.map((d, i) => {
     const date = dateOf(i);
@@ -570,7 +719,7 @@ function reportData() {
   let sessions = 0, xp = 0;
   for (let i = 0; i < 7; i++) { const l = S.logs[dateKey(addDays(mon, i))]; if (l) { if (l.complete) sessions++; xp += xpOfLog(l); } }
   xp += (w.right || w.shoot ? 25 : 0) + (w.improved || w.adjust ? 15 : 0) + (w.challenge && w.challenge.done ? 25 : 0);
-  return { mon, wk, w, sessions, xp, goal: Math.min(6, S.days.length) };
+  return { mon, wk, w, sessions, xp, goal: Math.min(6, S.days.length), hours: weekLoad(wk).hours };
 }
 function reportText(r) {
   const w = r.w, sk = [];
@@ -581,7 +730,7 @@ function reportText(r) {
   if (w.good) sk.push(`good reads ${w.good}`);
   const end = addDays(r.mon, 6);
   return [`${firstName(S.profile.name)}'s week, ${fmtShort(r.mon)} to ${fmtShort(end)} (${S.profile.team} ${S.profile.league})`,
-    `Sessions finished: ${r.sessions} of ${r.goal}`, `XP earned: ${r.xp}`,
+    `Sessions finished: ${r.sessions} of ${r.goal}`, `Organized basketball: ${r.hours.toFixed(1)} of 10 hours`, `XP earned: ${r.xp}`,
     sk.length ? `Skill check: ${sk.join(", ")}` : "", w.priority ? `Coach's priority: ${w.priority}` : "", w.goal ? `${firstName(S.profile.name)}'s goal: ${w.goal}` : "",
     w.improved ? `Improved: ${w.improved}` : "", w.hard ? `Difficult: ${w.hard}` : "", w.adjust ? `Next week's one adjustment: ${w.adjust}` : ""].filter(Boolean).join("\n");
 }
@@ -665,6 +814,8 @@ function viewLog() {
   <button class="btn gray" data-a="shareReport">Share weekly report</button>
   </div><div>
   ${trendsHtml()}
+  ${shotChartHtml()}
+  ${playbookHtml()}
   ${bests()}
   <h2 class="section">Rewards <button data-a="addReward">Add</button></h2>
   <div class="group">${sortedRewards().map((r) => { const got = xpTotal() >= r.xp; return `<div class="row tap ${got ? "" : "locked"}" data-a="editReward" data-id="${r.id}">${badge(got ? "gift" : "lock", got ? "" : "off")}<div class="grow"><div class="title strong">${esc(r.title)}</div><div class="detail">${r.xp} XP${r.note ? " · " + esc(r.note) : ""}</div></div>${got ? '<span class="pill blue">Unlocked</span>' : ""}</div>`; }).join("") || '<div class="empty">No rewards yet. Tap Add.</div>'}</div>
@@ -683,6 +834,7 @@ function viewGuide() {
   <div class="why"><b>My Why</b><p>${esc(p.why)}</p></div>
   <div class="group" style="margin-top:12px"><div class="row"><div class="grow"><div class="detail">Priority</div><div class="title">${esc(p.priority)}</div></div></div>
     <div class="row tap" data-a="editProfile"><div class="grow">Edit profile and My Why</div><span class="chev">›</span></div>
+    <div class="row tap" data-a="cycleRestart"><div class="grow"><div class="title strong">Restart the 4-week cycle</div><div class="detail">Makes this week Week 1 and the new baseline.</div></div><span class="chev">›</span></div>
     <div class="row tap" data-a="noteWrite"><div class="grow"><div class="title strong">Write a note to ${esc(firstName(p.name))}</div><div class="detail">${S.note && S.note.text ? "Current: " + esc(S.note.text) : "Shows on the Today screen on every synced device."}</div></div><span class="chev">›</span></div></div>
   <h2 class="section">The plan <button data-a="addNote">Add</button></h2>
   <div class="group">${S.notes.map((n) => `<div class="row tap" data-a="editNote" data-id="${n.id}"><div class="grow"><div class="title strong">${esc(n.title)}</div><div class="detail" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${esc(n.text)}</div></div><span class="chev">›</span></div>`).join("")}</div>
@@ -787,6 +939,7 @@ function renderSummary() {
       ${s.ups.map((u) => row(u.ic, `${u.name} reached level ${u.lvl}`, "Skill level up")).join("")}
       ${s.rewards.map((r) => row("gift", `Reward unlocked: ${r.title}`, r.note || "", "gold")).join("")}
       ${s.next ? `<div class="s-row">${badge("gift")}<div><b>Next reward: ${esc(s.next.next.title)}</b><span>${s.next.next.xp - s.xp} XP to go</span><div class="progress"><i style="width:${s.next.pct}%"></i></div></div></div>` : ""}
+      ${s.cards.map((c) => row("book", "New playbook card: " + c[0], c[1], "gold")).join("")}
       ${s.shots.att ? row("hoop", `${s.shots.m} of ${s.shots.att} shots made`, `${Math.round((s.shots.m / s.shots.att) * 100)}% from the spots you tracked`) : ""}
       ${s.reps ? row("pass", `${s.reps} reps counted`, "Tracked in this session") : ""}
       ${row("flame", `${s.week} session${s.week === 1 ? "" : "s"} this week`, s.streak ? `${s.streak} week streak` : "Finish 4 this week to start a streak")}
@@ -801,6 +954,14 @@ document.addEventListener("input", (e) => {
   if (ui.welcome && e.target.id === "w-name") ui.welcome.name = e.target.value;
   if (ui.welcome && e.target.id === "w-why") ui.welcome.why = e.target.value;
 });
+
+function renderCard() {
+  const el = $("#card");
+  if (!ui.card) { el.innerHTML = ""; return; }
+  paint(el, `<div class="guided cardview" role="dialog" aria-label="Player card"><div class="g-top"><button data-a="cardClose">Close</button><span>Player card</span><span class="g-sp"></span></div>
+    <div class="g-main">${cardHtml()}<p class="pc-hint">Ratings rise as you finish blocks in each skill.</p></div>
+    <div class="g-actions"><button class="g-primary" data-a="cardShare">Share card</button></div></div>`);
+}
 
 /* ---------- first-run welcome ---------- */
 function renderWelcome() {
@@ -835,7 +996,8 @@ function render() {
   renderSummary();
   renderWelcome();
   renderFilm();
-  document.body.classList.toggle("noscroll", !!(ui.guided || ui.summary || ui.welcome || ui.film));
+  renderCard();
+  document.body.classList.toggle("noscroll", !!(ui.guided || ui.summary || ui.welcome || ui.film || ui.card));
   document.querySelectorAll("video[data-file]").forEach(async (el) => {
     try { const b = await idb.get(el.dataset.file); if (b) el.src = URL.createObjectURL(b); } catch (e) {}
   });
@@ -1056,13 +1218,14 @@ function formLogDay(date) {
     title: "Log · " + fmtShort(parseKey(date)),
     fields: [
       { k: "event", label: "Session or team event", value: lg.event, ph: "Rens practice, game, solo session" },
-      { k: "minutes", label: "Minutes trained", type: "number", value: lg.minutes },
+      { k: "minutes", label: "Minutes trained (leave empty to use the plan)", type: "number", value: lg.minutes },
+      { k: "team", label: "Team practice or game (minutes)", type: "number", value: lg.team },
       { k: "energy", label: "Energy / body feels", type: "select", value: lg.energy ?? "", opts: [["", "Not rated"], [1, "😫 Wiped out"], [2, "😕 Tired"], [3, "😐 Okay"], [4, "🙂 Good"], [5, "🔥 Great"]] },
       { k: "learned", label: "One thing I learned", value: lg.learned },
       { k: "improve", label: "One improvement", value: lg.improve },
       { k: "challenge", label: "One challenge", value: lg.challenge },
     ],
-    save(f) { Object.assign(lg, f, { energy: f.energy ? Number(f.energy) : undefined }); },
+    save(f) { Object.assign(lg, f, { energy: f.energy ? Number(f.energy) : undefined, minutes: f.minutes ? Number(f.minutes) || undefined : undefined, team: f.team ? Number(f.team) || undefined : undefined }); },
   });
 }
 function weekForm(title, fields, req) {
@@ -1089,7 +1252,7 @@ function formProfile() {
   const p = S.profile;
   openForm({
     title: "Profile",
-    fields: [{ k: "name", label: "Name", value: p.name }, { k: "team", label: "Team", value: p.team }, { k: "league", label: "League / age group", value: p.league }, { k: "logo", label: "Team logo (choose an image)", type: "file", accept: "image/*" }, { k: "subtitle", label: "Team and level", value: p.subtitle }, { k: "priority", label: "Priority", type: "textarea", value: p.priority }, { k: "why", label: "My Why", type: "textarea", value: p.why, ph: "Why I train" }],
+    fields: [{ k: "name", label: "Name", value: p.name }, { k: "team", label: "Team", value: p.team }, { k: "league", label: "League / age group", value: p.league }, { k: "number", label: "Jersey number", value: p.number || "" }, { k: "logo", label: "Team logo (choose an image)", type: "file", accept: "image/*" }, { k: "subtitle", label: "Team and level", value: p.subtitle }, { k: "priority", label: "Priority", type: "textarea", value: p.priority }, { k: "why", label: "My Why", type: "textarea", value: p.why, ph: "Why I train" }],
     required: ["name"],
     extra: p.logo ? [{ label: "Remove logo", fn: () => { delete p.logo; } }] : [],
     async save(f) {
@@ -1161,6 +1324,7 @@ function buildSummary(date, crossed) {
     levelUp: now.cur[0] !== was.cur[0] ? now.cur : null, level: now,
     week: sessionsInWeek(dateKey(mondayOf(parseKey(date)))), streak: weekStreak(), next: nextReward(xp),
     msg: MESSAGES[(dayOfYear() + 3) % MESSAGES.length],
+    cards: PLAYBOOK.filter((c, i) => pbUnlockAt(i) > xp - xpOfLog(lg) && pbUnlockAt(i) <= xp),
     shots: shotTotals(lg), reps: Object.values(lg.reps || {}).reduce((p, q) => p + q, 0),
   };
 }
@@ -1180,7 +1344,7 @@ function toggleBlock(id) {
     if (!(lg.complete && !wasComplete) && !ui.guided) toast(CHEERS[Math.floor(Math.random() * CHEERS.length)]);
   }
   const crossed = S.rewards.filter((r) => r.xp > before && r.xp <= xpTotal());
-  if (lg.complete && !wasComplete) { celebrate(); ui.summary = buildSummary(dateOf(ui.day), crossed); if (ui.summary.levelUp || crossed.length) setTimeout(() => Sfx.chime(), 400); }
+  if (lg.complete && !wasComplete) { celebrate(); ui.summary = buildSummary(dateOf(ui.day), crossed); if (ui.summary.levelUp || crossed.length || ui.summary.cards.length) setTimeout(() => Sfx.chime(), 400); }
   else if (crossed.length) setTimeout(() => { celebrate(); toast("Reward unlocked: " + crossed.map((r) => r.title).join(", ")); }, 1200);
 }
 function download(name, text) {
@@ -1272,6 +1436,20 @@ const ACTIONS = {
     required: ["t"],
     save(f) { if (!/^([01]?\d|2[0-3]):[0-5]\d$/.test(f.t)) { toast("Use a time like 16:00."); return false; } Prefs.remindTime = f.t; Prefs.save(); scheduleReminder(); },
   }),
+  cardOpen: () => { ui.card = true; },
+  cardClose: () => { ui.card = false; },
+  cardShare: async () => {
+    try {
+      const blob = await cardImage();
+      const file = new File([blob], `${firstName(S.profile.name)}-player-card.png`, { type: "image/png" });
+      const r = await deliverFile(file);
+      if (r === "downloaded") toast("Card saved as a picture.");
+    } catch (e) { toast("Could not make the card picture."); }
+  },
+  chartRange: (d) => { ui.chartRange = d.r; },
+  chartSpot: (d) => { ui.chartSpot = ui.chartSpot === d.s ? null : d.s; },
+  pbOpen: (d) => { const c = PLAYBOOK[Number(d.i)]; openInfo(c[0], `<div class="pbdetail">${badge("book", "lg")}<p class="pbtip">${esc(c[1])}</p><div class="pbtry"><b>Try this</b><p>${esc(c[2])}</p></div></div>`); },
+  cycleRestart: () => { S.profile.cycleStart = dateKey(mondayOf(new Date())); toast("Cycle restarted. This is week 1."); },
   blockInfo: (d) => { ui.openBlocks[d.id] = !ui.openBlocks[d.id]; },
   gStart: () => {
     const day = S.days[ui.day];
@@ -1393,4 +1571,5 @@ if (!S.profile.onboarded && Object.keys(S.logs).length === 0 && !Sync.code) ui.w
 render();
 scheduleReminder();
 Sync.start();
+setTimeout(() => { const s = document.getElementById("splash"); if (s) { s.classList.add("gone"); setTimeout(() => s.remove(), 450); } }, 700);
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js").catch(() => {});
