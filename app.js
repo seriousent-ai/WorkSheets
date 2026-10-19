@@ -62,7 +62,7 @@ const idb = {
 };
 
 /* ---------- state ---------- */
-const ui = { tab: "today", day: todayIdx(), openVideo: null, weekOffset: 0, timer: null, form: null };
+const ui = { tab: "today", day: todayIdx(), openVideo: null, weekOffset: 0, guided: null, openBlocks: {}, form: null };
 const dateOf = (i) => dateKey(addDays(mondayOf(new Date()), i));
 const logOf = (date) => (S.logs[date] ||= { done: {} });
 
@@ -202,7 +202,8 @@ function fmtTime(sec) { return `${Math.floor(sec / 60)}:${pad(Math.max(0, sec % 
 function brand() {
   const p = S.profile;
   const logo = p.logo || "icons/team-logo.png";
-  return `<div class="brand"><img src="${esc(logo)}" alt="${esc(p.team)} logo" onerror="this.outerHTML='<button class=&quot;logo-add&quot; data-a=&quot;editProfile&quot;>Add<br>logo</button>'"><div><b>${esc(p.team)}</b><span>${esc(p.league)}</span></div></div>`;
+  const dot = Sync.code ? `<span class="syncdot ${Sync.status}" title="${esc(Sync.statusText())}"></span>` : "";
+  return `<div class="brand"><img src="${esc(logo)}" alt="${esc(p.team)} logo" onerror="this.outerHTML='<button class=&quot;logo-add&quot; data-a=&quot;editProfile&quot;>Add<br>logo</button>'"><div><b>${esc(p.team)}</b><span>${dot}${esc(p.league)}</span></div></div>`;
 }
 
 function viewToday() {
@@ -224,10 +225,47 @@ function viewToday() {
   const seg = S.days.map((d, i) => `<button class="${i === ui.day ? "on" : ""} ${i === todayIdx() ? "today" : ""}" data-a="day" data-i="${i}">${esc(d.name.slice(0, 3))}</button>`).join("");
   const vids = day.videoIds.map((id) => S.videos.find((v) => v.id === id)).filter(Boolean);
   const mood = [["😫", 1], ["😕", 2], ["😐", 3], ["🙂", 4], ["🔥", 5]];
+  const curId = (day.blocks.find((b) => !done[b.id]) || {}).id;
+  const startLabel = doneN > 0 ? "Continue session" : "Start session";
   return `
   ${brand()}
-  <h1 class="large">${greet}, ${esc(S.profile.name)}</h1>
-  <p class="sub">${esc(msg)}</p>
+  <h1 class="greet">${greet}, ${esc(S.profile.name)}</h1>
+  <p class="sub tight">${esc(msg)}</p>
+  <div class="seg">${seg}</div>
+  <div class="hero">
+    <div class="herorow"><div class="grow">
+      <div class="eyebrow">${isToday ? "Today" : esc(day.name)} · ${fmtShort(parseKey(date))}</div>
+      <div class="big">${esc(day.theme)}</div>
+      <div class="detail">${doneN} of ${day.blocks.length} blocks · ${day.blocks.reduce((a, b) => a + (Number(b.minutes) || 0), 0)} min</div>
+      ${day.cue ? `<div class="herocue"><b>Cue</b> ${esc(day.cue)}</div>` : ""}
+    </div>
+    <svg class="ring" viewBox="0 0 72 72" aria-label="${Math.round(pct)} percent done"><circle cx="36" cy="36" r="30" class="rt"/><circle cx="36" cy="36" r="30" class="rf ${pct === 100 ? "full" : ""}" stroke-dasharray="188.5" stroke-dashoffset="${(188.5 * (1 - pct / 100)).toFixed(1)}"/><text x="36" y="41" text-anchor="middle">${Math.round(pct)}%</text></svg></div>
+    ${pct === 100 ? `<p class="win">Session complete. That's how point guards are made, ${esc(S.profile.name)}!</p>` : day.blocks.length ? `<button class="startbtn" data-a="gStart">${startLabel}</button>` : ""}
+    <div class="herometa"><span>${xp} XP</span><span>${esc(lv.cur[1])}</span><span>${weekStreak()} week streak</span></div>
+  </div>
+  <h2 class="section">Session <button data-a="editDay">Edit day</button></h2>
+  <div class="group">
+    ${day.blocks.map((b, i) => {
+      const on = !!done[b.id];
+      const cur = b.id === curId;
+      const open = !!ui.openBlocks[b.id];
+      return `<div class="row blk ${on ? "done" : ""} ${cur ? "current" : ""}">
+        <button class="check ${on ? "on" : ""}" data-a="toggle" data-id="${b.id}" aria-label="Mark ${esc(b.title)} done">${on ? "✓" : ""}</button>
+        <div class="grow"><div class="title strong">${esc(b.title)}</div>
+          <div class="detail"><span class="pill">${times[i]}</span>${cur ? ' <span class="pill blue">Up next</span>' : ""}</div>
+          ${b.text ? `<button class="linkbtn" data-a="blockInfo" data-id="${b.id}">${open ? "Hide details" : "Details"}</button>${open ? `<div class="detail">${esc(b.text)}</div>` : ""}` : ""}</div>
+        <div class="side">
+          <button class="play" data-a="gFrom" data-id="${b.id}" aria-label="Start ${esc(b.title)} timer">▶</button>
+          <button class="more" data-a="editBlock" data-id="${b.id}" aria-label="Edit ${esc(b.title)}">•••</button>
+        </div></div>`;
+    }).join("") || `<div class="empty">No blocks yet.</div>`}
+  </div>
+  <button class="btn gray" data-a="addBlock">Add a block</button>
+  ${vids.length ? `<h2 class="section">Watch first</h2><div class="group"><div class="row"><div class="pills" style="margin:0">${vids.map((v) => `<button class="pill" data-a="goVideo" data-id="${v.id}">${esc(v.code || "▶")} ${esc(v.title)}</button>`).join("")}</div></div></div>` : ""}
+  <h2 class="section">How did it feel? <button data-a="editLogDay" data-date="${date}">Add notes</button></h2>
+  <div class="group"><div class="row"><div class="emojis grow">${mood.map(([e, v]) => `<button class="${lg.energy === v ? "on" : ""}" data-a="energy" data-v="${v}" aria-label="Energy ${v}">${e}</button>`).join("")}</div></div>
+  ${lg.improve || lg.challenge ? `<div class="row"><div class="grow">${lg.improve ? `<div class="detail"><b>Improved:</b> ${esc(lg.improve)}</div>` : ""}${lg.challenge ? `<div class="detail"><b>Challenge:</b> ${esc(lg.challenge)}</div>` : ""}</div></div>` : ""}</div>
+  <h2 class="section">Your progress</h2>
   <div class="stats">
     <div class="stat"><b>${xp}</b><span>XP points</span></div>
     <div class="stat"><b>${weekStreak()} 🔥</b><span>Week streak</span></div>
@@ -236,41 +274,8 @@ function viewToday() {
   <div class="level"><div class="progress"><i style="width:${lv.pct}%"></i></div>
     <p class="small">${lv.next ? `${lv.toGo} more session${lv.toGo === 1 ? "" : "s"} to reach <b>${esc(lv.next[1])}</b> ${lv.next[2]}` : "You reached the top level. Franchise PG."}</p></div>
   ${nr ? `<div class="reward"><div class="rtitle">🎁 Next reward: <b>${esc(nr.next.title)}</b></div><div class="progress"><i style="width:${nr.pct}%"></i></div><p class="small" style="margin:6px 0 0">${nr.next.xp - xp} XP to go · each block is +10, a full session +50</p></div>` : ""}
-  <h2 class="section">Point guard skills</h2>
-  <div class="group">${SKILLS.map(([k, name, em]) => { const sp = skillPoints()[k] || 0; const sl = skillLevel(sp); return `<div class="row"><div style="font-size:24px">${em}</div><div class="grow"><div class="title strong">${name}</div><div class="progress" style="margin-top:6px"><i style="width:${sl.pct}%"></i></div></div><span class="pill blue">Lv ${sl.l}</span></div>`; }).join("")}</div>
+  <div class="group" style="margin-top:12px">${SKILLS.map(([k, name, em]) => { const sp = skillPoints()[k] || 0; const sl = skillLevel(sp); return `<div class="row"><div style="font-size:24px">${em}</div><div class="grow"><div class="title strong">${name}</div><div class="progress" style="margin-top:6px"><i style="width:${sl.pct}%"></i></div></div><span class="pill blue">Lv ${sl.l}</span></div>`; }).join("")}</div>
   <p class="small">Finish blocks to level up each skill. The best point guards build all five.</p>
-  <div class="seg" style="margin-top:16px">${seg}</div>
-  <div class="hero">
-    <div class="herorow"><div class="grow">
-      <div class="eyebrow">${isToday ? "Today" : esc(day.name)} · ${fmtShort(parseKey(date))}</div>
-      <div class="big">${esc(day.theme)}</div>
-      <div class="detail">${doneN} of ${day.blocks.length} blocks · ${day.blocks.reduce((a, b) => a + (Number(b.minutes) || 0), 0)} min</div>
-    </div>
-    <svg class="ring" viewBox="0 0 72 72" aria-label="${Math.round(pct)} percent done"><circle cx="36" cy="36" r="30" class="rt"/><circle cx="36" cy="36" r="30" class="rf ${pct === 100 ? "full" : ""}" stroke-dasharray="188.5" stroke-dashoffset="${(188.5 * (1 - pct / 100)).toFixed(1)}"/><text x="36" y="41" text-anchor="middle">${Math.round(pct)}%</text></svg></div>
-    ${pct === 100 ? `<p class="win">Session complete. That's how point guards are made, ${esc(S.profile.name)}! 💪</p>` : ""}
-  </div>
-  ${day.cue ? `<div class="cue"><b>Coaching cue</b><br>${esc(day.cue)}</div>` : ""}
-  <h2 class="section">Session <button data-a="editDay">Edit day</button></h2>
-  <div class="group">
-    ${day.blocks.map((b, i) => {
-      const on = !!done[b.id];
-      const running = ui.timer && ui.timer.id === b.id;
-      return `<div class="row ${on ? "done" : ""}">
-        <button class="check ${on ? "on" : ""}" data-a="toggle" data-id="${b.id}" aria-label="Mark ${esc(b.title)} done">${on ? "✓" : ""}</button>
-        <div class="grow"><div class="title strong">${esc(b.title)}</div>
-          <div class="detail"><span class="pill">${times[i]}</span> ${running ? `<span class="timer" data-timer>${fmtTime(Math.ceil((ui.timer.end - Date.now()) / 1000))}</span>` : ""}</div>
-          ${b.text ? `<div class="detail">${esc(b.text)}</div>` : ""}</div>
-        <div class="side">
-          <button class="play ${running ? "run" : ""}" data-a="timer" data-id="${b.id}" aria-label="Timer">${running ? "■" : "▶"}</button>
-          <button class="more" data-a="editBlock" data-id="${b.id}" aria-label="Edit">•••</button>
-        </div></div>`;
-    }).join("") || `<div class="empty">No blocks yet.</div>`}
-  </div>
-  <button class="btn gray" data-a="addBlock">Add a block</button>
-  ${vids.length ? `<h2 class="section">Videos for today</h2><div class="group"><div class="row"><div class="pills" style="margin:0">${vids.map((v) => `<button class="pill" data-a="goVideo" data-id="${v.id}">${esc(v.code || "▶")} ${esc(v.title)}</button>`).join("")}</div></div></div>` : ""}
-  <h2 class="section">How did it feel? <button data-a="editLogDay" data-date="${date}">Add notes</button></h2>
-  <div class="group"><div class="row"><div class="emojis grow">${mood.map(([e, v]) => `<button class="${lg.energy === v ? "on" : ""}" data-a="energy" data-v="${v}" aria-label="Energy ${v}">${e}</button>`).join("")}</div></div>
-  ${lg.improve || lg.challenge ? `<div class="row"><div class="grow">${lg.improve ? `<div class="detail"><b>Improved:</b> ${esc(lg.improve)}</div>` : ""}${lg.challenge ? `<div class="detail"><b>Challenge:</b> ${esc(lg.challenge)}</div>` : ""}</div></div>` : ""}</div>
   <div class="why"><b>My Why</b><p>${esc(S.profile.why)}</p></div>`;
 }
 
@@ -412,12 +417,58 @@ function viewGuide() {
   <p class="small">Everything is saved on this device. Uploaded video clips stay on this device and are not part of the backup file. Each device keeps its own copy. To move progress or changes between devices, use Send backup on one and Import backup on the other. Install: in Safari tap Share, then Add to Home Screen.</p>`;
 }
 
+/* ---------- guided session ---------- */
+const G_C = 553;
+function gLoad(i) {
+  const b = S.days[ui.day].blocks[i];
+  const t = Math.max(1, Number(b.minutes) || 1) * 60;
+  ui.guided = { i, total: t, remaining: t, end: null, started: false };
+}
+function gStartAt(i) { gLoad(i); keepAwake(true); }
+function gAdvance(markDone) {
+  const day = S.days[ui.day];
+  const g = ui.guided;
+  const lg = logOf(dateOf(ui.day));
+  if (markDone && !lg.done[day.blocks[g.i].id]) toggleBlock(day.blocks[g.i].id);
+  let n = g.i + 1;
+  while (n < day.blocks.length && lg.done[day.blocks[n].id]) n++;
+  if (n >= day.blocks.length) { ui.guided = null; keepAwake(false); return; }
+  gLoad(n);
+}
+function renderGuided() {
+  const el = $("#guided");
+  const g = ui.guided;
+  document.body.classList.toggle("noscroll", !!g);
+  if (!g) { el.innerHTML = ""; return; }
+  const day = S.days[ui.day];
+  const b = day.blocks[g.i];
+  const next = day.blocks.slice(g.i + 1).find((x) => !logOf(dateOf(ui.day)).done[x.id]);
+  const left = g.end ? Math.max(0, Math.ceil((g.end - Date.now()) / 1000)) : g.remaining;
+  const lg = logOf(dateOf(ui.day));
+  const dots = day.blocks.map((x, i) => `<i class="${lg.done[x.id] ? "d" : ""} ${i === g.i ? "c" : ""}"></i>`).join("");
+  el.innerHTML = `<div class="guided" role="dialog" aria-label="Guided session">
+    <div class="g-top"><button data-a="gClose">Close</button><span>Block ${g.i + 1} of ${day.blocks.length}</span><span class="g-sp"></span></div>
+    <div class="g-dots">${dots}</div>
+    <div class="g-main">
+      <div class="g-eyebrow">${esc(day.theme)}</div>
+      <h2>${esc(b.title)}</h2>
+      <div class="g-ringwrap"><svg class="g-ring" viewBox="0 0 200 200"><circle cx="100" cy="100" r="88" class="rt"/><circle cx="100" cy="100" r="88" class="rf" data-gring stroke-dasharray="${G_C}" stroke-dashoffset="${(G_C * (1 - (g.total - left) / g.total)).toFixed(1)}"/></svg><div class="g-time" data-gtime>${fmtTime(left)}</div></div>
+      ${b.text ? `<p class="g-text">${esc(b.text)}</p>` : ""}
+    </div>
+    <div class="g-actions">
+      <button class="g-primary" data-a="gToggle">${g.end ? "Pause" : g.started ? "Resume" : "Start timer"}</button>
+      <div class="g-row"><button data-a="gSkip">Skip</button><button data-a="gDone">Done, next</button></div>
+      <p class="g-next">${next ? "Up next: " + esc(next.title) : "Last block. Finish strong."}</p>
+    </div></div>`;
+}
+
 /* ---------- render ---------- */
 function render() {
   const y = window.scrollY;
   $("#app").innerHTML = { today: viewToday, week: viewWeek, videos: viewVideos, log: viewLog, guide: viewGuide }[ui.tab]();
   $("#tabs").innerHTML = TABS.map(([k, l]) => `<button class="${ui.tab === k ? "on" : ""}" data-a="tab" data-t="${k}"><svg viewBox="0 0 24 24">${ICONS[k]}</svg>${l}</button>`).join("");
   window.scrollTo(0, y);
+  renderGuided();
   document.querySelectorAll("video[data-file]").forEach(async (el) => {
     try { const b = await idb.get(el.dataset.file); if (b) el.src = URL.createObjectURL(b); } catch (e) {}
   });
@@ -459,15 +510,18 @@ async function keepAwake(on) {
   } catch (e) {}
 }
 setInterval(() => {
-  if (!ui.timer) return;
-  const left = Math.ceil((ui.timer.end - Date.now()) / 1000);
+  const g = ui.guided;
+  if (!g || !g.end) return;
+  const left = Math.ceil((g.end - Date.now()) / 1000);
   if (left <= 0) {
-    const b = S.days[ui.day].blocks.find((x) => x.id === ui.timer.id);
-    ui.timer = null; keepAwake(false); beep(); toast(`${b ? b.title : "Block"} time is up!`); render();
+    const b = S.days[ui.day].blocks[g.i];
+    beep(); toast(`${b.title} done!`);
+    gAdvance(true); persist(); render();
     return;
   }
-  const el = $("[data-timer]");
-  if (el) el.textContent = fmtTime(left);
+  g.remaining = left;
+  const t = $("[data-gtime]"); if (t) t.textContent = fmtTime(left);
+  const r = $("[data-gring]"); if (r) r.setAttribute("stroke-dashoffset", (G_C * (1 - (g.total - left) / g.total)).toFixed(1));
 }, 500);
 
 /* ---------- forms ---------- */
@@ -693,11 +747,22 @@ const ACTIONS = {
   day: (d) => { ui.day = +d.i; },
   openDay: (d) => { ui.day = +d.i; ui.tab = "today"; window.scrollTo(0, 0); },
   toggle: (d) => toggleBlock(d.id),
-  timer: (d) => {
-    if (ui.timer && ui.timer.id === d.id) { ui.timer = null; keepAwake(false); return; }
-    const b = S.days[ui.day].blocks.find((x) => x.id === d.id);
-    ui.timer = { id: d.id, end: Date.now() + (Number(b.minutes) || 1) * 60000 }; keepAwake(true);
+  blockInfo: (d) => { ui.openBlocks[d.id] = !ui.openBlocks[d.id]; },
+  gStart: () => {
+    const day = S.days[ui.day];
+    const done = logOf(dateOf(ui.day)).done;
+    const i = day.blocks.findIndex((b) => !done[b.id]);
+    gStartAt(i < 0 ? 0 : i);
   },
+  gFrom: (d) => gStartAt(S.days[ui.day].blocks.findIndex((b) => b.id === d.id)),
+  gToggle: () => {
+    const g = ui.guided;
+    if (g.end) { g.remaining = Math.max(1, Math.ceil((g.end - Date.now()) / 1000)); g.end = null; }
+    else { g.end = Date.now() + g.remaining * 1000; g.started = true; }
+  },
+  gDone: () => gAdvance(true),
+  gSkip: () => gAdvance(false),
+  gClose: () => { ui.guided = null; keepAwake(false); },
   energy: (d) => { const lg = logOf(dateOf(ui.day)); lg.energy = lg.energy === +d.v ? undefined : +d.v; if (lg.energy) toast(["", "Rest up. Tomorrow's a new day.", "Take it easy and recover.", "Solid work.", "Nice! Keep it going.", "That's the energy! 🔥"][lg.energy]); },
   editDay: formDay,
   addBlock: () => formBlock(),

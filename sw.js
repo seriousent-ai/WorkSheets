@@ -1,4 +1,4 @@
-const CACHE = "training-plan-v1";
+const CACHE = "training-plan-v2";
 const ASSETS = ["./", "index.html", "styles.css", "data.js", "firebase-config.js", "sync.js", "app.js", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png", "icons/team-logo.png"];
 
 self.addEventListener("install", (e) => {

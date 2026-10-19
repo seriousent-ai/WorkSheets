@@ -21,6 +21,16 @@ on every push to `main`, or by running the workflow manually).
 - **Guide**: profile and "My Why", plan notes from the PDF, Sync section, Send/Export/Import backup, reset.
 Everything (days, blocks, videos, links, notes, rewards, profile, logs) can be added, edited and deleted.
 
+## Design pass: Phase 1 (done)
+- Compact Today: small header (logo left, team and sync dot right), one-line greeting, day selector, dark hero card with ring,
+  the coaching cue inside the hero, then the block list. XP, streak, level, reward and skills moved to a "Your progress" section below.
+- **Start session** button opens a guided full-screen mode: one block at a time, big countdown ring, pause/resume, Done (marks the block, moves on),
+  Skip, "Up next" line, screen stays awake, beep and vibration at zero (auto-marks done and advances). Per-block play buttons start it at that block.
+- Cleaner block rows: "Details" collapses the instructions, 44 pt buttons, the next block is highlighted ("Up next"), finished blocks fade.
+- The sync status dot sits next to the league name in the header.
+- Remaining plan (Phases 2 and 3) is in the game plan page: finish summary sheet, custom icon set, week strip, video thumbnails,
+  progress charts, first-run welcome, optional parent passcode, iPad layout.
+
 ## Motivation system
 - XP: +10 per finished block, +50 per finished session, +5 energy rating, +5 notes, +25 skill check, +15 reflection.
 - Levels by finished sessions: Rookie 0, Ball Handler 5, Playmaker 15, Floor General 30, All-Star 60, Franchise PG 100.
