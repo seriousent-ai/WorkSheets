@@ -270,7 +270,7 @@ function renderFilm() {
       <p class="g-text">+20 XP. Pick one answer and talk it through with a parent or your coach. Next time, scan the whole floor before the catch.</p></div>
       <div class="g-actions"><button class="g-primary" data-a="filmSave">Save and finish</button></div>`;
   }
-  el.innerHTML = `<div class="guided film" role="dialog" aria-label="Film study">${top}${body}</div>`;
+  paint(el, `<div class="guided film" role="dialog" aria-label="Film study">${top}${body}</div>`);
 }
 
 /* ---------- calendar export ---------- */
@@ -751,14 +751,13 @@ function renderGuided() {
   const el = $("#guided");
   const g = ui.guided;
   if (!g) { el.innerHTML = ""; return; }
-  const keepScroll = el.firstElementChild ? el.firstElementChild.scrollTop : 0;
   const day = S.days[ui.day];
   const b = day.blocks[g.i];
   const next = day.blocks.slice(g.i + 1).find((x) => !logOf(dateOf(ui.day)).done[x.id]);
   const left = g.end ? Math.max(0, Math.ceil((g.end - Date.now()) / 1000)) : g.remaining;
   const lg = logOf(dateOf(ui.day));
   const dots = day.blocks.map((x, i) => `<i class="${lg.done[x.id] ? "d" : ""} ${i === g.i ? "c" : ""}"></i>`).join("");
-  el.innerHTML = `<div class="guided" role="dialog" aria-label="Guided session">
+  paint(el, `<div class="guided" role="dialog" aria-label="Guided session">
     <div class="g-top"><button data-a="gClose">Close</button><span>Block ${g.i + 1} of ${day.blocks.length}</span><span class="g-sp"></span></div>
     <div class="g-dots">${dots}</div>
     <div class="g-main">
@@ -772,8 +771,7 @@ function renderGuided() {
       <button class="g-primary" data-a="gToggle">${g.end ? "Pause" : g.started ? "Resume" : "Start timer"}</button>
       <div class="g-row"><button data-a="gSkip">Skip</button><button data-a="gDone">Done, next</button></div>
       <p class="g-next">${next ? "Up next: " + esc(next.title) : "Last block. Finish strong."}</p>
-    </div></div>`;
-  if (el.firstElementChild) el.firstElementChild.scrollTop = keepScroll;
+    </div></div>`);
 }
 
 function renderSummary() {
@@ -781,7 +779,7 @@ function renderSummary() {
   const s = ui.summary;
   if (!s) { el.innerHTML = ""; return; }
   const row = (ic, title, sub, cls = "") => `<div class="s-row ${cls}">${badge(ic)}<div><b>${esc(title)}</b>${sub ? `<span>${esc(sub)}</span>` : ""}</div></div>`;
-  el.innerHTML = `<div class="guided summary" role="dialog" aria-label="Session complete">
+  paint(el, `<div class="guided summary" role="dialog" aria-label="Session complete">
     <div class="s-top"><svg class="s-check" viewBox="0 0 72 72"><circle cx="36" cy="36" r="30" class="rt"/><circle cx="36" cy="36" r="30" class="rf full" stroke-dasharray="188.5" stroke-dashoffset="0"/><path d="M24 37l8 8 16-17" class="ck"/></svg>
       <h2>Session complete</h2><p>${esc(s.theme)}</p><div class="s-xp">+${s.xpDay} XP</div><p class="s-sub">${s.xp} XP in total</p></div>
     <div class="s-list">
@@ -794,7 +792,7 @@ function renderSummary() {
       ${row("flame", `${s.week} session${s.week === 1 ? "" : "s"} this week`, s.streak ? `${s.streak} week streak` : "Finish 4 this week to start a streak")}
     </div>
     <p class="s-msg">${esc(s.msg)}</p>
-    <button class="g-primary" data-a="sumClose">Nice work</button></div>`;
+    <button class="g-primary" data-a="sumClose">Nice work</button></div>`);
 }
 
 document.addEventListener("input", (e) => {
@@ -811,7 +809,7 @@ function renderWelcome() {
   const w = ui.welcome;
   if (!w) { el.innerHTML = ""; return; }
   const logo = S.profile.logo || "icons/team-logo.png";
-  el.innerHTML = w.step === 1 ? `<div class="guided welcome" role="dialog" aria-label="Welcome">
+  paint(el, w.step === 1 ? `<div class="guided welcome" role="dialog" aria-label="Welcome">
       <div class="w-main"><img class="w-logo" src="${esc(logo)}" alt=""><h2>Welcome to ${esc(firstName(S.profile.name))}'s ${esc(S.profile.team)} Training Plan</h2>
       <p>Let's set it up. You can change anything later.</p>
       <label for="w-name">Your name</label><input id="w-name" type="text" autocomplete="off" value="${esc(w.name)}">
@@ -822,7 +820,7 @@ function renderWelcome() {
       <p>A family code keeps the plan and progress the same on every phone. Create one on this device and join from the others, or skip this and do it later in Guide.</p>
       ${w.code ? `<div class="w-code">${esc(Sync.pretty(w.code))}</div><p>Write this code down or share it. Enter it on your other device under Guide, then Join with a family code.</p>` : ""}
       </div>
-      <div class="g-actions">${w.code ? `<button class="g-primary" data-a="wFinish">Done, let's train</button>` : `${Sync.ready ? `<button class="g-primary" data-a="wCreate">Create a family code</button><div class="g-row"><button data-a="wJoin">I have a code</button><button data-a="wFinish">Skip for now</button></div>` : `<button class="g-primary" data-a="wFinish">Let's train</button>`}`}</div></div>`;
+      <div class="g-actions">${w.code ? `<button class="g-primary" data-a="wFinish">Done, let's train</button>` : `${Sync.ready ? `<button class="g-primary" data-a="wCreate">Create a family code</button><div class="g-row"><button data-a="wJoin">I have a code</button><button data-a="wFinish">Skip for now</button></div>` : `<button class="g-primary" data-a="wFinish">Let's train</button>`}`}</div></div>`);
 }
 const finishWelcome = () => { S.profile.onboarded = true; ui.welcome = null; };
 
@@ -881,6 +879,13 @@ const Sfx = {
   beep() { this.tone(880, 0.35, "sine", 0.18); this.tone(880, 0.35, "sine", 0.18, 0.45); },
   chime() { [523, 659, 784, 1047].forEach((f, i) => this.tone(f, 0.5, "triangle", 0.16, i * 0.12)); },
 };
+function paint(el, html) {
+  const had = !!el.firstElementChild;
+  const keep = had ? el.firstElementChild.scrollTop : 0;
+  el.innerHTML = html;
+  const root = el.firstElementChild;
+  if (root && had) { root.classList.add("noanim"); root.scrollTop = keep; }
+}
 function say(text) {
   if (!Prefs.voice || !("speechSynthesis" in window)) return;
   try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.rate = 1.02; speechSynthesis.speak(u); } catch (e) {}

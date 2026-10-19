@@ -427,3 +427,5 @@ select.f-input option { color: #000; }
 textarea.f-input { min-height: 120px; }
 .f-link { display: inline-block; margin-top: 10px; color: #ffb340; font-size: 16px; }
 .g-row button.got { background: #30d158; color: #06240f !important; }
+
+.guided.noanim, .guided.noanim .s-xp, .guided.noanim .pulse { animation: none; }
