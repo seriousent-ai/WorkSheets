@@ -115,7 +115,7 @@ const DEFAULT_DATA = {
   logs: {},
   weekly: {},
   profile: {
-    name: "Tristan Alvarez-Vasquez",
+    name: "Tristan",
     team: "NY Rens",
     league: "12U Jr. EYBL",
     subtitle: "12U NY Rens Jr. EYBL | Age 12 | Intermediate | Point guard development",
