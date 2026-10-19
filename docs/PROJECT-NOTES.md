@@ -40,6 +40,18 @@ Everything (days, blocks, videos, links, notes, rewards, profile, logs) can be a
 - Videos: YouTube thumbnails, "Watch first today" group, "Watch first" and "Watched" tags, Mark watched (+5 XP).
   Watched state is stored in the day's log (`logs[date].watched`), so it syncs.
 
+## Design pass: Phase 3 (done)
+- Log tab: **Trends** (a sparkline per skill-check measure with change vs last week and personal-best marker, plus an XP-per-week bar chart)
+  and **Share weekly report**: builds a text summary and a 1080x1350 PNG card (canvas) and shares both with the system share sheet
+  (falls back to copying the text).
+- **First-run welcome** on a fresh device (no logs, no family code): name, "My Why", then offer to create a family code, join, or skip.
+  `profile.onboarded` syncs, so a device that joins a family does not see it again.
+- **Parent lock (optional, device-local)**: Guide, Parent lock. A 4-digit passcode (hash in `localStorage["tristan-lock"]`, not synced)
+  gates `EDIT_ACTIONS` (plan, videos, links, rewards, notes, profile, backup/reset, sync controls, passcode changes) for 10 minutes after entry.
+  Checking blocks and logging stay open. "Forgot passcode" accepts the family code. It is a speed bump, not strong security.
+- **iPad / wide screens**: Today uses two columns (session left, progress right) at 900 px and wider. Other tabs stay in one column.
+- Not done yet: landscape-specific phone layout for the guided screen beyond the ring shrinking to fit; two-column Log.
+
 ## Motivation system
 - XP: +10 per finished block, +50 per finished session, +5 per video watched, +5 energy rating, +5 notes, +25 skill check, +15 reflection.
 - Levels by finished sessions: Rookie 0, Ball Handler 5, Playmaker 15, Floor General 30, All-Star 60, Franchise PG 100.

@@ -61,8 +61,27 @@ const idb = {
   del(id) { return this.tx("readwrite", (s) => s.delete(id)); },
 };
 
+/* ---------- parent lock (device-local, optional) ---------- */
+const Lock = {
+  key: "tristan-lock", hash: null, until: 0,
+  load() { try { const o = JSON.parse(localStorage.getItem(this.key)); if (o && o.hash) this.hash = o.hash; } catch (e) {} },
+  save() { try { if (this.hash) localStorage.setItem(this.key, JSON.stringify({ hash: this.hash })); else localStorage.removeItem(this.key); } catch (e) {} },
+  get on() { return !!this.hash; },
+  get open() { return !this.hash || Date.now() < this.until; },
+  async digest(pin) {
+    const s = "tristan-pin:" + pin;
+    if (window.crypto && crypto.subtle) { const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)); return [...new Uint8Array(d)].map((x) => x.toString(16).padStart(2, "0")).join(""); }
+    return Sync.hash(s);
+  },
+  async check(pin) { return (await this.digest(pin)) === this.hash; },
+  async set(pin) { this.hash = await this.digest(pin); this.until = 0; this.save(); },
+  clear() { this.hash = null; this.until = 0; this.save(); },
+};
+Lock.load();
+const EDIT_ACTIONS = new Set(["editDay", "addBlock", "editBlock", "addVideo", "editVideo", "addLink", "editLink", "addReward", "editReward", "addNote", "editNote", "editProfile", "import", "reset", "syncCreate", "syncJoin", "syncOff", "parentSet", "parentRemove"]);
+
 /* ---------- state ---------- */
-const ui = { summary: null, tab: "today", day: todayIdx(), openVideo: null, weekOffset: 0, guided: null, openBlocks: {}, form: null };
+const ui = { welcome: null, pin: null, summary: null, tab: "today", day: todayIdx(), openVideo: null, weekOffset: 0, guided: null, openBlocks: {}, form: null };
 const dateOf = (i) => dateKey(addDays(mondayOf(new Date()), i));
 const logOf = (date) => (S.logs[date] ||= { done: {} });
 
@@ -256,6 +275,7 @@ function viewToday() {
   <h1 class="greet">${greet}, ${esc(S.profile.name)}</h1>
   <p class="sub tight">${esc(msg)}</p>
   <div class="seg">${seg}</div>
+  <div class="cols"><div>
   <div class="hero">
     <div class="herorow"><div class="grow">
       <div class="eyebrow">${isToday ? "Today" : esc(day.name)} · ${fmtShort(parseKey(date))}</div>
@@ -285,6 +305,7 @@ function viewToday() {
     }).join("") || `<div class="empty">No blocks yet.</div>`}
   </div>
   <button class="btn gray" data-a="addBlock">Add a block</button>
+  </div><div>
   ${vids.length ? `<h2 class="section">Watch first</h2><div class="group"><div class="row"><div class="pills" style="margin:0">${vids.map((v) => `<button class="pill" data-a="goVideo" data-id="${v.id}">${watchedToday(v.id) ? "✓ " : ""}${esc(v.code || "▶")} ${esc(v.title)}</button>`).join("")}</div></div></div>` : ""}
   <h2 class="section">How did it feel? <button data-a="editLogDay" data-date="${date}">Add notes</button></h2>
   <div class="group"><div class="row"><div class="emojis grow">${mood.map(([e, v]) => `<button class="${lg.energy === v ? "on" : ""}" data-a="energy" data-v="${v}" aria-label="Energy ${v}">${e}</button>`).join("")}</div></div>
@@ -300,7 +321,8 @@ function viewToday() {
   ${nr ? `<div class="reward"><div class="rtitle">${badge("gift", "xs")} Next reward: <b>${esc(nr.next.title)}</b></div><div class="progress"><i style="width:${nr.pct}%"></i></div><p class="small" style="margin:6px 0 0">${nr.next.xp - xp} XP to go · each block is +10, a full session +50</p></div>` : ""}
   <div class="group" style="margin-top:12px">${SKILLS.map(([k, name, em]) => { const sp = skillPoints()[k] || 0; const sl = skillLevel(sp); return `<div class="row">${badge(em)}<div class="grow"><div class="title strong">${name}</div><div class="progress" style="margin-top:6px"><i style="width:${sl.pct}%"></i></div></div><span class="pill blue">Lv ${sl.l}</span></div>`; }).join("")}</div>
   <p class="small">Finish blocks to level up each skill. The best point guards build all five.</p>
-  <div class="why"><b>My Why</b><p>${esc(S.profile.why)}</p></div>`;
+  <div class="why"><b>My Why</b><p>${esc(S.profile.why)}</p></div>
+  </div></div>`;
 }
 
 function viewWeek() {
@@ -374,6 +396,97 @@ function viewVideos() {
   <p class="small">Tip: paste a YouTube or Vimeo link and it plays right here. You can also add a clip from your phone.</p>`;
 }
 
+const TRENDS = [["right", "Passes, right hand", "/10", 10, true], ["left", "Passes, left hand", "/10", 10, true], ["shoot", "Shots made", "/25", 25, true], ["ft", "Free throws", "/10", 10, true], ["lost", "Lost balls on the cone course", "", null, false], ["good", "Good reads in games", "", null, true]];
+function series(key) {
+  return Object.keys(S.weekly).sort()
+    .filter((k) => S.weekly[k][key] !== undefined && S.weekly[k][key] !== "" && !isNaN(Number(S.weekly[k][key])))
+    .map((k) => Number(S.weekly[k][key])).slice(-8);
+}
+function spark(vals, max, goodHigh) {
+  const w = 120, h = 34, p = 4;
+  const hi = max != null ? max : Math.max(5, ...vals);
+  const x = (i) => (vals.length === 1 ? w / 2 : p + (i * (w - 2 * p)) / (vals.length - 1));
+  const y = (v) => h - p - (Math.min(v, hi) / hi) * (h - 2 * p);
+  const best = goodHigh ? Math.max(...vals) : Math.min(...vals);
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" aria-hidden="true">${vals.length > 1 ? `<polyline points="${vals.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ")}"/>` : ""}${vals.map((v, i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="${i === vals.length - 1 ? 3.6 : 2.2}" class="${i === vals.length - 1 ? "last" : ""} ${vals.length > 1 && v === best ? "best" : ""}"/>`).join("")}</svg>`;
+}
+function xpByWeek(n = 8) {
+  const map = {};
+  for (const k in S.logs) { const w = dateKey(mondayOf(parseKey(k))); map[w] = (map[w] || 0) + xpOfLog(S.logs[k]); }
+  for (const w in S.weekly) { const o = S.weekly[w]; map[w] = (map[w] || 0) + (o.right || o.shoot ? 25 : 0) + (o.improved || o.adjust ? 15 : 0); }
+  const out = [];
+  let mon = mondayOf(new Date());
+  for (let i = 0; i < n; i++) { const k = dateKey(mon); out.unshift({ k, mon, xp: map[k] || 0, now: i === 0 }); mon = addDays(mon, -7); }
+  return out;
+}
+function trendsHtml() {
+  const rows = TRENDS.map(([k, label, suf, max, good]) => {
+    const v = series(k);
+    if (!v.length) return "";
+    const last = v[v.length - 1], d = v.length > 1 ? last - v[v.length - 2] : null;
+    const better = d === null || d === 0 ? null : good ? d > 0 : d < 0;
+    return `<div class="row"><div class="grow"><div class="title">${label}</div><div class="detail">${d === null ? "First result. Record again next week." : d === 0 ? "Same as last week" : `<span class="${better ? "up" : "down"}">${d > 0 ? "+" : ""}${d} vs last week</span>`}</div></div>${spark(v, max, good)}<div class="tval">${last}<small>${suf}</small></div></div>`;
+  }).join("");
+  const wk = xpByWeek();
+  const top = Math.max(50, ...wk.map((x) => x.xp));
+  const bw = 28, gap = 10, H = 78;
+  const bars = wk.map((x, i) => { const h = Math.round((x.xp / top) * H); const xx = i * (bw + gap) + 6; return `<g><rect class="bar ${x.now ? "now" : ""}" x="${xx}" y="${14 + H - h}" width="${bw}" height="${Math.max(h, x.xp ? 2 : 0)}" rx="5"/><text class="bv" x="${xx + bw / 2}" y="${10 + H - h}" text-anchor="middle">${x.xp || ""}</text><text class="bl" x="${xx + bw / 2}" y="108" text-anchor="middle">${x.mon.getMonth() + 1}/${x.mon.getDate()}</text></g>`; }).join("");
+  return `<h2 class="section">Trends</h2>
+  <div class="group">${rows || '<div class="empty">Record a Saturday skill check to see your trends here.</div>'}</div>
+  <div class="group chartcard"><div class="title strong">XP each week</div><svg class="xpchart" viewBox="0 0 320 114" role="img" aria-label="XP earned in each of the last 8 weeks">${bars}</svg></div>`;
+}
+function reportData() {
+  const mon = addDays(mondayOf(new Date()), ui.weekOffset * 7);
+  const wk = dateKey(mon);
+  const w = S.weekly[wk] || {};
+  let sessions = 0, xp = 0;
+  for (let i = 0; i < 7; i++) { const l = S.logs[dateKey(addDays(mon, i))]; if (l) { if (l.complete) sessions++; xp += xpOfLog(l); } }
+  xp += (w.right || w.shoot ? 25 : 0) + (w.improved || w.adjust ? 15 : 0);
+  return { mon, wk, w, sessions, xp, goal: Math.min(6, S.days.length) };
+}
+function reportText(r) {
+  const w = r.w, sk = [];
+  if (w.right !== undefined && w.right !== "") sk.push(`passes R ${w.right}/10, L ${w.left ?? "-"}/10`);
+  if (w.shoot) sk.push(`shots ${w.shoot}/25`);
+  if (w.ft) sk.push(`free throws ${w.ft}/10`);
+  if (w.lost) sk.push(`lost balls ${w.lost}`);
+  if (w.good) sk.push(`good reads ${w.good}`);
+  const end = addDays(r.mon, 6);
+  return [`${S.profile.name}'s week, ${fmtShort(r.mon)} to ${fmtShort(end)} (${S.profile.team} ${S.profile.league})`,
+    `Sessions finished: ${r.sessions} of ${r.goal}`, `XP earned: ${r.xp}`,
+    sk.length ? `Skill check: ${sk.join(", ")}` : "", w.priority ? `Coach's priority: ${w.priority}` : "", w.goal ? `${S.profile.name}'s goal: ${w.goal}` : "",
+    w.improved ? `Improved: ${w.improved}` : "", w.hard ? `Difficult: ${w.hard}` : "", w.adjust ? `Next week's one adjustment: ${w.adjust}` : ""].filter(Boolean).join("\n");
+}
+async function reportImage(r) {
+  const c = document.createElement("canvas");
+  c.width = 1080; c.height = 1350;
+  const g = c.getContext("2d");
+  const bg = g.createLinearGradient(0, 0, 0, 1350);
+  bg.addColorStop(0, "#22345f"); bg.addColorStop(1, "#0b1122");
+  g.fillStyle = bg; g.fillRect(0, 0, 1080, 1350);
+  try {
+    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = S.profile.logo || "icons/team-logo.png"; });
+    g.drawImage(img, 70, 70, 130, 130);
+  } catch (e) {}
+  g.textBaseline = "alphabetic";
+  const t = (s, x, y, size, color, weight = 700, align = "left") => { g.font = `${weight} ${size}px -apple-system, "SF Pro Display", Helvetica, Arial, sans-serif`; g.fillStyle = color; g.textAlign = align; g.fillText(s, x, y); };
+  t(S.profile.team, 1010, 130, 54, "#ffffff", 700, "right");
+  t(S.profile.league, 1010, 182, 34, "rgba(255,255,255,.7)", 500, "right");
+  t(`${S.profile.name}'s week`, 70, 330, 78, "#ffffff");
+  t(`${fmtShort(r.mon)} to ${fmtShort(addDays(r.mon, 6))}`, 70, 385, 38, "#ffb340", 600);
+  const card = (x, y, big, label) => { g.fillStyle = "rgba(255,255,255,.09)"; g.beginPath(); g.roundRect(x, y, 460, 230, 34); g.fill(); t(String(big), x + 40, y + 125, 100, "#ffb340", 800); t(label, x + 40, y + 180, 34, "rgba(255,255,255,.75)", 500); };
+  card(70, 450, `${r.sessions}/${r.goal}`, "Sessions finished");
+  card(550, 450, r.xp, "XP earned");
+  const w = r.w, rows = [["Passes, right / left", w.right !== undefined && w.right !== "" ? `${w.right} / ${w.left ?? "-"} of 10` : ""], ["Shots made", w.shoot ? `${w.shoot} of 25` : ""], ["Free throws", w.ft ? `${w.ft} of 10` : ""], ["Lost balls", w.lost || ""], ["Good reads", w.good || ""]].filter((x) => x[1] !== "");
+  let y = 770;
+  t("Saturday skill check", 70, y, 40, "#ffffff"); y += 30;
+  if (!rows.length) { y += 50; t("No skill check recorded this week", 70, y, 32, "rgba(255,255,255,.6)", 500); }
+  rows.forEach(([l, v]) => { y += 62; t(l, 70, y, 34, "rgba(255,255,255,.8)", 500); t(String(v), 1010, y, 36, "#ffffff", 700, "right"); });
+  if (w.adjust) { t("Next week's one adjustment", 70, 1150, 30, "#ffb340", 600); g.font = "500 34px -apple-system, Helvetica, Arial, sans-serif"; g.fillStyle = "#fff"; g.textAlign = "left"; let line = "", yy = 1200; for (const word of w.adjust.split(" ")) { if (g.measureText(line + word).width > 940) { g.fillText(line, 70, yy); yy += 46; line = ""; } line += word + " "; } g.fillText(line, 70, yy); }
+  t("Made with the NY Rens training app", 540, 1310, 28, "rgba(255,255,255,.5)", 500, "center");
+  return new Promise((res) => c.toBlob(res, "image/png"));
+}
+
 function viewLog() {
   const mon = addDays(mondayOf(new Date()), ui.weekOffset * 7);
   const wk = dateKey(mon);
@@ -415,10 +528,12 @@ function viewLog() {
     <div class="row"><div class="grow">Free throws</div><div class="detail">${val("ft", " / 10")}${pb("ft")}</div></div>
     <div class="row"><div class="grow">Cone course (lost balls)</div><div class="detail">${val("lost")}${pb("lost", false)}</div></div>
     <div class="row"><div class="grow">Game decisions (good reads)</div><div class="detail">${val("good")}${pb("good")}</div></div></div>
+  ${trendsHtml()}
   <h2 class="section">Weekly reflection <button data-a="editReflect">Edit</button></h2>
   <div class="group">${[["improved", "What improved?"], ["hard", "What was difficult?"], ["fun", "What was fun?"], ["adjust", "Next week's one adjustment"]].map(([k, l]) => `<div class="row"><div class="grow"><div class="detail">${l}</div><div class="title">${esc(w[k]) || "–"}</div></div></div>`).join("")}
     <div class="row"><div class="grow">Organized basketball this week</div><div class="detail">${val("hours", " hrs")}</div></div>
     <div class="row"><div class="grow">Physical rest day</div><div class="detail">${val("rest")}</div></div></div>
+  <button class="btn gray" data-a="shareReport">Share weekly report</button>
   <h2 class="section">Rewards <button data-a="addReward">Add</button></h2>
   <div class="group">${sortedRewards().map((r) => { const got = xpTotal() >= r.xp; return `<div class="row tap" data-a="editReward" data-id="${r.id}" style="opacity:${got ? 1 : 0.55}">${badge(got ? "gift" : "lock", got ? "" : "off")}<div class="grow"><div class="title strong">${esc(r.title)}</div><div class="detail">${r.xp} XP${r.note ? " · " + esc(r.note) : ""}</div></div>${got ? '<span class="pill blue">Unlocked</span>' : ""}</div>`; }).join("") || '<div class="empty">No rewards yet. Tap Add.</div>'}</div>
   <p class="small">Earn XP: +10 per finished block, +50 per finished session, +5 per video watched, +25 for a skill check, plus small bonuses for notes and reflections.</p>
@@ -446,6 +561,14 @@ function viewGuide() {
     <div class="row tap" data-a="syncOff"><div class="grow" style="color:var(--red)">Turn off sync on this device</div></div>` : `
     <div class="row tap" data-a="syncCreate"><div class="grow"><div class="title strong">Create a family code</div><div class="detail">Start here on one device, then join from the others.</div></div><span class="chev">›</span></div>
     <div class="row tap" data-a="syncJoin"><div class="grow"><div class="title strong">Join with a family code</div><div class="detail">Enter the code from your other device.</div></div><span class="chev">›</span></div>`}
+  </div>
+  <h2 class="section">Parent lock (optional)</h2>
+  <div class="group">
+    ${Lock.on ? `<div class="row"><div class="grow"><div class="title strong">${Lock.open ? "Unlocked for a few minutes" : "Locked on this device"}</div><div class="detail">Changing the plan, videos, rewards, notes, profile, backups and sync needs the passcode. Checking off blocks and logging stay open.</div></div></div>
+    ${Lock.open ? `<div class="row tap" data-a="parentLockNow"><div class="grow">Lock now</div><span class="chev">›</span></div>` : ""}
+    <div class="row tap" data-a="parentSet"><div class="grow">Change passcode</div><span class="chev">›</span></div>
+    <div class="row tap" data-a="parentRemove"><div class="grow" style="color:var(--red)">Remove passcode</div></div>` : `
+    <div class="row tap" data-a="parentSet"><div class="grow"><div class="title strong">Set a parent passcode</div><div class="detail">Use this on Tristan's phone so only you can change the plan. It is a speed bump for kids, not strong security.</div></div><span class="chev">›</span></div>`}
   </div>
   <h2 class="section">Your data</h2>
   <div class="group">
@@ -477,7 +600,6 @@ function gAdvance(markDone) {
 function renderGuided() {
   const el = $("#guided");
   const g = ui.guided;
-  document.body.classList.toggle("noscroll", !!g);
   if (!g) { el.innerHTML = ""; return; }
   const day = S.days[ui.day];
   const b = day.blocks[g.i];
@@ -504,7 +626,6 @@ function renderGuided() {
 function renderSummary() {
   const el = $("#summary");
   const s = ui.summary;
-  document.body.classList.toggle("noscroll", !!s || !!ui.guided);
   if (!s) { el.innerHTML = ""; return; }
   const row = (ic, title, sub, cls = "") => `<div class="s-row ${cls}">${badge(ic)}<div><b>${esc(title)}</b>${sub ? `<span>${esc(sub)}</span>` : ""}</div></div>`;
   el.innerHTML = `<div class="guided summary" role="dialog" aria-label="Session complete">
@@ -521,14 +642,65 @@ function renderSummary() {
     <button class="g-primary" data-a="sumClose">Nice work</button></div>`;
 }
 
+function renderPin() {
+  const el = $("#pin");
+  const p = ui.pin;
+  if (!p) { el.innerHTML = ""; return; }
+  el.innerHTML = `<div class="scrim center"><div class="pinbox" role="dialog" aria-label="Parent passcode">
+    <b>Parent passcode</b><p>${p.forgot ? "Enter your family code to remove the passcode." : "Ask a parent to enter the 4-digit passcode."}</p>
+    ${p.forgot ? `<input id="pin-recover" type="text" autocapitalize="off" autocomplete="off" placeholder="xxxx-xxxx-xxxx-xxxx-xxxx"><button class="btn" data-a="pinRecover">Remove passcode</button>`
+      : `<input id="pin-input" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="••••">`}
+    <div class="pin-err" role="alert">${esc(p.error)}</div>
+    <div class="pin-links"><button data-a="pinCancel">Cancel</button><button data-a="pinForgot">${p.forgot ? "Back" : "Forgot passcode?"}</button></div></div></div>`;
+  const inp = $("#pin-input") || $("#pin-recover");
+  if (inp) setTimeout(() => inp.focus(), 50);
+}
+document.addEventListener("input", async (e) => {
+  if (e.target.id === "pin-input" && e.target.value.length === 4 && ui.pin) {
+    if (await Lock.check(e.target.value)) {
+      Lock.until = Date.now() + 10 * 60 * 1000;
+      const p = ui.pin.pending; ui.pin = null; renderPin();
+      ACTIONS[p.a](p.data); persist(); if (!ui.form) render();
+    } else { ui.pin.error = "Wrong passcode. Try again."; e.target.value = ""; renderPin(); if (navigator.vibrate) navigator.vibrate(120); }
+  }
+  if (ui.welcome && e.target.id === "w-name") ui.welcome.name = e.target.value;
+  if (ui.welcome && e.target.id === "w-why") ui.welcome.why = e.target.value;
+});
+
+/* ---------- first-run welcome ---------- */
+function renderWelcome() {
+  const el = $("#welcome");
+  if (ui.welcome && S.profile.onboarded) ui.welcome = null;
+  const w = ui.welcome;
+  if (!w) { el.innerHTML = ""; return; }
+  const logo = S.profile.logo || "icons/team-logo.png";
+  el.innerHTML = w.step === 1 ? `<div class="guided welcome" role="dialog" aria-label="Welcome">
+      <div class="w-main"><img class="w-logo" src="${esc(logo)}" alt=""><h2>Welcome to the ${esc(S.profile.team)} training plan</h2>
+      <p>Let's set it up. You can change anything later.</p>
+      <label for="w-name">Your name</label><input id="w-name" type="text" autocomplete="off" value="${esc(w.name)}">
+      <label for="w-why">My Why (why I train)</label><textarea id="w-why">${esc(w.why)}</textarea></div>
+      <div class="g-actions"><button class="g-primary" data-a="wNext">Continue</button></div></div>`
+    : `<div class="guided welcome" role="dialog" aria-label="Sync your devices">
+      <div class="w-main"><h2>Use it on more than one device?</h2>
+      <p>A family code keeps the plan and progress the same on every phone. Create one on this device and join from the others, or skip this and do it later in Guide.</p>
+      ${w.code ? `<div class="w-code">${esc(Sync.pretty(w.code))}</div><p>Write this code down or share it. Enter it on your other device under Guide, then Join with a family code.</p>` : ""}
+      </div>
+      <div class="g-actions">${w.code ? `<button class="g-primary" data-a="wFinish">Done, let's train</button>` : `${Sync.ready ? `<button class="g-primary" data-a="wCreate">Create a family code</button><div class="g-row"><button data-a="wJoin">I have a code</button><button data-a="wFinish">Skip for now</button></div>` : `<button class="g-primary" data-a="wFinish">Let's train</button>`}`}</div></div>`;
+}
+const finishWelcome = () => { S.profile.onboarded = true; ui.welcome = null; };
+
 /* ---------- render ---------- */
 function render() {
   const y = window.scrollY;
+  $("#app").className = ui.tab === "today" ? "wide" : "";
   $("#app").innerHTML = { today: viewToday, week: viewWeek, videos: viewVideos, log: viewLog, guide: viewGuide }[ui.tab]();
   $("#tabs").innerHTML = TABS.map(([k, l]) => `<button class="${ui.tab === k ? "on" : ""}" data-a="tab" data-t="${k}"><svg viewBox="0 0 24 24">${ICONS[k]}</svg>${l}</button>`).join("");
   window.scrollTo(0, y);
   renderGuided();
   renderSummary();
+  renderWelcome();
+  renderPin();
+  document.body.classList.toggle("noscroll", !!(ui.guided || ui.summary || ui.welcome || ui.pin));
   document.querySelectorAll("video[data-file]").forEach(async (el) => {
     try { const b = await idb.get(el.dataset.file); if (b) el.src = URL.createObjectURL(b); } catch (e) {}
   });
@@ -591,6 +763,7 @@ function fieldHtml(f) {
   if (f.type === "textarea") return `<div class="field">${lab}<textarea id="f-${f.k}" name="${f.k}" placeholder="${esc(f.ph || "")}">${esc(v)}</textarea></div>`;
   if (f.type === "select") return `<div class="field">${lab}<select id="f-${f.k}" name="${f.k}">${f.opts.map(([ov, ol]) => `<option value="${esc(ov)}" ${String(ov) === String(v) ? "selected" : ""}>${esc(ol)}</option>`).join("")}</select></div>`;
   if (f.type === "checks") return `<div class="field"><label>${esc(f.label)}</label><div class="group checks">${f.opts.map(([ov, ol]) => `<label class="row"><span class="grow">${esc(ol)}</span><input type="checkbox" name="${f.k}" value="${esc(ov)}" ${(v || []).includes(ov) ? "checked" : ""}></label>`).join("")}</div></div>`;
+  if (f.type === "pin") return `<div class="field">${lab}<input id="f-${f.k}" name="${f.k}" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="4 digits"></div>`;
   if (f.type === "file") return `<div class="field">${lab}<input id="f-${f.k}" type="file" name="${f.k}" accept="${f.accept || "video/*"}"></div>`;
   const t = f.type === "number" ? 'type="text" inputmode="decimal"' : f.type === "url" ? 'type="url" inputmode="url" autocapitalize="off"' : 'type="text"';
   return `<div class="field">${lab}<input id="f-${f.k}" name="${f.k}" ${t} value="${esc(v)}" placeholder="${esc(f.ph || "")}"></div>`;
@@ -831,6 +1004,33 @@ const ACTIONS = {
   day: (d) => { ui.day = +d.i; },
   openDay: (d) => { ui.day = +d.i; ui.tab = "today"; window.scrollTo(0, 0); },
   toggle: (d) => toggleBlock(d.id),
+  wNext: () => { const n = ui.welcome.name.trim(); if (n) S.profile.name = n; if (ui.welcome.why.trim()) S.profile.why = ui.welcome.why.trim(); ui.welcome.step = 2; },
+  wCreate: async () => { try { ui.welcome.code = await Sync.create(); render(); } catch (e) { toast("Could not reach the sync service."); } },
+  wJoin: () => ACTIONS.syncJoin(),
+  wFinish: () => finishWelcome(),
+  parentSet: () => openForm({
+    title: Lock.on ? "Change passcode" : "Set passcode",
+    fields: [{ k: "pin", label: "New passcode", type: "pin" }, { k: "pin2", label: "Type it again", type: "pin" }],
+    required: ["pin", "pin2"],
+    async save(f) {
+      if (!/^\d{4}$/.test(f.pin)) { toast("Use exactly 4 digits."); return false; }
+      if (f.pin !== f.pin2) { toast("The two passcodes do not match."); return false; }
+      await Lock.set(f.pin); toast("Passcode set. This device is now locked.");
+    },
+  }),
+  parentRemove: () => { Lock.clear(); toast("Passcode removed."); },
+  parentLockNow: () => { Lock.until = 0; toast("Locked."); },
+  shareReport: async () => {
+    const r = reportData();
+    const text = reportText(r);
+    try {
+      const blob = await reportImage(r);
+      const file = new File([blob], `${S.profile.name}-week-${r.wk}.png`, { type: "image/png" });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], text }); return; }
+    } catch (e) { if (e && e.name === "AbortError") return; }
+    try { if (navigator.share) { await navigator.share({ text }); return; } } catch (e) { if (e && e.name === "AbortError") return; }
+    try { await navigator.clipboard.writeText(text); toast("Report copied. Paste it into a message."); } catch (e) { toast("Could not share the report."); }
+  },
   watchMark: (d) => {
     const l = logOf(todayKey());
     l.watched ||= {};
@@ -935,16 +1135,28 @@ document.addEventListener("click", async (e) => {
     const v = collect();
     const miss = (ui.form.required || []).find((k) => !v[k]);
     if (miss) return toast("Please fill in the " + miss + ".");
-    await ui.form.save(v); closeForm(); persist(); render(); return;
+    const keep = await ui.form.save(v);
+    if (keep === false) return;
+    closeForm(); persist(); render(); return;
   }
   if (a === "extra") { ui.form.extra[+t.dataset.i].fn(); closeForm(); persist(); render(); return; }
   if (a === "del") {
     if (!delArmed) { delArmed = true; t.textContent = "Tap again to confirm"; setTimeout(() => { delArmed = false; if (t.isConnected) t.textContent = ui.form.delLabel || "Delete"; }, 3000); return; }
     delArmed = false; await ui.form.del(); closeForm(); persist(); render(); return;
   }
+  if (EDIT_ACTIONS.has(a) && !Lock.open) { ui.pin = { pending: { a, data: { ...t.dataset } }, error: "", forgot: false }; render(); return; }
+  if (a === "pinCancel") { ui.pin = null; render(); return; }
+  if (a === "pinForgot") { ui.pin.forgot = !ui.pin.forgot; ui.pin.error = ""; render(); return; }
+  if (a === "pinRecover") {
+    const v = Sync.normalize($("#pin-recover").value);
+    if (Sync.code && v === Sync.code) { Lock.clear(); const p = ui.pin.pending; ui.pin = null; toast("Passcode removed."); ACTIONS[p.a](p.data); persist(); if (!ui.form) render(); }
+    else { ui.pin.error = Sync.code ? "That is not this family's code." : "No family code on this device. Remove the app and add it again to reset."; render(); }
+    return;
+  }
   if (ACTIONS[a]) { ACTIONS[a](t.dataset); persist(); if (!ui.form) render(); }
 });
 
+if (!S.profile.onboarded && Object.keys(S.logs).length === 0 && !Sync.code) ui.welcome = { step: 1, name: S.profile.name, why: S.profile.why };
 render();
 Sync.start();
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js").catch(() => {});
