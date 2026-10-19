@@ -31,8 +31,17 @@ Everything (days, blocks, videos, links, notes, rewards, profile, logs) can be a
 - Remaining plan (Phases 2 and 3) is in the game plan page: finish summary sheet, custom icon set, week strip, video thumbnails,
   progress charts, first-run welcome, optional parent passcode, iPad layout.
 
+## Design pass: Phase 2 (done)
+- Finish summary overlay when the last block is completed: XP earned today, level-up moment, skill level-ups, rewards unlocked,
+  next reward progress, sessions this week and streak, a daily line.
+- Custom SVG icon set (`ICON_PATHS` and `badge()` in `app.js`) replaces emoji for levels, skills, achievements, rewards and the lock.
+  Mood faces and confetti still use emoji.
+- Week tab: a strip of seven progress rings above the day list.
+- Videos: YouTube thumbnails, "Watch first today" group, "Watch first" and "Watched" tags, Mark watched (+5 XP).
+  Watched state is stored in the day's log (`logs[date].watched`), so it syncs.
+
 ## Motivation system
-- XP: +10 per finished block, +50 per finished session, +5 energy rating, +5 notes, +25 skill check, +15 reflection.
+- XP: +10 per finished block, +50 per finished session, +5 per video watched, +5 energy rating, +5 notes, +25 skill check, +15 reflection.
 - Levels by finished sessions: Rookie 0, Ball Handler 5, Playmaker 15, Floor General 30, All-Star 60, Franchise PG 100.
 - Skills (levels at 0/30/80/150/250/400/600 points): ball handling, passing and reads, shooting, finishing and defense, court IQ.
   A block counts toward a skill by matching words in its title (see `SKILLS` in `app.js`).
