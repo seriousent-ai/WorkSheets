@@ -60,6 +60,7 @@ const Sync = {
     this.status = s;
     const el = document.querySelector("[data-sync-status]");
     if (el) el.textContent = this.statusText();
+    document.querySelectorAll(".syncdot").forEach((d) => { d.className = "syncdot " + s; d.title = this.statusText(); });
   },
 
   async put(id, json, ts) {

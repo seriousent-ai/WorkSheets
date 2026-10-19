@@ -61,8 +61,27 @@ const idb = {
   del(id) { return this.tx("readwrite", (s) => s.delete(id)); },
 };
 
+/* ---------- parent lock (device-local, optional) ---------- */
+const Lock = {
+  key: "tristan-lock", hash: null, until: 0,
+  load() { try { const o = JSON.parse(localStorage.getItem(this.key)); if (o && o.hash) this.hash = o.hash; } catch (e) {} },
+  save() { try { if (this.hash) localStorage.setItem(this.key, JSON.stringify({ hash: this.hash })); else localStorage.removeItem(this.key); } catch (e) {} },
+  get on() { return !!this.hash; },
+  get open() { return !this.hash || Date.now() < this.until; },
+  async digest(pin) {
+    const s = "tristan-pin:" + pin;
+    if (window.crypto && crypto.subtle) { const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)); return [...new Uint8Array(d)].map((x) => x.toString(16).padStart(2, "0")).join(""); }
+    return Sync.hash(s);
+  },
+  async check(pin) { return (await this.digest(pin)) === this.hash; },
+  async set(pin) { this.hash = await this.digest(pin); this.until = 0; this.save(); },
+  clear() { this.hash = null; this.until = 0; this.save(); },
+};
+Lock.load();
+const EDIT_ACTIONS = new Set(["editDay", "addBlock", "editBlock", "addVideo", "editVideo", "addLink", "editLink", "addReward", "editReward", "addNote", "editNote", "editProfile", "import", "reset", "syncCreate", "syncJoin", "syncOff", "parentSet", "parentRemove"]);
+
 /* ---------- state ---------- */
-const ui = { tab: "today", day: todayIdx(), openVideo: null, weekOffset: 0, timer: null, form: null };
+const ui = { welcome: null, pin: null, summary: null, tab: "today", day: todayIdx(), openVideo: null, weekOffset: 0, guided: null, openBlocks: {}, form: null };
 const dateOf = (i) => dateKey(addDays(mondayOf(new Date()), i));
 const logOf = (date) => (S.logs[date] ||= { done: {} });
 
@@ -83,18 +102,42 @@ const MESSAGES = [
   "Dream big. Train smart. Rest well.",
   "Read the defender, then make the play.",
 ];
-const LEVELS = [[0, "Rookie", "🌱"], [5, "Ball Handler", "🏀"], [15, "Playmaker", "🎯"], [30, "Floor General", "🧠"], [60, "All-Star", "⭐"], [100, "Franchise PG", "👑"]];
+const ICON_PATHS = {
+  sprout: '<path d="M12 20v-8"/><path d="M12 12c0-3.5-2.5-5.5-6-5.5 0 3.5 2.5 5.5 6 5.5z"/><path d="M12 14c0-3 2-5 5.5-5 0 3-2 5-5.5 5z"/>',
+  ball: '<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17M3.5 12h17"/><path d="M6 6c3 2.5 3 9.5 0 12M18 6c-3 2.5-3 9.5 0 12"/>',
+  target: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/>',
+  shield: '<path d="M12 3l7 2.5v5.5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V5.5z"/><path d="M9 12l2.2 2.2L15 10"/>',
+  star: '<path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9L3.5 9.7l5.9-.8z"/>',
+  crown: '<path d="M4 17l-1-9 5 4 4-7 4 7 5-4-1 9z"/><path d="M5 20h14"/>',
+  flame: '<path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 01-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 1-9z"/>',
+  gift: '<rect x="4" y="9" width="16" height="11" rx="2"/><path d="M12 9v11M4 13h16"/><path d="M12 9c-2-4-6-3-5-1 .8 1.5 3.5 1 5 1zM12 9c2-4 6-3 5-1-.8 1.5-3.5 1-5 1z"/>',
+  lock: '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/>',
+  bolt: '<path d="M13 3L5 13.5h6L10 21l8-10.5h-6z"/>',
+  eye: '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/>',
+  hoop: '<path d="M4 4h16v6H4z"/><ellipse cx="12" cy="14" rx="5" ry="1.6"/><path d="M7.5 15l1.5 5M16.5 15L15 20M12 15.6V20"/>',
+  pass: '<path d="M3.5 9h14M14 5l4 4-4 4"/><path d="M20.5 16h-14M10 12l-4 4 4 4"/>',
+  trend: '<path d="M3.5 17l5.5-5.5 3.5 3.5 7-8"/><path d="M15 7h5.5v5.5"/>',
+  trophy: '<path d="M7.5 4h9v5a4.5 4.5 0 01-9 0z"/><path d="M7.5 6H4.5c0 3 1.5 4 3 4M16.5 6h3c0 3-1.5 4-3 4"/><path d="M12 13.5V17M8.5 20h7M9.5 17h5"/>',
+  chart: '<path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/>',
+  check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+};
+function badge(name, cls = "") {
+  return `<span class="badge ${cls}"><svg viewBox="0 0 24 24" aria-hidden="true">${ICON_PATHS[name] || ""}</svg></span>`;
+}
+const LEVELS = [[0, "Rookie", "sprout"], [5, "Ball Handler", "ball"], [15, "Playmaker", "target"], [30, "Floor General", "shield"], [60, "All-Star", "star"], [100, "Franchise PG", "crown"]];
 const dayOfYear = () => Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 864e5);
 
+function xpOfLog(l) {
+  let x = Object.keys(l.done || {}).length * 10;
+  if (l.complete) x += 50;
+  if (l.energy) x += 5;
+  if (l.learned || l.improve || l.challenge) x += 5;
+  x += Object.keys(l.watched || {}).length * 5;
+  return x;
+}
 function xpTotal() {
   let x = 0;
-  for (const k in S.logs) {
-    const l = S.logs[k];
-    x += Object.keys(l.done || {}).length * 10;
-    if (l.complete) x += 50;
-    if (l.energy) x += 5;
-    if (l.learned || l.improve || l.challenge) x += 5;
-  }
+  for (const k in S.logs) x += xpOfLog(S.logs[k]);
   for (const k in S.weekly) {
     const w = S.weekly[k];
     if (w.right || w.shoot) x += 25;
@@ -102,7 +145,7 @@ function xpTotal() {
   }
   return x;
 }
-const SKILLS = [["handle", "Ball handling", "🏀", /handl/], ["pass", "Passing and reads", "🎯", /pass/], ["shoot", "Shooting", "🔥", /shoot/], ["finish", "Finishing and defense", "💪", /finish|defen/], ["iq", "Court IQ", "🧠", /film|discuss|review|check-in|decision/]];
+const SKILLS = [["handle", "Ball handling", "ball", /handl/], ["pass", "Passing and reads", "pass", /pass/], ["shoot", "Shooting", "hoop", /shoot/], ["finish", "Finishing and defense", "bolt", /finish|defen/], ["iq", "Court IQ", "eye", /film|discuss|review|check-in|decision/]];
 const SK_LV = [0, 30, 80, 150, 250, 400, 600];
 function skillPoints() {
   const titles = {}, pts = {};
@@ -160,14 +203,14 @@ function achievements() {
   const skill = Object.values(S.weekly).some((w) => w.right !== undefined && w.right !== "" || w.shoot !== undefined && w.shoot !== "");
   const streak = weekStreak();
   return [
-    ["🏀", "First session", "Finish one full session.", total >= 1],
-    ["🔥", "Five sessions", "Finish 5 sessions.", total >= 5],
-    ["🎯", "Ten sessions", "Finish 10 sessions.", total >= 10],
-    ["⭐", "Twenty-five sessions", "Finish 25 sessions.", total >= 25],
-    ["💪", "Big week", "Finish 6 sessions in one week.", weeks.some((n) => n >= 6)],
-    ["📈", "Two-week streak", "4+ sessions two weeks in a row.", streak >= 2],
-    ["🏆", "Four-week streak", "Complete a full development cycle.", streak >= 4],
-    ["📊", "Skill check logged", "Record a Saturday skill check.", skill],
+    ["ball", "First session", "Finish one full session.", total >= 1],
+    ["flame", "Five sessions", "Finish 5 sessions.", total >= 5],
+    ["target", "Ten sessions", "Finish 10 sessions.", total >= 10],
+    ["star", "Twenty-five sessions", "Finish 25 sessions.", total >= 25],
+    ["bolt", "Big week", "Finish 6 sessions in one week.", weeks.some((n) => n >= 6)],
+    ["trend", "Two-week streak", "4+ sessions two weeks in a row.", streak >= 2],
+    ["trophy", "Four-week streak", "Complete a full development cycle.", streak >= 4],
+    ["chart", "Skill check logged", "Record a Saturday skill check.", skill],
   ];
 }
 
@@ -202,7 +245,8 @@ function fmtTime(sec) { return `${Math.floor(sec / 60)}:${pad(Math.max(0, sec % 
 function brand() {
   const p = S.profile;
   const logo = p.logo || "icons/team-logo.png";
-  return `<div class="brand"><img src="${esc(logo)}" alt="${esc(p.team)} logo" onerror="this.outerHTML='<button class=&quot;logo-add&quot; data-a=&quot;editProfile&quot;>Add<br>logo</button>'"><div><b>${esc(p.team)}</b><span>${esc(p.league)}</span></div></div>`;
+  const dot = Sync.code ? `<span class="syncdot ${Sync.status}" title="${esc(Sync.statusText())}"></span>` : "";
+  return `<div class="brand"><img src="${esc(logo)}" alt="${esc(p.team)} logo" onerror="this.outerHTML='<button class=&quot;logo-add&quot; data-a=&quot;editProfile&quot;>Add<br>logo</button>'"><div><b>${esc(p.team)}</b><span>${dot}${esc(p.league)}</span></div></div>`;
 }
 
 function viewToday() {
@@ -224,54 +268,61 @@ function viewToday() {
   const seg = S.days.map((d, i) => `<button class="${i === ui.day ? "on" : ""} ${i === todayIdx() ? "today" : ""}" data-a="day" data-i="${i}">${esc(d.name.slice(0, 3))}</button>`).join("");
   const vids = day.videoIds.map((id) => S.videos.find((v) => v.id === id)).filter(Boolean);
   const mood = [["😫", 1], ["😕", 2], ["😐", 3], ["🙂", 4], ["🔥", 5]];
+  const curId = (day.blocks.find((b) => !done[b.id]) || {}).id;
+  const startLabel = doneN > 0 ? "Continue session" : "Start session";
   return `
   ${brand()}
-  <h1 class="large">${greet}, ${esc(S.profile.name)}</h1>
-  <p class="sub">${esc(msg)}</p>
-  <div class="stats">
-    <div class="stat"><b>${xp}</b><span>XP points</span></div>
-    <div class="stat"><b>${weekStreak()} 🔥</b><span>Week streak</span></div>
-    <div class="stat"><b>${lv.cur[2]}</b><span>${esc(lv.cur[1])}</span></div>
-  </div>
-  <div class="level"><div class="progress"><i style="width:${lv.pct}%"></i></div>
-    <p class="small">${lv.next ? `${lv.toGo} more session${lv.toGo === 1 ? "" : "s"} to reach <b>${esc(lv.next[1])}</b> ${lv.next[2]}` : "You reached the top level. Franchise PG."}</p></div>
-  ${nr ? `<div class="reward"><div class="rtitle">🎁 Next reward: <b>${esc(nr.next.title)}</b></div><div class="progress"><i style="width:${nr.pct}%"></i></div><p class="small" style="margin:6px 0 0">${nr.next.xp - xp} XP to go · each block is +10, a full session +50</p></div>` : ""}
-  <h2 class="section">Point guard skills</h2>
-  <div class="group">${SKILLS.map(([k, name, em]) => { const sp = skillPoints()[k] || 0; const sl = skillLevel(sp); return `<div class="row"><div style="font-size:24px">${em}</div><div class="grow"><div class="title strong">${name}</div><div class="progress" style="margin-top:6px"><i style="width:${sl.pct}%"></i></div></div><span class="pill blue">Lv ${sl.l}</span></div>`; }).join("")}</div>
-  <p class="small">Finish blocks to level up each skill. The best point guards build all five.</p>
-  <div class="seg" style="margin-top:16px">${seg}</div>
+  <h1 class="greet">${greet}, ${esc(S.profile.name)}</h1>
+  <p class="sub tight">${esc(msg)}</p>
+  <div class="seg">${seg}</div>
+  <div class="cols"><div>
   <div class="hero">
     <div class="herorow"><div class="grow">
       <div class="eyebrow">${isToday ? "Today" : esc(day.name)} · ${fmtShort(parseKey(date))}</div>
       <div class="big">${esc(day.theme)}</div>
       <div class="detail">${doneN} of ${day.blocks.length} blocks · ${day.blocks.reduce((a, b) => a + (Number(b.minutes) || 0), 0)} min</div>
+      ${day.cue ? `<div class="herocue"><b>Cue</b> ${esc(day.cue)}</div>` : ""}
     </div>
     <svg class="ring" viewBox="0 0 72 72" aria-label="${Math.round(pct)} percent done"><circle cx="36" cy="36" r="30" class="rt"/><circle cx="36" cy="36" r="30" class="rf ${pct === 100 ? "full" : ""}" stroke-dasharray="188.5" stroke-dashoffset="${(188.5 * (1 - pct / 100)).toFixed(1)}"/><text x="36" y="41" text-anchor="middle">${Math.round(pct)}%</text></svg></div>
-    ${pct === 100 ? `<p class="win">Session complete. That's how point guards are made, ${esc(S.profile.name)}! 💪</p>` : ""}
+    ${pct === 100 ? `<p class="win">Session complete. That's how point guards are made, ${esc(S.profile.name)}!</p>` : day.blocks.length ? `<button class="startbtn" data-a="gStart">${startLabel}</button>` : ""}
+    <div class="herometa"><span>${xp} XP</span><span>${esc(lv.cur[1])}</span><span>${weekStreak()} week streak</span></div>
   </div>
-  ${day.cue ? `<div class="cue"><b>Coaching cue</b><br>${esc(day.cue)}</div>` : ""}
   <h2 class="section">Session <button data-a="editDay">Edit day</button></h2>
   <div class="group">
     ${day.blocks.map((b, i) => {
       const on = !!done[b.id];
-      const running = ui.timer && ui.timer.id === b.id;
-      return `<div class="row ${on ? "done" : ""}">
+      const cur = b.id === curId;
+      const open = !!ui.openBlocks[b.id];
+      return `<div class="row blk ${on ? "done" : ""} ${cur ? "current" : ""}">
         <button class="check ${on ? "on" : ""}" data-a="toggle" data-id="${b.id}" aria-label="Mark ${esc(b.title)} done">${on ? "✓" : ""}</button>
         <div class="grow"><div class="title strong">${esc(b.title)}</div>
-          <div class="detail"><span class="pill">${times[i]}</span> ${running ? `<span class="timer" data-timer>${fmtTime(Math.ceil((ui.timer.end - Date.now()) / 1000))}</span>` : ""}</div>
-          ${b.text ? `<div class="detail">${esc(b.text)}</div>` : ""}</div>
+          <div class="detail"><span class="pill">${times[i]}</span>${cur ? ' <span class="pill blue">Up next</span>' : ""}</div>
+          ${b.text ? `<button class="linkbtn" data-a="blockInfo" data-id="${b.id}">${open ? "Hide details" : "Details"}</button>${open ? `<div class="detail">${esc(b.text)}</div>` : ""}` : ""}</div>
         <div class="side">
-          <button class="play ${running ? "run" : ""}" data-a="timer" data-id="${b.id}" aria-label="Timer">${running ? "■" : "▶"}</button>
-          <button class="more" data-a="editBlock" data-id="${b.id}" aria-label="Edit">•••</button>
+          <button class="play" data-a="gFrom" data-id="${b.id}" aria-label="Start ${esc(b.title)} timer">▶</button>
+          <button class="more" data-a="editBlock" data-id="${b.id}" aria-label="Edit ${esc(b.title)}">•••</button>
         </div></div>`;
     }).join("") || `<div class="empty">No blocks yet.</div>`}
   </div>
   <button class="btn gray" data-a="addBlock">Add a block</button>
-  ${vids.length ? `<h2 class="section">Videos for today</h2><div class="group"><div class="row"><div class="pills" style="margin:0">${vids.map((v) => `<button class="pill" data-a="goVideo" data-id="${v.id}">${esc(v.code || "▶")} ${esc(v.title)}</button>`).join("")}</div></div></div>` : ""}
+  </div><div>
+  ${vids.length ? `<h2 class="section">Watch first</h2><div class="group"><div class="row"><div class="pills" style="margin:0">${vids.map((v) => `<button class="pill" data-a="goVideo" data-id="${v.id}">${watchedToday(v.id) ? "✓ " : ""}${esc(v.code || "▶")} ${esc(v.title)}</button>`).join("")}</div></div></div>` : ""}
   <h2 class="section">How did it feel? <button data-a="editLogDay" data-date="${date}">Add notes</button></h2>
   <div class="group"><div class="row"><div class="emojis grow">${mood.map(([e, v]) => `<button class="${lg.energy === v ? "on" : ""}" data-a="energy" data-v="${v}" aria-label="Energy ${v}">${e}</button>`).join("")}</div></div>
   ${lg.improve || lg.challenge ? `<div class="row"><div class="grow">${lg.improve ? `<div class="detail"><b>Improved:</b> ${esc(lg.improve)}</div>` : ""}${lg.challenge ? `<div class="detail"><b>Challenge:</b> ${esc(lg.challenge)}</div>` : ""}</div></div>` : ""}</div>
-  <div class="why"><b>My Why</b><p>${esc(S.profile.why)}</p></div>`;
+  <h2 class="section">Your progress</h2>
+  <div class="stats">
+    <div class="stat"><b>${xp}</b><span>XP points</span></div>
+    <div class="stat"><b>${weekStreak()}</b><span>Week streak</span></div>
+    <div class="stat"><b>${badge(lv.cur[2])}</b><span>${esc(lv.cur[1])}</span></div>
+  </div>
+  <div class="level"><div class="progress"><i style="width:${lv.pct}%"></i></div>
+    <p class="small">${lv.next ? `${lv.toGo} more session${lv.toGo === 1 ? "" : "s"} to reach <b>${esc(lv.next[1])}</b> ${badge(lv.next[2], "xs")}` : "You reached the top level. Franchise PG."}</p></div>
+  ${nr ? `<div class="reward"><div class="rtitle">${badge("gift", "xs")} Next reward: <b>${esc(nr.next.title)}</b></div><div class="progress"><i style="width:${nr.pct}%"></i></div><p class="small" style="margin:6px 0 0">${nr.next.xp - xp} XP to go · each block is +10, a full session +50</p></div>` : ""}
+  <div class="group" style="margin-top:12px">${SKILLS.map(([k, name, em]) => { const sp = skillPoints()[k] || 0; const sl = skillLevel(sp); return `<div class="row">${badge(em)}<div class="grow"><div class="title strong">${name}</div><div class="progress" style="margin-top:6px"><i style="width:${sl.pct}%"></i></div></div><span class="pill blue">Lv ${sl.l}</span></div>`; }).join("")}</div>
+  <p class="small">Finish blocks to level up each skill. The best point guards build all five.</p>
+  <div class="why"><b>My Why</b><p>${esc(S.profile.why)}</p></div>
+  </div></div>`;
 }
 
 function viewWeek() {
@@ -287,6 +338,12 @@ function viewWeek() {
     <div class="big">${n} of ${goal} sessions</div>
     <div class="progress"><i style="width:${Math.min(100, (n / goal) * 100)}%"></i></div>
     <div class="detail">${wk.priority ? "Coach's priority: " + esc(wk.priority) : "Set a priority for the week in Log."}</div></div>
+  <div class="wstrip">${S.days.map((d, i) => {
+    const l = S.logs[dateOf(i)] || { done: {} };
+    const c = d.blocks.filter((b) => l.done?.[b.id]).length;
+    const p = d.blocks.length ? c / d.blocks.length : 0;
+    return `<button class="wd ${i === todayIdx() ? "today" : ""}" data-a="openDay" data-i="${i}" aria-label="${esc(d.name)} ${Math.round(p * 100)} percent"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="14" class="rt"/><circle cx="18" cy="18" r="14" class="rf ${l.complete ? "full" : ""}" stroke-dasharray="88" stroke-dashoffset="${(88 * (1 - p)).toFixed(1)}"/>${l.complete ? '<path d="M11.5 18.5l4.2 4.2 8.8-9" class="ck"/>' : ""}</svg><span>${esc(d.name.slice(0, 3))}</span></button>`;
+  }).join("")}</div>
   <h2 class="section">Days</h2>
   <div class="group">${S.days.map((d, i) => {
     const date = dateOf(i);
@@ -301,7 +358,12 @@ function viewWeek() {
   <p class="small">Team practice, mandatory training and games replace that day's individual session. Do not double up to make up a missed day.</p>`;
 }
 
+const ytId = (u) => { const m = (u || "").match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/); return m ? m[1] : null; };
+const todayKey = () => dateKey(new Date());
+const watchedToday = (id) => !!((S.logs[todayKey()] || {}).watched || {})[id];
+
 function viewVideos() {
+  const todaysIds = (S.days[todayIdx()] || { videoIds: [] }).videoIds;
   const card = (v) => {
     const open = ui.openVideo === v.id;
     const e = v.url ? embed(v.url) : null;
@@ -311,23 +373,118 @@ function viewVideos() {
       else if (e && e.kind === "iframe") player = `<iframe class="player" src="${esc(e.src)}" allow="fullscreen; picture-in-picture" allowfullscreen loading="lazy"></iframe>`;
       else if (e && e.kind === "video") player = `<video class="player" controls playsinline src="${esc(e.src)}"></video>`;
     }
+    const yt = ytId(v.url);
+    const w = watchedToday(v.id);
+    const tag = w ? '<span class="pill green">Watched</span>' : todaysIds.includes(v.id) ? '<span class="pill blue">Watch first</span>' : "";
     return `<div class="row tap-wrap" style="flex-direction:column;align-items:stretch">
       <div style="display:flex;gap:12px;align-items:center" data-a="openVid" data-id="${v.id}">
-        <div class="vcode ${v.fileId ? "file" : ""}">${esc(v.code || "▶")}</div>
-        <div class="grow"><div class="title strong">${esc(v.title)}</div>${v.note ? `<div class="detail">${esc(v.note)}</div>` : ""}</div>
+        <div class="thumb"><div class="vcode ${v.fileId ? "file" : ""}">${esc(v.code || "▶")}</div>${yt ? `<img src="https://i.ytimg.com/vi/${yt}/mqdefault.jpg" alt="" loading="lazy" onerror="this.remove()">` : ""}</div>
+        <div class="grow"><div class="title strong">${esc(v.title)}</div>${tag ? `<div style="margin-top:3px">${tag}</div>` : ""}${v.note ? `<div class="detail">${esc(v.note)}</div>` : ""}</div>
         <span class="chev">${open ? "⌃" : "›"}</span></div>
-      ${open ? `${player}<div class="pills">${v.url ? `<a class="pill blue" href="${esc(v.url)}" target="_blank" rel="noopener">Open on ${esc(host(v.url) || "web")} ↗</a>` : ""}<button class="pill" data-a="editVideo" data-id="${v.id}">Edit</button></div>` : ""}
+      ${open ? `${player}<div class="pills">${v.url ? `<a class="pill blue" href="${esc(v.url)}" target="_blank" rel="noopener" data-a="watchOpen" data-id="${v.id}">Open on ${esc(host(v.url) || "web")} ↗</a>` : ""}<button class="pill ${w ? "green" : ""}" data-a="watchMark" data-id="${v.id}">${w ? "Watched ✓" : "Mark watched (+5 XP)"}</button><button class="pill" data-a="editVideo" data-id="${v.id}">Edit</button></div>` : ""}
     </div>`;
   };
   return `
   <h1 class="large">Videos</h1>
   <p class="sub">Watch the clip that matches today's drill.</p>
   <a class="feature" href="https://jr.nba.com/jrnbaathome/" target="_blank" rel="noopener"><b>Jr. NBA at Home</b><span>Free drills and videos you can do anywhere ↗</span></a>
-  <h2 class="section">Drill videos <button data-a="addVideo">Add</button></h2>
+  ${todaysIds.length ? `<h2 class="section">Watch first today</h2><div class="group">${todaysIds.map((id) => S.videos.find((v) => v.id === id)).filter(Boolean).map(card).join("")}</div>` : ""}
+  <h2 class="section">All drill videos <button data-a="addVideo">Add</button></h2>
   <div class="group">${S.videos.map(card).join("") || `<div class="empty">No videos yet. Tap Add to save one.</div>`}</div>
   <h2 class="section">Websites <button data-a="addLink">Add</button></h2>
   <div class="group">${S.links.map((l) => `<div class="row"><div class="grow"><a class="title strong lnk" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.title)} ↗</a>${l.note ? `<div class="detail">${esc(l.note)}</div>` : ""}</div><button data-a="editLink" data-id="${l.id}">Edit</button></div>`).join("") || `<div class="empty">No websites yet.</div>`}</div>
   <p class="small">Tip: paste a YouTube or Vimeo link and it plays right here. You can also add a clip from your phone.</p>`;
+}
+
+const TRENDS = [["right", "Passes, right hand", "/10", 10, true], ["left", "Passes, left hand", "/10", 10, true], ["shoot", "Shots made", "/25", 25, true], ["ft", "Free throws", "/10", 10, true], ["lost", "Lost balls on the cone course", "", null, false], ["good", "Good reads in games", "", null, true]];
+function series(key) {
+  return Object.keys(S.weekly).sort()
+    .filter((k) => S.weekly[k][key] !== undefined && S.weekly[k][key] !== "" && !isNaN(Number(S.weekly[k][key])))
+    .map((k) => Number(S.weekly[k][key])).slice(-8);
+}
+function spark(vals, max, goodHigh) {
+  const w = 120, h = 34, p = 4;
+  const hi = max != null ? max : Math.max(5, ...vals);
+  const x = (i) => (vals.length === 1 ? w / 2 : p + (i * (w - 2 * p)) / (vals.length - 1));
+  const y = (v) => h - p - (Math.min(v, hi) / hi) * (h - 2 * p);
+  const best = goodHigh ? Math.max(...vals) : Math.min(...vals);
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" aria-hidden="true">${vals.length > 1 ? `<polyline points="${vals.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ")}"/>` : ""}${vals.map((v, i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="${i === vals.length - 1 ? 3.6 : 2.2}" class="${i === vals.length - 1 ? "last" : ""} ${vals.length > 1 && v === best ? "best" : ""}"/>`).join("")}</svg>`;
+}
+function xpByWeek(n = 8) {
+  const map = {};
+  for (const k in S.logs) { const w = dateKey(mondayOf(parseKey(k))); map[w] = (map[w] || 0) + xpOfLog(S.logs[k]); }
+  for (const w in S.weekly) { const o = S.weekly[w]; map[w] = (map[w] || 0) + (o.right || o.shoot ? 25 : 0) + (o.improved || o.adjust ? 15 : 0); }
+  const out = [];
+  let mon = mondayOf(new Date());
+  for (let i = 0; i < n; i++) { const k = dateKey(mon); out.unshift({ k, mon, xp: map[k] || 0, now: i === 0 }); mon = addDays(mon, -7); }
+  return out;
+}
+function trendsHtml() {
+  const rows = TRENDS.map(([k, label, suf, max, good]) => {
+    const v = series(k);
+    if (!v.length) return "";
+    const last = v[v.length - 1], d = v.length > 1 ? last - v[v.length - 2] : null;
+    const better = d === null || d === 0 ? null : good ? d > 0 : d < 0;
+    return `<div class="row"><div class="grow"><div class="title">${label}</div><div class="detail">${d === null ? "First result. Record again next week." : d === 0 ? "Same as last week" : `<span class="${better ? "up" : "down"}">${d > 0 ? "+" : ""}${d} vs last week</span>`}</div></div>${spark(v, max, good)}<div class="tval">${last}<small>${suf}</small></div></div>`;
+  }).join("");
+  const wk = xpByWeek();
+  const top = Math.max(50, ...wk.map((x) => x.xp));
+  const bw = 28, gap = 10, H = 78;
+  const bars = wk.map((x, i) => { const h = Math.round((x.xp / top) * H); const xx = i * (bw + gap) + 6; return `<g><rect class="bar ${x.now ? "now" : ""}" x="${xx}" y="${14 + H - h}" width="${bw}" height="${Math.max(h, x.xp ? 2 : 0)}" rx="5"/><text class="bv" x="${xx + bw / 2}" y="${10 + H - h}" text-anchor="middle">${x.xp || ""}</text><text class="bl" x="${xx + bw / 2}" y="108" text-anchor="middle">${x.mon.getMonth() + 1}/${x.mon.getDate()}</text></g>`; }).join("");
+  return `<h2 class="section">Trends</h2>
+  <div class="group">${rows || '<div class="empty">Record a Saturday skill check to see your trends here.</div>'}</div>
+  <div class="group chartcard"><div class="title strong">XP each week</div><svg class="xpchart" viewBox="0 0 320 114" role="img" aria-label="XP earned in each of the last 8 weeks">${bars}</svg></div>`;
+}
+function reportData() {
+  const mon = addDays(mondayOf(new Date()), ui.weekOffset * 7);
+  const wk = dateKey(mon);
+  const w = S.weekly[wk] || {};
+  let sessions = 0, xp = 0;
+  for (let i = 0; i < 7; i++) { const l = S.logs[dateKey(addDays(mon, i))]; if (l) { if (l.complete) sessions++; xp += xpOfLog(l); } }
+  xp += (w.right || w.shoot ? 25 : 0) + (w.improved || w.adjust ? 15 : 0);
+  return { mon, wk, w, sessions, xp, goal: Math.min(6, S.days.length) };
+}
+function reportText(r) {
+  const w = r.w, sk = [];
+  if (w.right !== undefined && w.right !== "") sk.push(`passes R ${w.right}/10, L ${w.left ?? "-"}/10`);
+  if (w.shoot) sk.push(`shots ${w.shoot}/25`);
+  if (w.ft) sk.push(`free throws ${w.ft}/10`);
+  if (w.lost) sk.push(`lost balls ${w.lost}`);
+  if (w.good) sk.push(`good reads ${w.good}`);
+  const end = addDays(r.mon, 6);
+  return [`${S.profile.name}'s week, ${fmtShort(r.mon)} to ${fmtShort(end)} (${S.profile.team} ${S.profile.league})`,
+    `Sessions finished: ${r.sessions} of ${r.goal}`, `XP earned: ${r.xp}`,
+    sk.length ? `Skill check: ${sk.join(", ")}` : "", w.priority ? `Coach's priority: ${w.priority}` : "", w.goal ? `${S.profile.name}'s goal: ${w.goal}` : "",
+    w.improved ? `Improved: ${w.improved}` : "", w.hard ? `Difficult: ${w.hard}` : "", w.adjust ? `Next week's one adjustment: ${w.adjust}` : ""].filter(Boolean).join("\n");
+}
+async function reportImage(r) {
+  const c = document.createElement("canvas");
+  c.width = 1080; c.height = 1350;
+  const g = c.getContext("2d");
+  const bg = g.createLinearGradient(0, 0, 0, 1350);
+  bg.addColorStop(0, "#22345f"); bg.addColorStop(1, "#0b1122");
+  g.fillStyle = bg; g.fillRect(0, 0, 1080, 1350);
+  try {
+    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = S.profile.logo || "icons/team-logo.png"; });
+    g.drawImage(img, 70, 70, 130, 130);
+  } catch (e) {}
+  g.textBaseline = "alphabetic";
+  const t = (s, x, y, size, color, weight = 700, align = "left") => { g.font = `${weight} ${size}px -apple-system, "SF Pro Display", Helvetica, Arial, sans-serif`; g.fillStyle = color; g.textAlign = align; g.fillText(s, x, y); };
+  t(S.profile.team, 1010, 130, 54, "#ffffff", 700, "right");
+  t(S.profile.league, 1010, 182, 34, "rgba(255,255,255,.7)", 500, "right");
+  t(`${S.profile.name}'s week`, 70, 330, 78, "#ffffff");
+  t(`${fmtShort(r.mon)} to ${fmtShort(addDays(r.mon, 6))}`, 70, 385, 38, "#ffb340", 600);
+  const card = (x, y, big, label) => { g.fillStyle = "rgba(255,255,255,.09)"; g.beginPath(); g.roundRect(x, y, 460, 230, 34); g.fill(); t(String(big), x + 40, y + 125, 100, "#ffb340", 800); t(label, x + 40, y + 180, 34, "rgba(255,255,255,.75)", 500); };
+  card(70, 450, `${r.sessions}/${r.goal}`, "Sessions finished");
+  card(550, 450, r.xp, "XP earned");
+  const w = r.w, rows = [["Passes, right / left", w.right !== undefined && w.right !== "" ? `${w.right} / ${w.left ?? "-"} of 10` : ""], ["Shots made", w.shoot ? `${w.shoot} of 25` : ""], ["Free throws", w.ft ? `${w.ft} of 10` : ""], ["Lost balls", w.lost || ""], ["Good reads", w.good || ""]].filter((x) => x[1] !== "");
+  let y = 770;
+  t("Saturday skill check", 70, y, 40, "#ffffff"); y += 30;
+  if (!rows.length) { y += 50; t("No skill check recorded this week", 70, y, 32, "rgba(255,255,255,.6)", 500); }
+  rows.forEach(([l, v]) => { y += 62; t(l, 70, y, 34, "rgba(255,255,255,.8)", 500); t(String(v), 1010, y, 36, "#ffffff", 700, "right"); });
+  if (w.adjust) { t("Next week's one adjustment", 70, 1150, 30, "#ffb340", 600); g.font = "500 34px -apple-system, Helvetica, Arial, sans-serif"; g.fillStyle = "#fff"; g.textAlign = "left"; let line = "", yy = 1200; for (const word of w.adjust.split(" ")) { if (g.measureText(line + word).width > 940) { g.fillText(line, 70, yy); yy += 46; line = ""; } line += word + " "; } g.fillText(line, 70, yy); }
+  t("Made with the NY Rens training app", 540, 1310, 28, "rgba(255,255,255,.5)", 500, "center");
+  return new Promise((res) => c.toBlob(res, "image/png"));
 }
 
 function viewLog() {
@@ -342,7 +499,7 @@ function viewLog() {
     const others = prev.map((p) => Number(p[key])).filter((x) => p0(x));
     function p0(x) { return !isNaN(x); }
     if (!others.length) return "";
-    return (high ? others.every((o) => v > o) : others.every((o) => v < o)) ? ' <span class="pill blue">🏆 Personal best</span>' : "";
+    return (high ? others.every((o) => v > o) : others.every((o) => v < o)) ? ' <span class="pill blue">Personal best</span>' : "";
   };
   const val = (k, suf = "") => (w[k] === undefined || w[k] === "" ? "–" : esc(w[k]) + suf);
   const rows = S.days.map((d, i) => {
@@ -371,15 +528,17 @@ function viewLog() {
     <div class="row"><div class="grow">Free throws</div><div class="detail">${val("ft", " / 10")}${pb("ft")}</div></div>
     <div class="row"><div class="grow">Cone course (lost balls)</div><div class="detail">${val("lost")}${pb("lost", false)}</div></div>
     <div class="row"><div class="grow">Game decisions (good reads)</div><div class="detail">${val("good")}${pb("good")}</div></div></div>
+  ${trendsHtml()}
   <h2 class="section">Weekly reflection <button data-a="editReflect">Edit</button></h2>
   <div class="group">${[["improved", "What improved?"], ["hard", "What was difficult?"], ["fun", "What was fun?"], ["adjust", "Next week's one adjustment"]].map(([k, l]) => `<div class="row"><div class="grow"><div class="detail">${l}</div><div class="title">${esc(w[k]) || "–"}</div></div></div>`).join("")}
     <div class="row"><div class="grow">Organized basketball this week</div><div class="detail">${val("hours", " hrs")}</div></div>
     <div class="row"><div class="grow">Physical rest day</div><div class="detail">${val("rest")}</div></div></div>
+  <button class="btn gray" data-a="shareReport">Share weekly report</button>
   <h2 class="section">Rewards <button data-a="addReward">Add</button></h2>
-  <div class="group">${sortedRewards().map((r) => { const got = xpTotal() >= r.xp; return `<div class="row tap" data-a="editReward" data-id="${r.id}" style="opacity:${got ? 1 : 0.55}"><div style="font-size:28px">${got ? "🎁" : "🔒"}</div><div class="grow"><div class="title strong">${esc(r.title)}</div><div class="detail">${r.xp} XP${r.note ? " · " + esc(r.note) : ""}</div></div>${got ? '<span class="pill blue">Unlocked</span>' : ""}</div>`; }).join("") || '<div class="empty">No rewards yet. Tap Add.</div>'}</div>
-  <p class="small">Earn XP: +10 per finished block, +50 per finished session, +25 for a skill check, plus small bonuses for notes and reflections.</p>
+  <div class="group">${sortedRewards().map((r) => { const got = xpTotal() >= r.xp; return `<div class="row tap" data-a="editReward" data-id="${r.id}" style="opacity:${got ? 1 : 0.55}">${badge(got ? "gift" : "lock", got ? "" : "off")}<div class="grow"><div class="title strong">${esc(r.title)}</div><div class="detail">${r.xp} XP${r.note ? " · " + esc(r.note) : ""}</div></div>${got ? '<span class="pill blue">Unlocked</span>' : ""}</div>`; }).join("") || '<div class="empty">No rewards yet. Tap Add.</div>'}</div>
+  <p class="small">Earn XP: +10 per finished block, +50 per finished session, +5 per video watched, +25 for a skill check, plus small bonuses for notes and reflections.</p>
   <h2 class="section">Achievements</h2>
-  <div class="group">${ach.map(([e, t, d, got]) => `<div class="row" style="opacity:${got ? 1 : 0.4}"><div style="font-size:28px;filter:${got ? "none" : "grayscale(1)"}">${e}</div><div class="grow"><div class="title strong">${t}</div><div class="detail">${d}</div></div>${got ? '<span class="pill blue">Earned</span>' : ""}</div>`).join("")}</div>`;
+  <div class="group">${ach.map(([e, t, d, got]) => `<div class="row" style="opacity:${got ? 1 : 0.4}">${badge(e, got ? "" : "off")}<div class="grow"><div class="title strong">${t}</div><div class="detail">${d}</div></div>${got ? '<span class="pill blue">Earned</span>' : ""}</div>`).join("")}</div>`;
 }
 
 function viewGuide() {
@@ -403,6 +562,14 @@ function viewGuide() {
     <div class="row tap" data-a="syncCreate"><div class="grow"><div class="title strong">Create a family code</div><div class="detail">Start here on one device, then join from the others.</div></div><span class="chev">›</span></div>
     <div class="row tap" data-a="syncJoin"><div class="grow"><div class="title strong">Join with a family code</div><div class="detail">Enter the code from your other device.</div></div><span class="chev">›</span></div>`}
   </div>
+  <h2 class="section">Parent lock (optional)</h2>
+  <div class="group">
+    ${Lock.on ? `<div class="row"><div class="grow"><div class="title strong">${Lock.open ? "Unlocked for a few minutes" : "Locked on this device"}</div><div class="detail">Changing the plan, videos, rewards, notes, profile, backups and sync needs the passcode. Checking off blocks and logging stay open.</div></div></div>
+    ${Lock.open ? `<div class="row tap" data-a="parentLockNow"><div class="grow">Lock now</div><span class="chev">›</span></div>` : ""}
+    <div class="row tap" data-a="parentSet"><div class="grow">Change passcode</div><span class="chev">›</span></div>
+    <div class="row tap" data-a="parentRemove"><div class="grow" style="color:var(--red)">Remove passcode</div></div>` : `
+    <div class="row tap" data-a="parentSet"><div class="grow"><div class="title strong">Set a parent passcode</div><div class="detail">Use this on Tristan's phone so only you can change the plan. It is a speed bump for kids, not strong security.</div></div><span class="chev">›</span></div>`}
+  </div>
   <h2 class="section">Your data</h2>
   <div class="group">
     <div class="row tap" data-a="share"><div class="grow">Send backup (AirDrop, Messages)</div><span class="chev">›</span></div>
@@ -412,12 +579,128 @@ function viewGuide() {
   <p class="small">Everything is saved on this device. Uploaded video clips stay on this device and are not part of the backup file. Each device keeps its own copy. To move progress or changes between devices, use Send backup on one and Import backup on the other. Install: in Safari tap Share, then Add to Home Screen.</p>`;
 }
 
+/* ---------- guided session ---------- */
+const G_C = 553;
+function gLoad(i) {
+  const b = S.days[ui.day].blocks[i];
+  const t = Math.max(1, Number(b.minutes) || 1) * 60;
+  ui.guided = { i, total: t, remaining: t, end: null, started: false };
+}
+function gStartAt(i) { gLoad(i); keepAwake(true); }
+function gAdvance(markDone) {
+  const day = S.days[ui.day];
+  const g = ui.guided;
+  const lg = logOf(dateOf(ui.day));
+  if (markDone && !lg.done[day.blocks[g.i].id]) toggleBlock(day.blocks[g.i].id);
+  let n = g.i + 1;
+  while (n < day.blocks.length && lg.done[day.blocks[n].id]) n++;
+  if (n >= day.blocks.length) { ui.guided = null; keepAwake(false); return; }
+  gLoad(n);
+}
+function renderGuided() {
+  const el = $("#guided");
+  const g = ui.guided;
+  if (!g) { el.innerHTML = ""; return; }
+  const day = S.days[ui.day];
+  const b = day.blocks[g.i];
+  const next = day.blocks.slice(g.i + 1).find((x) => !logOf(dateOf(ui.day)).done[x.id]);
+  const left = g.end ? Math.max(0, Math.ceil((g.end - Date.now()) / 1000)) : g.remaining;
+  const lg = logOf(dateOf(ui.day));
+  const dots = day.blocks.map((x, i) => `<i class="${lg.done[x.id] ? "d" : ""} ${i === g.i ? "c" : ""}"></i>`).join("");
+  el.innerHTML = `<div class="guided" role="dialog" aria-label="Guided session">
+    <div class="g-top"><button data-a="gClose">Close</button><span>Block ${g.i + 1} of ${day.blocks.length}</span><span class="g-sp"></span></div>
+    <div class="g-dots">${dots}</div>
+    <div class="g-main">
+      <div class="g-eyebrow">${esc(day.theme)}</div>
+      <h2>${esc(b.title)}</h2>
+      <div class="g-ringwrap"><svg class="g-ring" viewBox="0 0 200 200"><circle cx="100" cy="100" r="88" class="rt"/><circle cx="100" cy="100" r="88" class="rf" data-gring stroke-dasharray="${G_C}" stroke-dashoffset="${(G_C * (1 - (g.total - left) / g.total)).toFixed(1)}"/></svg><div class="g-time" data-gtime>${fmtTime(left)}</div></div>
+      ${b.text ? `<p class="g-text">${esc(b.text)}</p>` : ""}
+    </div>
+    <div class="g-actions">
+      <button class="g-primary" data-a="gToggle">${g.end ? "Pause" : g.started ? "Resume" : "Start timer"}</button>
+      <div class="g-row"><button data-a="gSkip">Skip</button><button data-a="gDone">Done, next</button></div>
+      <p class="g-next">${next ? "Up next: " + esc(next.title) : "Last block. Finish strong."}</p>
+    </div></div>`;
+}
+
+function renderSummary() {
+  const el = $("#summary");
+  const s = ui.summary;
+  if (!s) { el.innerHTML = ""; return; }
+  const row = (ic, title, sub, cls = "") => `<div class="s-row ${cls}">${badge(ic)}<div><b>${esc(title)}</b>${sub ? `<span>${esc(sub)}</span>` : ""}</div></div>`;
+  el.innerHTML = `<div class="guided summary" role="dialog" aria-label="Session complete">
+    <div class="s-top"><svg class="s-check" viewBox="0 0 72 72"><circle cx="36" cy="36" r="30" class="rt"/><circle cx="36" cy="36" r="30" class="rf full" stroke-dasharray="188.5" stroke-dashoffset="0"/><path d="M24 37l8 8 16-17" class="ck"/></svg>
+      <h2>Session complete</h2><p>${esc(s.theme)}</p><div class="s-xp">+${s.xpDay} XP</div><p class="s-sub">${s.xp} XP in total</p></div>
+    <div class="s-list">
+      ${s.levelUp ? `<div class="s-level">${badge(s.levelUp[2], "lg pulse")}<div><span>Level up</span><b>You're now a ${esc(s.levelUp[1])}</b></div></div>` : ""}
+      ${s.ups.map((u) => row(u.ic, `${u.name} reached level ${u.lvl}`, "Skill level up")).join("")}
+      ${s.rewards.map((r) => row("gift", `Reward unlocked: ${r.title}`, r.note || "", "gold")).join("")}
+      ${s.next ? `<div class="s-row">${badge("gift")}<div><b>Next reward: ${esc(s.next.next.title)}</b><span>${s.next.next.xp - s.xp} XP to go</span><div class="progress"><i style="width:${s.next.pct}%"></i></div></div></div>` : ""}
+      ${row("flame", `${s.week} session${s.week === 1 ? "" : "s"} this week`, s.streak ? `${s.streak} week streak` : "Finish 4 this week to start a streak")}
+    </div>
+    <p class="s-msg">${esc(s.msg)}</p>
+    <button class="g-primary" data-a="sumClose">Nice work</button></div>`;
+}
+
+function renderPin() {
+  const el = $("#pin");
+  const p = ui.pin;
+  if (!p) { el.innerHTML = ""; return; }
+  el.innerHTML = `<div class="scrim center"><div class="pinbox" role="dialog" aria-label="Parent passcode">
+    <b>Parent passcode</b><p>${p.forgot ? "Enter your family code to remove the passcode." : "Ask a parent to enter the 4-digit passcode."}</p>
+    ${p.forgot ? `<input id="pin-recover" type="text" autocapitalize="off" autocomplete="off" placeholder="xxxx-xxxx-xxxx-xxxx-xxxx"><button class="btn" data-a="pinRecover">Remove passcode</button>`
+      : `<input id="pin-input" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="••••">`}
+    <div class="pin-err" role="alert">${esc(p.error)}</div>
+    <div class="pin-links"><button data-a="pinCancel">Cancel</button><button data-a="pinForgot">${p.forgot ? "Back" : "Forgot passcode?"}</button></div></div></div>`;
+  const inp = $("#pin-input") || $("#pin-recover");
+  if (inp) setTimeout(() => inp.focus(), 50);
+}
+document.addEventListener("input", async (e) => {
+  if (e.target.id === "pin-input" && e.target.value.length === 4 && ui.pin) {
+    if (await Lock.check(e.target.value)) {
+      Lock.until = Date.now() + 10 * 60 * 1000;
+      const p = ui.pin.pending; ui.pin = null; renderPin();
+      ACTIONS[p.a](p.data); persist(); if (!ui.form) render();
+    } else { ui.pin.error = "Wrong passcode. Try again."; e.target.value = ""; renderPin(); if (navigator.vibrate) navigator.vibrate(120); }
+  }
+  if (ui.welcome && e.target.id === "w-name") ui.welcome.name = e.target.value;
+  if (ui.welcome && e.target.id === "w-why") ui.welcome.why = e.target.value;
+});
+
+/* ---------- first-run welcome ---------- */
+function renderWelcome() {
+  const el = $("#welcome");
+  if (ui.welcome && S.profile.onboarded) ui.welcome = null;
+  const w = ui.welcome;
+  if (!w) { el.innerHTML = ""; return; }
+  const logo = S.profile.logo || "icons/team-logo.png";
+  el.innerHTML = w.step === 1 ? `<div class="guided welcome" role="dialog" aria-label="Welcome">
+      <div class="w-main"><img class="w-logo" src="${esc(logo)}" alt=""><h2>Welcome to the ${esc(S.profile.team)} training plan</h2>
+      <p>Let's set it up. You can change anything later.</p>
+      <label for="w-name">Your name</label><input id="w-name" type="text" autocomplete="off" value="${esc(w.name)}">
+      <label for="w-why">My Why (why I train)</label><textarea id="w-why">${esc(w.why)}</textarea></div>
+      <div class="g-actions"><button class="g-primary" data-a="wNext">Continue</button></div></div>`
+    : `<div class="guided welcome" role="dialog" aria-label="Sync your devices">
+      <div class="w-main"><h2>Use it on more than one device?</h2>
+      <p>A family code keeps the plan and progress the same on every phone. Create one on this device and join from the others, or skip this and do it later in Guide.</p>
+      ${w.code ? `<div class="w-code">${esc(Sync.pretty(w.code))}</div><p>Write this code down or share it. Enter it on your other device under Guide, then Join with a family code.</p>` : ""}
+      </div>
+      <div class="g-actions">${w.code ? `<button class="g-primary" data-a="wFinish">Done, let's train</button>` : `${Sync.ready ? `<button class="g-primary" data-a="wCreate">Create a family code</button><div class="g-row"><button data-a="wJoin">I have a code</button><button data-a="wFinish">Skip for now</button></div>` : `<button class="g-primary" data-a="wFinish">Let's train</button>`}`}</div></div>`;
+}
+const finishWelcome = () => { S.profile.onboarded = true; ui.welcome = null; };
+
 /* ---------- render ---------- */
 function render() {
   const y = window.scrollY;
+  $("#app").className = ui.tab === "today" ? "wide" : "";
   $("#app").innerHTML = { today: viewToday, week: viewWeek, videos: viewVideos, log: viewLog, guide: viewGuide }[ui.tab]();
   $("#tabs").innerHTML = TABS.map(([k, l]) => `<button class="${ui.tab === k ? "on" : ""}" data-a="tab" data-t="${k}"><svg viewBox="0 0 24 24">${ICONS[k]}</svg>${l}</button>`).join("");
   window.scrollTo(0, y);
+  renderGuided();
+  renderSummary();
+  renderWelcome();
+  renderPin();
+  document.body.classList.toggle("noscroll", !!(ui.guided || ui.summary || ui.welcome || ui.pin));
   document.querySelectorAll("video[data-file]").forEach(async (el) => {
     try { const b = await idb.get(el.dataset.file); if (b) el.src = URL.createObjectURL(b); } catch (e) {}
   });
@@ -459,15 +742,18 @@ async function keepAwake(on) {
   } catch (e) {}
 }
 setInterval(() => {
-  if (!ui.timer) return;
-  const left = Math.ceil((ui.timer.end - Date.now()) / 1000);
+  const g = ui.guided;
+  if (!g || !g.end) return;
+  const left = Math.ceil((g.end - Date.now()) / 1000);
   if (left <= 0) {
-    const b = S.days[ui.day].blocks.find((x) => x.id === ui.timer.id);
-    ui.timer = null; keepAwake(false); beep(); toast(`${b ? b.title : "Block"} time is up!`); render();
+    const b = S.days[ui.day].blocks[g.i];
+    beep(); toast(`${b.title} done!`);
+    gAdvance(true); persist(); render();
     return;
   }
-  const el = $("[data-timer]");
-  if (el) el.textContent = fmtTime(left);
+  g.remaining = left;
+  const t = $("[data-gtime]"); if (t) t.textContent = fmtTime(left);
+  const r = $("[data-gring]"); if (r) r.setAttribute("stroke-dashoffset", (G_C * (1 - (g.total - left) / g.total)).toFixed(1));
 }, 500);
 
 /* ---------- forms ---------- */
@@ -477,6 +763,7 @@ function fieldHtml(f) {
   if (f.type === "textarea") return `<div class="field">${lab}<textarea id="f-${f.k}" name="${f.k}" placeholder="${esc(f.ph || "")}">${esc(v)}</textarea></div>`;
   if (f.type === "select") return `<div class="field">${lab}<select id="f-${f.k}" name="${f.k}">${f.opts.map(([ov, ol]) => `<option value="${esc(ov)}" ${String(ov) === String(v) ? "selected" : ""}>${esc(ol)}</option>`).join("")}</select></div>`;
   if (f.type === "checks") return `<div class="field"><label>${esc(f.label)}</label><div class="group checks">${f.opts.map(([ov, ol]) => `<label class="row"><span class="grow">${esc(ol)}</span><input type="checkbox" name="${f.k}" value="${esc(ov)}" ${(v || []).includes(ov) ? "checked" : ""}></label>`).join("")}</div></div>`;
+  if (f.type === "pin") return `<div class="field">${lab}<input id="f-${f.k}" name="${f.k}" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="4 digits"></div>`;
   if (f.type === "file") return `<div class="field">${lab}<input id="f-${f.k}" type="file" name="${f.k}" accept="${f.accept || "video/*"}"></div>`;
   const t = f.type === "number" ? 'type="text" inputmode="decimal"' : f.type === "url" ? 'type="url" inputmode="url" autocapitalize="off"' : 'type="text"';
   return `<div class="field">${lab}<input id="f-${f.k}" name="${f.k}" ${t} value="${esc(v)}" placeholder="${esc(f.ph || "")}"></div>`;
@@ -664,6 +951,30 @@ function xpPop(text) {
   document.body.appendChild(s);
   setTimeout(() => s.remove(), 1100);
 }
+function skillPointsOn(date) {
+  const titles = {}, pts = {};
+  S.days.forEach((d) => d.blocks.forEach((b) => (titles[b.id] = b.title.toLowerCase())));
+  for (const id in (S.logs[date] || {}).done || {}) {
+    const sk = SKILLS.find((s) => s[3].test(titles[id] || ""));
+    if (sk) pts[sk[0]] = (pts[sk[0]] || 0) + 10;
+  }
+  return pts;
+}
+function buildSummary(date, crossed) {
+  const lg = logOf(date);
+  const all = skillPoints(), today = skillPointsOn(date);
+  const ups = SKILLS.filter(([k]) => skillLevel(all[k] || 0).l > skillLevel((all[k] || 0) - (today[k] || 0)).l)
+    .map(([k, name, ic]) => ({ name, ic, lvl: skillLevel(all[k]).l }));
+  const total = completeDates().length;
+  const now = levelInfo(total), was = levelInfo(total - 1);
+  const xp = xpTotal();
+  return {
+    xpDay: xpOfLog(lg), xp, theme: S.days[ui.day].theme, ups, rewards: crossed,
+    levelUp: now.cur[0] !== was.cur[0] ? now.cur : null, level: now,
+    week: sessionsInWeek(dateKey(mondayOf(parseKey(date)))), streak: weekStreak(), next: nextReward(xp),
+    msg: MESSAGES[(dayOfYear() + 3) % MESSAGES.length],
+  };
+}
 function toggleBlock(id) {
   const day = S.days[ui.day];
   const lg = logOf(dateOf(ui.day));
@@ -678,9 +989,9 @@ function toggleBlock(id) {
     if (navigator.vibrate) navigator.vibrate(15);
     if (!(lg.complete && !wasComplete)) toast(CHEERS[Math.floor(Math.random() * CHEERS.length)]);
   }
-  if (lg.complete && !wasComplete) { celebrate(); toast("Session complete! +50 XP 💪"); }
   const crossed = S.rewards.filter((r) => r.xp > before && r.xp <= xpTotal());
-  if (crossed.length) setTimeout(() => { celebrate(); toast("Reward unlocked: " + crossed[0].title + " 🎁"); }, 1200);
+  if (lg.complete && !wasComplete) { celebrate(); ui.summary = buildSummary(dateOf(ui.day), crossed); }
+  else if (crossed.length) setTimeout(() => { celebrate(); toast("Reward unlocked: " + crossed[0].title); }, 1200);
 }
 function download(name, text) {
   const a = document.createElement("a");
@@ -693,11 +1004,56 @@ const ACTIONS = {
   day: (d) => { ui.day = +d.i; },
   openDay: (d) => { ui.day = +d.i; ui.tab = "today"; window.scrollTo(0, 0); },
   toggle: (d) => toggleBlock(d.id),
-  timer: (d) => {
-    if (ui.timer && ui.timer.id === d.id) { ui.timer = null; keepAwake(false); return; }
-    const b = S.days[ui.day].blocks.find((x) => x.id === d.id);
-    ui.timer = { id: d.id, end: Date.now() + (Number(b.minutes) || 1) * 60000 }; keepAwake(true);
+  wNext: () => { const n = ui.welcome.name.trim(); if (n) S.profile.name = n; if (ui.welcome.why.trim()) S.profile.why = ui.welcome.why.trim(); ui.welcome.step = 2; },
+  wCreate: async () => { try { ui.welcome.code = await Sync.create(); render(); } catch (e) { toast("Could not reach the sync service."); } },
+  wJoin: () => ACTIONS.syncJoin(),
+  wFinish: () => finishWelcome(),
+  parentSet: () => openForm({
+    title: Lock.on ? "Change passcode" : "Set passcode",
+    fields: [{ k: "pin", label: "New passcode", type: "pin" }, { k: "pin2", label: "Type it again", type: "pin" }],
+    required: ["pin", "pin2"],
+    async save(f) {
+      if (!/^\d{4}$/.test(f.pin)) { toast("Use exactly 4 digits."); return false; }
+      if (f.pin !== f.pin2) { toast("The two passcodes do not match."); return false; }
+      await Lock.set(f.pin); toast("Passcode set. This device is now locked.");
+    },
+  }),
+  parentRemove: () => { Lock.clear(); toast("Passcode removed."); },
+  parentLockNow: () => { Lock.until = 0; toast("Locked."); },
+  shareReport: async () => {
+    const r = reportData();
+    const text = reportText(r);
+    try {
+      const blob = await reportImage(r);
+      const file = new File([blob], `${S.profile.name}-week-${r.wk}.png`, { type: "image/png" });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], text }); return; }
+    } catch (e) { if (e && e.name === "AbortError") return; }
+    try { if (navigator.share) { await navigator.share({ text }); return; } } catch (e) { if (e && e.name === "AbortError") return; }
+    try { await navigator.clipboard.writeText(text); toast("Report copied. Paste it into a message."); } catch (e) { toast("Could not share the report."); }
   },
+  watchMark: (d) => {
+    const l = logOf(todayKey());
+    l.watched ||= {};
+    if (l.watched[d.id]) delete l.watched[d.id]; else { l.watched[d.id] = true; xpPop("+5 XP"); toast("Nice. Now put it to work."); }
+  },
+  watchOpen: (d) => { const l = logOf(todayKey()); l.watched ||= {}; if (!l.watched[d.id]) { l.watched[d.id] = true; toast("Marked watched. +5 XP"); } },
+  sumClose: () => { ui.summary = null; },
+  blockInfo: (d) => { ui.openBlocks[d.id] = !ui.openBlocks[d.id]; },
+  gStart: () => {
+    const day = S.days[ui.day];
+    const done = logOf(dateOf(ui.day)).done;
+    const i = day.blocks.findIndex((b) => !done[b.id]);
+    gStartAt(i < 0 ? 0 : i);
+  },
+  gFrom: (d) => gStartAt(S.days[ui.day].blocks.findIndex((b) => b.id === d.id)),
+  gToggle: () => {
+    const g = ui.guided;
+    if (g.end) { g.remaining = Math.max(1, Math.ceil((g.end - Date.now()) / 1000)); g.end = null; }
+    else { g.end = Date.now() + g.remaining * 1000; g.started = true; }
+  },
+  gDone: () => gAdvance(true),
+  gSkip: () => gAdvance(false),
+  gClose: () => { ui.guided = null; keepAwake(false); },
   energy: (d) => { const lg = logOf(dateOf(ui.day)); lg.energy = lg.energy === +d.v ? undefined : +d.v; if (lg.energy) toast(["", "Rest up. Tomorrow's a new day.", "Take it easy and recover.", "Solid work.", "Nice! Keep it going.", "That's the energy! 🔥"][lg.energy]); },
   editDay: formDay,
   addBlock: () => formBlock(),
@@ -779,16 +1135,28 @@ document.addEventListener("click", async (e) => {
     const v = collect();
     const miss = (ui.form.required || []).find((k) => !v[k]);
     if (miss) return toast("Please fill in the " + miss + ".");
-    await ui.form.save(v); closeForm(); persist(); render(); return;
+    const keep = await ui.form.save(v);
+    if (keep === false) return;
+    closeForm(); persist(); render(); return;
   }
   if (a === "extra") { ui.form.extra[+t.dataset.i].fn(); closeForm(); persist(); render(); return; }
   if (a === "del") {
     if (!delArmed) { delArmed = true; t.textContent = "Tap again to confirm"; setTimeout(() => { delArmed = false; if (t.isConnected) t.textContent = ui.form.delLabel || "Delete"; }, 3000); return; }
     delArmed = false; await ui.form.del(); closeForm(); persist(); render(); return;
   }
+  if (EDIT_ACTIONS.has(a) && !Lock.open) { ui.pin = { pending: { a, data: { ...t.dataset } }, error: "", forgot: false }; render(); return; }
+  if (a === "pinCancel") { ui.pin = null; render(); return; }
+  if (a === "pinForgot") { ui.pin.forgot = !ui.pin.forgot; ui.pin.error = ""; render(); return; }
+  if (a === "pinRecover") {
+    const v = Sync.normalize($("#pin-recover").value);
+    if (Sync.code && v === Sync.code) { Lock.clear(); const p = ui.pin.pending; ui.pin = null; toast("Passcode removed."); ACTIONS[p.a](p.data); persist(); if (!ui.form) render(); }
+    else { ui.pin.error = Sync.code ? "That is not this family's code." : "No family code on this device. Remove the app and add it again to reset."; render(); }
+    return;
+  }
   if (ACTIONS[a]) { ACTIONS[a](t.dataset); persist(); if (!ui.form) render(); }
 });
 
+if (!S.profile.onboarded && Object.keys(S.logs).length === 0 && !Sync.code) ui.welcome = { step: 1, name: S.profile.name, why: S.profile.why };
 render();
 Sync.start();
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js").catch(() => {});
