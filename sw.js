@@ -1,4 +1,4 @@
-const CACHE = "training-plan-v5";
+const CACHE = "training-plan-v9";
 const ASSETS = ["./", "index.html", "styles.css", "data.js", "firebase-config.js", "sync.js", "app.js", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png", "icons/team-logo.png"];
 
 self.addEventListener("install", (e) => {
@@ -22,4 +22,9 @@ self.addEventListener("fetch", (e) => {
       })
       .catch(() => caches.match(req).then((r) => r || caches.match("index.html")))
   );
+});
+
+self.addEventListener("notificationclick", (e) => {
+  e.notification.close();
+  e.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((cs) => (cs.length ? cs[0].focus() : self.clients.openWindow("./"))));
 });

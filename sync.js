@@ -36,8 +36,8 @@ const Sync = {
   },
   strip(o) { const c = { ...o }; delete c._ts; return JSON.stringify(c); },
   planJson() {
-    const { days, videos, links, notes, rewards, profile } = S;
-    return JSON.stringify({ days, videos, links, notes, rewards, profile });
+    const { days, videos, links, notes, rewards, profile, note } = S;
+    return JSON.stringify({ days, videos, links, notes, rewards, profile, note });
   },
 
   load() {
@@ -98,7 +98,7 @@ const Sync = {
     if (id === "plan") {
       this.last.plan = this.hash(json);
       if (ts <= (S.planTs || 0)) return false;
-      ["days", "videos", "links", "notes", "rewards", "profile"].forEach((k) => { if (o[k] !== undefined) S[k] = o[k]; });
+      ["days", "videos", "links", "notes", "rewards", "profile", "note"].forEach((k) => { if (o[k] !== undefined) S[k] = o[k]; });
       S.planTs = ts;
       return true;
     }
