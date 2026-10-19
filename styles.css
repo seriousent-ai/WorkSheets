@@ -399,3 +399,18 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .switch.on { background: var(--green); }
 .switch.on i { transform: translateX(20px); }
 @media (prefers-reduced-motion: reduce) { .switch, .switch i { transition: none; } }
+
+/* ---- phase 5: note, challenge, check-in ---- */
+.pnote, .chal { display: flex; gap: 12px; align-items: center; background: var(--card); border-radius: 14px; padding: 12px 14px; margin: 0 0 12px; }
+.pnote { background: color-mix(in srgb, var(--orange) 14%, var(--card)); }
+.pnote b, .chal b { display: block; font-size: 15px; }
+.pnote p { margin: 2px 0 0; font-size: 16px; overflow-wrap: anywhere; }
+.chal span { display: block; font-size: 14px; color: var(--label2); overflow-wrap: anywhere; }
+.chal.done span { text-decoration: line-through; }
+.chips { display: flex; gap: 6px; flex: none; }
+.chip { min-width: 56px; min-height: 36px; padding: 6px 12px; border-radius: 18px; background: var(--fill); color: var(--label); font-size: 15px; font-weight: 500; }
+.chip.on { background: var(--blue); color: #fff; }
+.stepper { display: flex; align-items: center; gap: 4px; flex: none; }
+.stepper b { min-width: 44px; text-align: center; font-size: 18px; font-variant-numeric: tabular-nums; }
+.stepper button { width: 44px; height: 44px; border-radius: 50%; background: var(--fill); font-size: 22px; }
+.detail.warn { color: var(--red-text); }
