@@ -64,7 +64,7 @@ const idb = {
 };
 
 /* ---------- state ---------- */
-const ui = { card: false, chartRange: "4w", chartSpot: null, film: null, welcome: null, summary: null, tab: "today", day: todayIdx(), openVideo: null, weekOffset: 0, guided: null, openBlocks: {}, form: null };
+const ui = { overview: false, card: false, chartRange: "4w", chartSpot: null, film: null, welcome: null, summary: null, tab: "today", day: todayIdx(), openVideo: null, weekOffset: 0, guided: null, openBlocks: {}, form: null };
 const dateOf = (i) => dateKey(addDays(mondayOf(new Date()), i));
 const logOf = (date) => (S.logs[date] ||= { done: {} });
 
@@ -793,6 +793,7 @@ function viewLog() {
   return `
   <h1 class="large">Progress</h1>
   <div class="nav-row"><button data-a="wkPrev">‹ Earlier</button><span class="week-title">${isNow ? "This week" : "Week of " + fmtShort(mon)}</span><button data-a="wkNext" ${isNow ? 'disabled style="opacity:.3"' : ""}>Later ›</button></div>
+  <button class="btn" style="margin:0 0 12px" data-a="ovrOpen">Progress overview</button>
   <div class="cols"><div>
   <h2 class="section">Goals <button data-a="editWeekGoals">Edit</button></h2>
   <div class="group">
@@ -831,6 +832,7 @@ function viewGuide() {
   ${brand()}
   <h1 class="large">Guide</h1>
   <p class="sub">${esc(p.subtitle)}</p>
+  <button class="btn" style="margin:12px 0 0" data-a="ovrOpen">Progress overview</button>
   <div class="why"><b>My Why</b><p>${esc(p.why)}</p></div>
   <div class="group" style="margin-top:12px"><div class="row"><div class="grow"><div class="detail">Priority</div><div class="title">${esc(p.priority)}</div></div></div>
     <div class="row tap" data-a="editProfile"><div class="grow">Edit profile and My Why</div><span class="chev">›</span></div>
@@ -963,6 +965,79 @@ function renderCard() {
     <div class="g-actions"><button class="g-primary" data-a="cardShare">Share card</button></div></div>`);
 }
 
+/* ---------- progress overview (for a parent) ---------- */
+function ago(ts) {
+  if (!ts) return "";
+  const m = Math.round((Date.now() - ts) / 60000);
+  if (m < 1) return "just now";
+  if (m < 60) return m + " min ago";
+  const h = Math.round(m / 60);
+  if (h < 24) return h + (h === 1 ? " hour ago" : " hours ago");
+  const d = Math.round(h / 24);
+  return d + (d === 1 ? " day ago" : " days ago");
+}
+function overviewHtml() {
+  const first = firstName(S.profile.name);
+  const mon = mondayOf(new Date()), wk = dateKey(mon);
+  const total = completeDates().length, lv = levelInfo(total), xp = xpTotal(), { r, ovr } = ratings();
+  const days = S.days.slice(0, 7).map((d, i) => { const date = dateKey(addDays(mon, i)); const l = S.logs[date] || { done: {} }; return { d, i, date, l, c: d.blocks.filter((b) => l.done && l.done[b.id]).length }; });
+  const sessions = days.filter((x) => x.l.complete).length, goal = Math.min(6, S.days.length);
+  const load = weekLoad(wk);
+  const sleeps = days.map((x) => x.l.sleep).filter(Boolean), avgSleep = sleeps.length ? Math.round((sleeps.reduce((p, q) => p + q, 0) / sleeps.length) * 10) / 10 : null;
+  const sore = days.filter((x) => x.l.body === 3).length;
+  const lastTs = Math.max(0, ...Object.values(S.logs).map((l) => l._ts || 0));
+  const todayI = todayIdx();
+  const flags = [];
+  if (sore) flags.push(`${sore} sore day${sore > 1 ? "s" : ""} this week. Check in about how his body feels.`);
+  if (avgSleep && avgSleep < 9) flags.push(`Average sleep is ${avgSleep} hours, under the 9 to 12 a 12-year-old needs.`);
+  if (load.hours >= 10) flags.push(`${load.hours.toFixed(1)} hours of basketball this week, over the plan's 10-hour ceiling.`);
+  else if (load.hours >= 8) flags.push(`${load.hours.toFixed(1)} hours of basketball this week, close to the 10-hour ceiling.`);
+  if (todayI >= 3 && sessions === 0) flags.push(`No sessions finished yet this week.`);
+  const shots = shotAgg("4w");
+  let M = 0, X = 0; Object.values(shots).forEach((o) => { M += o.m; X += o.x; });
+  const w = S.weekly[wk] || {};
+  const films = Object.keys(S.logs).filter((k) => S.logs[k].film).sort();
+  const lastFilm = films.length ? S.logs[films[films.length - 1]].film : null;
+  const notes = Object.keys(S.logs).sort().reverse().map((k) => ({ k, l: S.logs[k] })).filter((x) => x.l.learned || x.l.improve || x.l.challenge).slice(0, 5);
+  const synced = Sync.code
+    ? `Synced ${Sync.lastOk ? ago(Sync.lastOk) : "when the app is online"}. Latest activity from ${first}'s phone: ${lastTs ? ago(lastTs) : "none yet"}.`
+    : `This phone is not connected to ${first}'s phone yet. In Guide, join with his family code to see his progress here.`;
+  const faces = { 1: "Wiped out", 2: "Tired", 3: "Okay", 4: "Good", 5: "Great" };
+  return `<header class="ovr-top"><button data-a="ovrClose">Done</button><b>${esc(first)}'s progress</b><button data-a="ovrRefresh">Refresh</button></header>
+  <p class="ovr-sync ${Sync.code ? "" : "warn"}">${esc(synced)}</p>
+  <div class="hero"><div class="herorow"><div class="grow"><div class="eyebrow">This week</div><div class="big">${sessions} of ${goal} sessions</div><div class="detail">${esc(lv.cur[1])} · Overall ${ovr} · ${xp} XP · ${weekStreak()} week streak</div></div>${badge(lv.cur[2], "lg")}</div>
+    <div class="progress"><i style="width:${Math.min(100, (sessions / goal) * 100)}%"></i></div></div>
+  ${flags.length ? `<div class="ovr-flags"><b>Worth a conversation</b>${flags.map((f) => `<p>${esc(f)}</p>`).join("")}</div>` : `<div class="ovr-ok"><b>Looking good</b><p>Nothing needs attention this week.</p></div>`}
+  <h2 class="section">Day by day</h2>
+  <div class="group">${days.map(({ d, i, l, c }) => {
+    const future = i > todayI;
+    const status = l.complete ? `<span class="pill green">Done</span>` : c ? `<span class="pill">${c}/${d.blocks.length}</span>` : future ? `<span class="pill">Ahead</span>` : l.team ? `<span class="pill">Team</span>` : `<span class="pill">–</span>`;
+    const bits = [l.body ? ["", "Fresh", "OK", "Sore"][l.body] : "", l.sleep ? l.sleep + "h sleep" : "", l.energy ? faces[l.energy] : "", l.team ? l.team + " min team" : "", l.film ? `Film ${l.film.score}/5` : ""].filter(Boolean);
+    return `<div class="row ${i === todayI ? "current" : ""}"><div class="grow"><div class="title strong">${esc(d.name)} <span class="detail" style="display:inline">${esc(d.theme)}</span></div><div class="detail ${l.body === 3 ? "warn" : ""}">${bits.length ? esc(bits.join(" · ")) : future ? "Not yet" : "No check-in"}</div></div>${status}</div>`;
+  }).join("")}</div>
+  <h2 class="section">The numbers</h2>
+  <div class="group">
+    <div class="row"><div class="grow">Organized basketball</div><div class="tval">${load.hours.toFixed(1)}<small> of 10 h</small></div></div>
+    <div class="row"><div class="grow">Average sleep</div><div class="tval">${avgSleep ? avgSleep : "–"}<small>${avgSleep ? " h" : ""}</small></div></div>
+    <div class="row"><div class="grow">Shots made, last 4 weeks</div><div class="tval">${M + X ? Math.round((M / (M + X)) * 100) + "%" : "–"}<small>${M + X ? ` ${M}/${M + X}` : ""}</small></div></div>
+    <div class="row"><div class="grow">Weekly challenge</div><div class="detail">${w.challenge ? esc(w.challenge.text) + (w.challenge.done ? " (done)" : " (in progress)") : "Not chosen"}</div></div>
+    <div class="row"><div class="grow">Latest film study</div><div class="tval">${lastFilm ? lastFilm.score : "–"}<small>${lastFilm ? " of 5" : ""}</small></div></div>
+  </div>
+  <h2 class="section">Skills</h2>
+  <div class="group">${SKILLS.map(([k, name, ic]) => { const sl = skillLevel(skillPoints()[k] || 0); return `<div class="row">${badge(ic)}<div class="grow"><div class="title strong">${name}</div><div class="progress" style="margin-top:6px"><i style="width:${sl.pct}%"></i></div></div><span class="tval" style="font-size:18px">${r[k]}</span></div>`; }).join("")}</div>
+  <h2 class="section">In his words</h2>
+  <div class="group">${notes.map(({ k, l }) => `<div class="row"><div class="grow"><div class="detail">${fmtShort(parseKey(k))}</div>${l.improve ? `<div class="title">Improved: ${esc(l.improve)}</div>` : ""}${l.challenge ? `<div class="title">Challenge: ${esc(l.challenge)}</div>` : ""}${l.learned ? `<div class="title">Learned: ${esc(l.learned)}</div>` : ""}</div></div>`).join("") || '<div class="empty">Notes he writes after training will show up here.</div>'}
+  ${w.improved || w.hard || w.adjust ? `<div class="row"><div class="grow"><div class="detail">This week's reflection</div>${w.improved ? `<div class="title">Improved: ${esc(w.improved)}</div>` : ""}${w.hard ? `<div class="title">Hard: ${esc(w.hard)}</div>` : ""}${w.adjust ? `<div class="title">Next week: ${esc(w.adjust)}</div>` : ""}</div></div>` : ""}</div>
+  <button class="btn" data-a="shareReport">Share this week's report</button>
+  <button class="btn gray" data-a="noteWrite">Write a note to ${esc(first)}</button>
+  <p class="small">Everything on this screen comes from what ${esc(first)} checks off and logs in the app.</p>`;
+}
+function renderOverview() {
+  const el = $("#overview");
+  if (!ui.overview) { el.innerHTML = ""; return; }
+  paint(el, `<div class="ovr" role="dialog" aria-label="Progress overview">${overviewHtml()}</div>`);
+}
+
 /* ---------- first-run welcome ---------- */
 function renderWelcome() {
   const el = $("#welcome");
@@ -997,7 +1072,8 @@ function render() {
   renderWelcome();
   renderFilm();
   renderCard();
-  document.body.classList.toggle("noscroll", !!(ui.guided || ui.summary || ui.welcome || ui.film || ui.card));
+  renderOverview();
+  document.body.classList.toggle("noscroll", !!(ui.guided || ui.summary || ui.welcome || ui.film || ui.card || ui.overview));
   document.querySelectorAll("video[data-file]").forEach(async (el) => {
     try { const b = await idb.get(el.dataset.file); if (b) el.src = URL.createObjectURL(b); } catch (e) {}
   });
@@ -1436,6 +1512,9 @@ const ACTIONS = {
     required: ["t"],
     save(f) { if (!/^([01]?\d|2[0-3]):[0-5]\d$/.test(f.t)) { toast("Use a time like 16:00."); return false; } Prefs.remindTime = f.t; Prefs.save(); scheduleReminder(); },
   }),
+  ovrOpen: () => { ui.overview = true; Sync.sync(); },
+  ovrClose: () => { ui.overview = false; },
+  ovrRefresh: () => { Sync.sync(); toast("Checking for new activity…"); },
   cardOpen: () => { ui.card = true; },
   cardClose: () => { ui.card = false; },
   cardShare: async () => {
