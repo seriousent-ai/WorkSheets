@@ -1,6 +1,6 @@
 {
-  "name": "Basketball Training Plan",
-  "short_name": "Training",
+  "name": "Rens Basketball Training",
+  "short_name": "Rens Training",
   "description": "Weekly basketball training plan with sessions, videos and a training log.",
   "start_url": "./index.html",
   "scope": "./",
