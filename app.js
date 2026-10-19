@@ -539,8 +539,8 @@ function viewToday() {
   const startLabel = doneN > 0 ? "Continue session" : "Start session";
   return `
   ${brand()}
-  <h1 class="greet">${greet}, ${esc(firstName(S.profile.name))}</h1>
-  <p class="sub tight">${esc(msg)}</p>
+  <h1 class="greet">${greet}, ${esc(Prefs.parent ? firstName(Prefs.parent) : firstName(S.profile.name))}</h1>
+  <p class="sub tight">${Prefs.parent ? esc("Family view. You are following " + firstName(S.profile.name) + "'s training.") : esc(msg)}</p>
   ${noteCard()}
   <div class="seg">${seg}</div>
   <div class="cols"><div>
@@ -850,6 +850,8 @@ function viewGuide() {
     <div class="row tap" data-a="syncCreate"><div class="grow"><div class="title strong">Create a family code</div><div class="detail">Start here on one device, then join from the others.</div></div><span class="chev">›</span></div>
     <div class="row tap" data-a="syncJoin"><div class="grow"><div class="title strong">Join with a family code</div><div class="detail">Enter the code from your other device.</div></div><span class="chev">›</span></div>`}
   </div>
+  <h2 class="section">This device</h2>
+  <div class="group"><div class="row tap" data-a="parentSet"><div class="grow"><div class="title strong">Family view</div><div class="detail">${Prefs.parent ? "On for " + esc(Prefs.parent) + ". Greets you by name, opens the progress overview, and blocks taps that would log training for " + esc(firstName(p.name)) + "." : "For a parent or sibling. Put your own name on this phone. It only changes this device, not " + esc(firstName(p.name)) + "'s."}</div></div><span class="chev">›</span></div></div>
   <h2 class="section">Sound, voice and haptics</h2>
   <div class="group">${[["sound", "Sounds", "A swish on each finished block and a chime on level-ups."], ["voice", "Voice cues", "Spoken start, halfway, one minute left and time up."], ["haptic", "Vibration", "Short buzzes when you tap or a timer ends."]].map(([k, t, d]) => `<div class="row"><div class="grow"><div class="title strong">${t}</div><div class="detail">${d}</div></div><button class="switch ${Prefs[k] ? "on" : ""}" role="switch" aria-checked="${Prefs[k]}" aria-label="${t}" data-a="prefToggle" data-k="${k}"><i></i></button></div>`).join("")}</div>
   <h2 class="section">Reminders</h2>
@@ -1086,9 +1088,9 @@ function toast(msg) {
   setTimeout(() => t.remove(), 2400);
 }
 const Prefs = {
-  sound: true, voice: true, haptic: true, remind: false, remindTime: "16:00", calTime: "16:00", calAlarm: "30",
+  sound: true, voice: true, haptic: true, remind: false, remindTime: "16:00", calTime: "16:00", calAlarm: "30", parent: "",
   load() { try { Object.assign(this, JSON.parse(localStorage.getItem("tristan-prefs")) || {}); } catch (e) {} },
-  save() { try { localStorage.setItem("tristan-prefs", JSON.stringify({ sound: this.sound, voice: this.voice, haptic: this.haptic, remind: this.remind, remindTime: this.remindTime, calTime: this.calTime, calAlarm: this.calAlarm })); } catch (e) {} },
+  save() { try { localStorage.setItem("tristan-prefs", JSON.stringify({ sound: this.sound, voice: this.voice, haptic: this.haptic, remind: this.remind, remindTime: this.remindTime, calTime: this.calTime, calAlarm: this.calAlarm, parent: this.parent })); } catch (e) {} },
 };
 Prefs.load();
 const buzz = (p) => { if (Prefs.haptic && navigator.vibrate) navigator.vibrate(p); };
@@ -1429,6 +1431,7 @@ function download(name, text) {
   a.download = name; document.body.appendChild(a); a.click(); a.remove();
 }
 let confirmReset = false;
+const PARENT_BLOCKED = new Set(["toggle", "gStart", "challengeDone", "bodySet", "sleepAdj", "energy", "watchMark", "filmStart", "editReflect", "editSkill", "editLogDay"]);
 const ACTIONS = {
   tab: (d) => { ui.tab = d.t; window.scrollTo(0, 0); },
   day: (d) => { ui.day = +d.i; },
@@ -1460,7 +1463,7 @@ const ACTIONS = {
   noteSeen: () => { try { localStorage.setItem("tristan-note-seen", String(S.note && S.note.ts)); } catch (e) {} },
   noteWrite: () => openForm({
     title: "Note for " + firstName(S.profile.name),
-    fields: [{ k: "from", label: "From", value: (S.note && S.note.from) || "", ph: "Dad, Mom, Coach" }, { k: "text", label: "Note (leave empty to remove it)", type: "textarea", value: (S.note && S.note.text) || "", ph: "Proud of how you worked on your left hand." }],
+    fields: [{ k: "from", label: "From", value: (S.note && S.note.from) || Prefs.parent || "", ph: "Dad, Mom, Coach" }, { k: "text", label: "Note (leave empty to remove it)", type: "textarea", value: (S.note && S.note.text) || "", ph: "Proud of how you worked on your left hand." }],
     save(f) { S.note = f.text ? { text: f.text, from: f.from, ts: Date.now() } : null; },
   }),
   challengePick: () => {
@@ -1511,6 +1514,14 @@ const ACTIONS = {
     fields: [{ k: "t", label: "Time (24-hour, like 16:00)", value: Prefs.remindTime }],
     required: ["t"],
     save(f) { if (!/^([01]?\d|2[0-3]):[0-5]\d$/.test(f.t)) { toast("Use a time like 16:00."); return false; } Prefs.remindTime = f.t; Prefs.save(); scheduleReminder(); },
+  }),
+  parentSet: () => openForm({
+    title: "Family view on this device",
+    fields: [{ k: "name", label: "Your name (leave empty to turn off)", value: Prefs.parent, ph: "Your first name, like Jalen" }],
+    save(f) {
+      Prefs.parent = f.name.trim(); Prefs.save();
+      if (Prefs.parent) { ui.tab = "today"; ui.overview = true; Sync.sync(); toast("Family view is on for " + Prefs.parent + "."); } else toast("Family view is off.");
+    },
   }),
   ovrOpen: () => { ui.overview = true; Sync.sync(); },
   ovrClose: () => { ui.overview = false; },
@@ -1643,10 +1654,12 @@ document.addEventListener("click", async (e) => {
     if (!delArmed) { delArmed = true; t.textContent = "Tap again to confirm"; setTimeout(() => { delArmed = false; if (t.isConnected) t.textContent = ui.form.delLabel || "Delete"; }, 3000); return; }
     delArmed = false; await ui.form.del(); closeForm(); persist(); render(); return;
   }
+  if (Prefs.parent && PARENT_BLOCKED.has(a)) { toast("Family view. This would log training for " + firstName(S.profile.name) + "."); return; }
   if (ACTIONS[a]) { ACTIONS[a](t.dataset); persist(); if (!ui.form) render(); }
 });
 
 if (!S.profile.onboarded && Object.keys(S.logs).length === 0 && !Sync.code) ui.welcome = { step: 1, name: S.profile.name, why: S.profile.why };
+if (Prefs.parent) ui.overview = true;
 render();
 scheduleReminder();
 Sync.start();
