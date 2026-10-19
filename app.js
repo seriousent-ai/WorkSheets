@@ -61,27 +61,8 @@ const idb = {
   del(id) { return this.tx("readwrite", (s) => s.delete(id)); },
 };
 
-/* ---------- parent lock (device-local, optional) ---------- */
-const Lock = {
-  key: "tristan-lock", hash: null, until: 0,
-  load() { try { const o = JSON.parse(localStorage.getItem(this.key)); if (o && o.hash) this.hash = o.hash; } catch (e) {} },
-  save() { try { if (this.hash) localStorage.setItem(this.key, JSON.stringify({ hash: this.hash })); else localStorage.removeItem(this.key); } catch (e) {} },
-  get on() { return !!this.hash; },
-  get open() { return !this.hash || Date.now() < this.until; },
-  async digest(pin) {
-    const s = "tristan-pin:" + pin;
-    if (window.crypto && crypto.subtle) { const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)); return [...new Uint8Array(d)].map((x) => x.toString(16).padStart(2, "0")).join(""); }
-    return Sync.hash(s);
-  },
-  async check(pin) { return (await this.digest(pin)) === this.hash; },
-  async set(pin) { this.hash = await this.digest(pin); this.until = 0; this.save(); },
-  clear() { this.hash = null; this.until = 0; this.save(); },
-};
-Lock.load();
-const EDIT_ACTIONS = new Set(["editDay", "addBlock", "editBlock", "addVideo", "editVideo", "addLink", "editLink", "addReward", "editReward", "addNote", "editNote", "editProfile", "import", "reset", "syncCreate", "syncJoin", "syncOff", "parentSet", "parentRemove"]);
-
 /* ---------- state ---------- */
-const ui = { welcome: null, pin: null, summary: null, tab: "today", day: todayIdx(), openVideo: null, weekOffset: 0, guided: null, openBlocks: {}, form: null };
+const ui = { welcome: null, summary: null, tab: "today", day: todayIdx(), openVideo: null, weekOffset: 0, guided: null, openBlocks: {}, form: null };
 const dateOf = (i) => dateKey(addDays(mondayOf(new Date()), i));
 const logOf = (date) => (S.logs[date] ||= { done: {} });
 
@@ -516,6 +497,7 @@ function viewLog() {
   return `
   <h1 class="large">Progress</h1>
   <div class="nav-row"><button data-a="wkPrev">‹ Earlier</button><span class="week-title">${isNow ? "This week" : "Week of " + fmtShort(mon)}</span><button data-a="wkNext" ${isNow ? 'disabled style="opacity:.3"' : ""}>Later ›</button></div>
+  <div class="cols"><div>
   <h2 class="section">Goals <button data-a="editWeekGoals">Edit</button></h2>
   <div class="group">
     <div class="row"><div class="grow"><div class="detail">Coach's priority</div><div class="title">${esc(w.priority) || "Tap Edit to set one"}</div></div></div>
@@ -528,17 +510,19 @@ function viewLog() {
     <div class="row"><div class="grow">Free throws</div><div class="detail">${val("ft", " / 10")}${pb("ft")}</div></div>
     <div class="row"><div class="grow">Cone course (lost balls)</div><div class="detail">${val("lost")}${pb("lost", false)}</div></div>
     <div class="row"><div class="grow">Game decisions (good reads)</div><div class="detail">${val("good")}${pb("good")}</div></div></div>
-  ${trendsHtml()}
   <h2 class="section">Weekly reflection <button data-a="editReflect">Edit</button></h2>
   <div class="group">${[["improved", "What improved?"], ["hard", "What was difficult?"], ["fun", "What was fun?"], ["adjust", "Next week's one adjustment"]].map(([k, l]) => `<div class="row"><div class="grow"><div class="detail">${l}</div><div class="title">${esc(w[k]) || "–"}</div></div></div>`).join("")}
     <div class="row"><div class="grow">Organized basketball this week</div><div class="detail">${val("hours", " hrs")}</div></div>
     <div class="row"><div class="grow">Physical rest day</div><div class="detail">${val("rest")}</div></div></div>
   <button class="btn gray" data-a="shareReport">Share weekly report</button>
+  </div><div>
+  ${trendsHtml()}
   <h2 class="section">Rewards <button data-a="addReward">Add</button></h2>
-  <div class="group">${sortedRewards().map((r) => { const got = xpTotal() >= r.xp; return `<div class="row tap" data-a="editReward" data-id="${r.id}" style="opacity:${got ? 1 : 0.55}">${badge(got ? "gift" : "lock", got ? "" : "off")}<div class="grow"><div class="title strong">${esc(r.title)}</div><div class="detail">${r.xp} XP${r.note ? " · " + esc(r.note) : ""}</div></div>${got ? '<span class="pill blue">Unlocked</span>' : ""}</div>`; }).join("") || '<div class="empty">No rewards yet. Tap Add.</div>'}</div>
+  <div class="group">${sortedRewards().map((r) => { const got = xpTotal() >= r.xp; return `<div class="row tap ${got ? "" : "locked"}" data-a="editReward" data-id="${r.id}">${badge(got ? "gift" : "lock", got ? "" : "off")}<div class="grow"><div class="title strong">${esc(r.title)}</div><div class="detail">${r.xp} XP${r.note ? " · " + esc(r.note) : ""}</div></div>${got ? '<span class="pill blue">Unlocked</span>' : ""}</div>`; }).join("") || '<div class="empty">No rewards yet. Tap Add.</div>'}</div>
   <p class="small">Earn XP: +10 per finished block, +50 per finished session, +5 per video watched, +25 for a skill check, plus small bonuses for notes and reflections.</p>
   <h2 class="section">Achievements</h2>
-  <div class="group">${ach.map(([e, t, d, got]) => `<div class="row" style="opacity:${got ? 1 : 0.4}">${badge(e, got ? "" : "off")}<div class="grow"><div class="title strong">${t}</div><div class="detail">${d}</div></div>${got ? '<span class="pill blue">Earned</span>' : ""}</div>`).join("")}</div>`;
+  <div class="group">${ach.map(([e, t, d, got]) => `<div class="row ${got ? "" : "locked"}">${badge(e, got ? "" : "off")}<div class="grow"><div class="title strong">${t}</div><div class="detail">${d}</div></div>${got ? '<span class="pill blue">Earned</span>' : ""}</div>`).join("")}</div>
+  </div></div>`;
 }
 
 function viewGuide() {
@@ -558,24 +542,16 @@ function viewGuide() {
     <div class="row"><div class="grow"><div class="detail">Family code</div><div class="title strong" style="font-family:ui-monospace,Menlo,monospace;font-size:17px;overflow-wrap:anywhere;user-select:all">${esc(Sync.pretty(Sync.code))}</div><div class="detail" data-sync-status>${esc(Sync.statusText())}</div></div></div>
     <div class="row tap" data-a="syncShare"><div class="grow">Share code</div><span class="chev">›</span></div>
     <div class="row tap" data-a="syncNow"><div class="grow">Sync now</div><span class="chev">›</span></div>
-    <div class="row tap" data-a="syncOff"><div class="grow" style="color:var(--red)">Turn off sync on this device</div></div>` : `
+    <div class="row tap" data-a="syncOff"><div class="grow" style="color:var(--red-text)">Turn off sync on this device</div></div>` : `
     <div class="row tap" data-a="syncCreate"><div class="grow"><div class="title strong">Create a family code</div><div class="detail">Start here on one device, then join from the others.</div></div><span class="chev">›</span></div>
     <div class="row tap" data-a="syncJoin"><div class="grow"><div class="title strong">Join with a family code</div><div class="detail">Enter the code from your other device.</div></div><span class="chev">›</span></div>`}
-  </div>
-  <h2 class="section">Parent lock (optional)</h2>
-  <div class="group">
-    ${Lock.on ? `<div class="row"><div class="grow"><div class="title strong">${Lock.open ? "Unlocked for a few minutes" : "Locked on this device"}</div><div class="detail">Changing the plan, videos, rewards, notes, profile, backups and sync needs the passcode. Checking off blocks and logging stay open.</div></div></div>
-    ${Lock.open ? `<div class="row tap" data-a="parentLockNow"><div class="grow">Lock now</div><span class="chev">›</span></div>` : ""}
-    <div class="row tap" data-a="parentSet"><div class="grow">Change passcode</div><span class="chev">›</span></div>
-    <div class="row tap" data-a="parentRemove"><div class="grow" style="color:var(--red)">Remove passcode</div></div>` : `
-    <div class="row tap" data-a="parentSet"><div class="grow"><div class="title strong">Set a parent passcode</div><div class="detail">Use this on Tristan's phone so only you can change the plan. It is a speed bump for kids, not strong security.</div></div><span class="chev">›</span></div>`}
   </div>
   <h2 class="section">Your data</h2>
   <div class="group">
     <div class="row tap" data-a="share"><div class="grow">Send backup (AirDrop, Messages)</div><span class="chev">›</span></div>
     <div class="row tap" data-a="export"><div class="grow">Export backup</div><span class="chev">›</span></div>
     <div class="row tap" data-a="import"><div class="grow">Import backup</div><span class="chev">›</span></div>
-    <div class="row tap" data-a="reset"><div class="grow" style="color:var(--red)">Reset to original plan</div></div></div>
+    <div class="row tap" data-a="reset"><div class="grow" style="color:var(--red-text)">Reset to original plan</div></div></div>
   <p class="small">Everything is saved on this device. Uploaded video clips stay on this device and are not part of the backup file. Each device keeps its own copy. To move progress or changes between devices, use Send backup on one and Import backup on the other. Install: in Safari tap Share, then Add to Home Screen.</p>`;
 }
 
@@ -642,27 +618,7 @@ function renderSummary() {
     <button class="g-primary" data-a="sumClose">Nice work</button></div>`;
 }
 
-function renderPin() {
-  const el = $("#pin");
-  const p = ui.pin;
-  if (!p) { el.innerHTML = ""; return; }
-  el.innerHTML = `<div class="scrim center"><div class="pinbox" role="dialog" aria-label="Parent passcode">
-    <b>Parent passcode</b><p>${p.forgot ? "Enter your family code to remove the passcode." : "Ask a parent to enter the 4-digit passcode."}</p>
-    ${p.forgot ? `<input id="pin-recover" type="text" autocapitalize="off" autocomplete="off" placeholder="xxxx-xxxx-xxxx-xxxx-xxxx"><button class="btn" data-a="pinRecover">Remove passcode</button>`
-      : `<input id="pin-input" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="••••">`}
-    <div class="pin-err" role="alert">${esc(p.error)}</div>
-    <div class="pin-links"><button data-a="pinCancel">Cancel</button><button data-a="pinForgot">${p.forgot ? "Back" : "Forgot passcode?"}</button></div></div></div>`;
-  const inp = $("#pin-input") || $("#pin-recover");
-  if (inp) setTimeout(() => inp.focus(), 50);
-}
-document.addEventListener("input", async (e) => {
-  if (e.target.id === "pin-input" && e.target.value.length === 4 && ui.pin) {
-    if (await Lock.check(e.target.value)) {
-      Lock.until = Date.now() + 10 * 60 * 1000;
-      const p = ui.pin.pending; ui.pin = null; renderPin();
-      ACTIONS[p.a](p.data); persist(); if (!ui.form) render();
-    } else { ui.pin.error = "Wrong passcode. Try again."; e.target.value = ""; renderPin(); if (navigator.vibrate) navigator.vibrate(120); }
-  }
+document.addEventListener("input", (e) => {
   if (ui.welcome && e.target.id === "w-name") ui.welcome.name = e.target.value;
   if (ui.welcome && e.target.id === "w-why") ui.welcome.why = e.target.value;
 });
@@ -692,15 +648,14 @@ const finishWelcome = () => { S.profile.onboarded = true; ui.welcome = null; };
 /* ---------- render ---------- */
 function render() {
   const y = window.scrollY;
-  $("#app").className = ui.tab === "today" ? "wide" : "";
+  $("#app").className = ui.tab === "today" || ui.tab === "log" ? "wide" : "";
   $("#app").innerHTML = { today: viewToday, week: viewWeek, videos: viewVideos, log: viewLog, guide: viewGuide }[ui.tab]();
   $("#tabs").innerHTML = TABS.map(([k, l]) => `<button class="${ui.tab === k ? "on" : ""}" data-a="tab" data-t="${k}"><svg viewBox="0 0 24 24">${ICONS[k]}</svg>${l}</button>`).join("");
   window.scrollTo(0, y);
   renderGuided();
   renderSummary();
   renderWelcome();
-  renderPin();
-  document.body.classList.toggle("noscroll", !!(ui.guided || ui.summary || ui.welcome || ui.pin));
+  document.body.classList.toggle("noscroll", !!(ui.guided || ui.summary || ui.welcome));
   document.querySelectorAll("video[data-file]").forEach(async (el) => {
     try { const b = await idb.get(el.dataset.file); if (b) el.src = URL.createObjectURL(b); } catch (e) {}
   });
@@ -741,7 +696,18 @@ async function keepAwake(on) {
     else if (wake) { await wake.release(); wake = null; }
   } catch (e) {}
 }
-setInterval(() => {
+let lastDay = dateKey(new Date());
+function checkNewDay() {
+  const k = dateKey(new Date());
+  if (k === lastDay) return;
+  lastDay = k;
+  ui.day = todayIdx();
+  ui.weekOffset = 0;
+  if (!ui.form && !ui.guided) render();
+}
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { checkNewDay(); gTick(); } });
+setInterval(checkNewDay, 60000);
+function gTick() {
   const g = ui.guided;
   if (!g || !g.end) return;
   const left = Math.ceil((g.end - Date.now()) / 1000);
@@ -754,7 +720,8 @@ setInterval(() => {
   g.remaining = left;
   const t = $("[data-gtime]"); if (t) t.textContent = fmtTime(left);
   const r = $("[data-gring]"); if (r) r.setAttribute("stroke-dashoffset", (G_C * (1 - (g.total - left) / g.total)).toFixed(1));
-}, 500);
+}
+setInterval(gTick, 500);
 
 /* ---------- forms ---------- */
 function fieldHtml(f) {
@@ -763,7 +730,6 @@ function fieldHtml(f) {
   if (f.type === "textarea") return `<div class="field">${lab}<textarea id="f-${f.k}" name="${f.k}" placeholder="${esc(f.ph || "")}">${esc(v)}</textarea></div>`;
   if (f.type === "select") return `<div class="field">${lab}<select id="f-${f.k}" name="${f.k}">${f.opts.map(([ov, ol]) => `<option value="${esc(ov)}" ${String(ov) === String(v) ? "selected" : ""}>${esc(ol)}</option>`).join("")}</select></div>`;
   if (f.type === "checks") return `<div class="field"><label>${esc(f.label)}</label><div class="group checks">${f.opts.map(([ov, ol]) => `<label class="row"><span class="grow">${esc(ol)}</span><input type="checkbox" name="${f.k}" value="${esc(ov)}" ${(v || []).includes(ov) ? "checked" : ""}></label>`).join("")}</div></div>`;
-  if (f.type === "pin") return `<div class="field">${lab}<input id="f-${f.k}" name="${f.k}" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="4 digits"></div>`;
   if (f.type === "file") return `<div class="field">${lab}<input id="f-${f.k}" type="file" name="${f.k}" accept="${f.accept || "video/*"}"></div>`;
   const t = f.type === "number" ? 'type="text" inputmode="decimal"' : f.type === "url" ? 'type="url" inputmode="url" autocapitalize="off"' : 'type="text"';
   return `<div class="field">${lab}<input id="f-${f.k}" name="${f.k}" ${t} value="${esc(v)}" placeholder="${esc(f.ph || "")}"></div>`;
@@ -987,11 +953,11 @@ function toggleBlock(id) {
   if (gain > 0) {
     xpPop("+" + gain + " XP");
     if (navigator.vibrate) navigator.vibrate(15);
-    if (!(lg.complete && !wasComplete)) toast(CHEERS[Math.floor(Math.random() * CHEERS.length)]);
+    if (!(lg.complete && !wasComplete) && !ui.guided) toast(CHEERS[Math.floor(Math.random() * CHEERS.length)]);
   }
   const crossed = S.rewards.filter((r) => r.xp > before && r.xp <= xpTotal());
   if (lg.complete && !wasComplete) { celebrate(); ui.summary = buildSummary(dateOf(ui.day), crossed); }
-  else if (crossed.length) setTimeout(() => { celebrate(); toast("Reward unlocked: " + crossed[0].title); }, 1200);
+  else if (crossed.length) setTimeout(() => { celebrate(); toast("Reward unlocked: " + crossed.map((r) => r.title).join(", ")); }, 1200);
 }
 function download(name, text) {
   const a = document.createElement("a");
@@ -1008,18 +974,6 @@ const ACTIONS = {
   wCreate: async () => { try { ui.welcome.code = await Sync.create(); render(); } catch (e) { toast("Could not reach the sync service."); } },
   wJoin: () => ACTIONS.syncJoin(),
   wFinish: () => finishWelcome(),
-  parentSet: () => openForm({
-    title: Lock.on ? "Change passcode" : "Set passcode",
-    fields: [{ k: "pin", label: "New passcode", type: "pin" }, { k: "pin2", label: "Type it again", type: "pin" }],
-    required: ["pin", "pin2"],
-    async save(f) {
-      if (!/^\d{4}$/.test(f.pin)) { toast("Use exactly 4 digits."); return false; }
-      if (f.pin !== f.pin2) { toast("The two passcodes do not match."); return false; }
-      await Lock.set(f.pin); toast("Passcode set. This device is now locked.");
-    },
-  }),
-  parentRemove: () => { Lock.clear(); toast("Passcode removed."); },
-  parentLockNow: () => { Lock.until = 0; toast("Locked."); },
   shareReport: async () => {
     const r = reportData();
     const text = reportText(r);
@@ -1143,15 +1097,6 @@ document.addEventListener("click", async (e) => {
   if (a === "del") {
     if (!delArmed) { delArmed = true; t.textContent = "Tap again to confirm"; setTimeout(() => { delArmed = false; if (t.isConnected) t.textContent = ui.form.delLabel || "Delete"; }, 3000); return; }
     delArmed = false; await ui.form.del(); closeForm(); persist(); render(); return;
-  }
-  if (EDIT_ACTIONS.has(a) && !Lock.open) { ui.pin = { pending: { a, data: { ...t.dataset } }, error: "", forgot: false }; render(); return; }
-  if (a === "pinCancel") { ui.pin = null; render(); return; }
-  if (a === "pinForgot") { ui.pin.forgot = !ui.pin.forgot; ui.pin.error = ""; render(); return; }
-  if (a === "pinRecover") {
-    const v = Sync.normalize($("#pin-recover").value);
-    if (Sync.code && v === Sync.code) { Lock.clear(); const p = ui.pin.pending; ui.pin = null; toast("Passcode removed."); ACTIONS[p.a](p.data); persist(); if (!ui.form) render(); }
-    else { ui.pin.error = Sync.code ? "That is not this family's code." : "No family code on this device. Remove the app and add it again to reset."; render(); }
-    return;
   }
   if (ACTIONS[a]) { ACTIONS[a](t.dataset); persist(); if (!ui.form) render(); }
 });
