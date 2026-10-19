@@ -414,3 +414,16 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .stepper b { min-width: 44px; text-align: center; font-size: 18px; font-variant-numeric: tabular-nums; }
 .stepper button { width: 44px; height: 44px; border-radius: 50%; background: var(--fill); font-size: 22px; }
 .detail.warn { color: var(--red-text); }
+
+/* ---- phase 5: film study, calendar ---- */
+.film-card { display: block; width: 100%; text-align: left; margin-bottom: 10px; background: linear-gradient(135deg, #22345f, #0f1628); }
+.film-main { align-items: stretch; text-align: left; }
+.film-main h2 { text-align: left; }
+.film-main .g-eyebrow { text-align: left; }
+.film-main .g-text { margin: 0 0 12px; }
+.f-label { font-size: 13px; text-transform: uppercase; letter-spacing: .5px; color: #ffb340; margin: 8px 4px 4px; }
+.f-input { background: rgba(255,255,255,.12); color: #fff; border-radius: 12px; }
+select.f-input option { color: #000; }
+textarea.f-input { min-height: 120px; }
+.f-link { display: inline-block; margin-top: 10px; color: #ffb340; font-size: 16px; }
+.g-row button.got { background: #30d158; color: #06240f !important; }

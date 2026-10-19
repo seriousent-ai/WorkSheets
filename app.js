@@ -63,7 +63,7 @@ const idb = {
 };
 
 /* ---------- state ---------- */
-const ui = { welcome: null, summary: null, tab: "today", day: todayIdx(), openVideo: null, weekOffset: 0, guided: null, openBlocks: {}, form: null };
+const ui = { film: null, welcome: null, summary: null, tab: "today", day: todayIdx(), openVideo: null, weekOffset: 0, guided: null, openBlocks: {}, form: null };
 const dateOf = (i) => dateKey(addDays(mondayOf(new Date()), i));
 const logOf = (date) => (S.logs[date] ||= { done: {} });
 
@@ -118,6 +118,7 @@ function xpOfLog(l) {
   if (l.energy) x += 5;
   if (l.learned || l.improve || l.challenge) x += 5;
   x += Object.keys(l.watched || {}).length * 5;
+  if (l.film) x += 20;
   if (l.body) x += 5;
   if (l.sleep) x += 5;
   return x;
@@ -237,6 +238,100 @@ function brand() {
   return `<div class="brand"><img src="${esc(logo)}" alt="${esc(p.team)} logo" onerror="this.outerHTML='<button class=&quot;logo-add&quot; data-a=&quot;editProfile&quot;>Add<br>logo</button>'"><div><b>${esc(p.team)}</b><span>${dot}${esc(p.league)}</span></div></div>`;
 }
 
+/* ---------- film study (self-scored) ---------- */
+const FILM_QS = [["Who is open?", "Pause before the point guard decides. Name every teammate who could get the ball."], ["What did the defender do?", "Did the defender stay home, help, or commit to the ball?"], ["Where should the pass arrive?", "Into the receiver's path, away from the defender."], ["Was there a scoring opportunity?", "Could the point guard have scored, or was passing right?"], ["What is one practical adjustment?", "One thing to do differently next time."]];
+const newFilm = () => ({ step: 0, clip: "", answers: ["", "", "", "", ""], scores: [null, null, null, null, null] });
+function filmScore(f) { return f.scores.slice(0, 4).filter(Boolean).length + (f.answers[4].trim() ? 1 : 0); }
+function renderFilm() {
+  const el = $("#film");
+  const f = ui.film;
+  if (!f) { el.innerHTML = ""; return; }
+  const dots = FILM_QS.map((_, i) => `<i class="${i < f.step - 1 || f.step > 5 ? "d" : ""} ${i === f.step - 1 ? "c" : ""}"></i>`).join("");
+  const top = `<div class="g-top"><button data-a="filmClose">Close</button><span>Film study</span><span class="g-sp"></span></div><div class="g-dots">${dots}</div>`;
+  let body = "";
+  if (f.step === 0) {
+    const vids = S.videos.filter((v) => v.url);
+    const cur = S.videos.find((v) => v.id === f.clip);
+    body = `<div class="g-main film-main"><div class="g-eyebrow">Read the floor</div><h2>Film study</h2>
+      <p class="g-text">Watch a short game clip or a training video. Pause before the point guard decides. Then answer five questions. You score yourself, so be honest. +20 XP when you finish.</p>
+      <label class="f-label" for="film-clip">Which clip?</label>
+      <select id="film-clip" class="f-input" data-film-clip><option value="">My own game footage</option>${vids.map((v) => `<option value="${v.id}" ${f.clip === v.id ? "selected" : ""}>${esc((v.code ? v.code + " · " : "") + v.title)}</option>`).join("")}</select>
+      ${cur && cur.url ? `<a class="f-link" href="${esc(cur.url)}" target="_blank" rel="noopener">Open the clip ↗</a>` : ""}</div>
+      <div class="g-actions"><button class="g-primary" data-a="filmNext">Start the questions</button></div>`;
+  } else if (f.step <= 5) {
+    const i = f.step - 1, [q, hint] = FILM_QS[i];
+    body = `<div class="g-main film-main"><div class="g-eyebrow">Question ${f.step} of 5</div><h2>${esc(q)}</h2><p class="g-text">${esc(hint)}</p>
+      <label class="f-label" for="film-ans">${i === 4 ? "My adjustment" : "My answer (optional)"}</label>
+      <textarea id="film-ans" class="f-input" data-film-ans>${esc(f.answers[i])}</textarea></div>
+      <div class="g-actions">${i < 4 ? `<div class="g-row"><button data-a="filmScore" data-v="0">Not yet</button><button class="got" data-a="filmScore" data-v="1">Got it</button></div>` : `<button class="g-primary" data-a="filmFinish">Finish</button>`}</div>`;
+  } else {
+    const sc = filmScore(f);
+    body = `<div class="g-main film-main"><div class="g-eyebrow">Nice work</div><h2>You read ${sc} of 5</h2>
+      <p class="g-text">+20 XP. Pick one answer and talk it through with a parent or your coach. Next time, scan the whole floor before the catch.</p></div>
+      <div class="g-actions"><button class="g-primary" data-a="filmSave">Save and finish</button></div>`;
+  }
+  el.innerHTML = `<div class="guided film" role="dialog" aria-label="Film study">${top}${body}</div>`;
+}
+
+/* ---------- calendar export ---------- */
+const icsEsc = (s) => String(s).replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
+function icsFold(line) { const out = []; let l = line; while (l.length > 74) { out.push(l.slice(0, 74)); l = " " + l.slice(74); } out.push(l); return out.join("\r\n"); }
+const icsLocal = (d) => `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
+const icsUtc = (d) => `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}Z`;
+function buildIcs({ time, alarm, weeks, sunday }) {
+  const [hh, mm] = time.split(":").map(Number);
+  const now = new Date();
+  const mon0 = mondayOf(now);
+  const link = /^https?:/.test(location.protocol) ? location.href.split("#")[0] : "";
+  const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Rens Training//EN", "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "X-WR-CALNAME:Rens Training"];
+  let count = 0;
+  for (let w = 0; w < weeks; w++) {
+    S.days.slice(0, 7).forEach((d, i) => {
+      if (i === 6 && !sunday) return;
+      const day = addDays(mon0, w * 7 + i);
+      const start = new Date(day.getFullYear(), day.getMonth(), day.getDate(), hh, mm);
+      const mins = d.blocks.reduce((p, b) => p + (Number(b.minutes) || 0), 0) || 60;
+      const end = new Date(start.getTime() + mins * 60000);
+      if (end < now) return;
+      const vids = d.videoIds.map((id) => S.videos.find((v) => v.id === id)).filter((v) => v && v.url);
+      const desc = [d.theme, d.cue ? "Cue: " + d.cue : "", "", ...d.blocks.map((b) => `${b.title} (${b.minutes} min)`), vids.length ? "\nWatch first:" : "", ...vids.map((v) => `${v.title}: ${v.url}`), link ? "\nOpen the app: " + link : ""].filter((x) => x !== undefined).join("\n");
+      lines.push("BEGIN:VEVENT", `UID:rens-${dateKey(day)}-${d.id}@rens-training`, `DTSTAMP:${icsUtc(now)}`, `DTSTART:${icsLocal(start)}`, `DTEND:${icsLocal(end)}`, `SUMMARY:${icsEsc("Rens Training: " + d.theme)}`, `DESCRIPTION:${icsEsc(desc)}`,
+        "BEGIN:VALARM", `TRIGGER:-PT${Number(alarm)}M`, "ACTION:DISPLAY", `DESCRIPTION:${icsEsc("Training starts in " + alarm + " minutes")}`, "END:VALARM", "END:VEVENT");
+      count++;
+    });
+  }
+  lines.push("END:VCALENDAR");
+  return { text: lines.map(icsFold).join("\r\n") + "\r\n", count };
+}
+async function deliverFile(file) {
+  try { if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: file.name }); return "shared"; } } catch (e) { if (e && e.name === "AbortError") return "cancel"; }
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(file); a.download = file.name; document.body.appendChild(a); a.click(); a.remove();
+  return "downloaded";
+}
+
+/* ---------- reminders (best effort, only while the app can run) ---------- */
+let remindTimer = null;
+async function showReminder() {
+  const day = S.days[todayIdx()];
+  if (!day || logOf(todayKey()).complete) return;
+  const title = "Time to train, " + firstName(S.profile.name);
+  const body = `${day.theme}. ${day.blocks.reduce((p, b) => p + (Number(b.minutes) || 0), 0)} minutes. Let's go.`;
+  try {
+    const reg = navigator.serviceWorker && (await navigator.serviceWorker.getRegistration());
+    if (reg && reg.showNotification) { await reg.showNotification(title, { body, icon: "icons/icon-192.png", tag: "rens-reminder" }); return; }
+  } catch (e) {}
+  try { new Notification(title, { body, icon: "icons/icon-192.png", tag: "rens-reminder" }); } catch (e) {}
+}
+function scheduleReminder() {
+  clearTimeout(remindTimer);
+  if (!Prefs.remind || !("Notification" in window) || Notification.permission !== "granted") return;
+  const [h, m] = Prefs.remindTime.split(":").map(Number);
+  const t = new Date(); t.setHours(h, m, 0, 0);
+  const ms = t - Date.now();
+  if (ms > 0 && ms < 2147483000) remindTimer = setTimeout(showReminder, ms);
+}
+
 const CHALLENGES = ["Make 8 of 10 free throws", "20 left-hand passes on target in one session", "Zero lost balls on the cone course", "Hit 7 of 10 from my best spot", "10 minutes of left-hand dribbling, 4 days", "Watch a game and spot 3 good passes"];
 const weekKeyNow = () => dateKey(mondayOf(new Date()));
 const noteSeen = () => { try { return localStorage.getItem("tristan-note-seen"); } catch (e) { return null; } };
@@ -334,7 +429,7 @@ function viewToday() {
   </div>
   <button class="btn gray" data-a="addBlock">Add a block</button>
   </div><div>
-  ${vids.length ? `<h2 class="section">Watch first</h2><div class="group"><div class="row"><div class="pills" style="margin:0">${vids.map((v) => `<button class="pill" data-a="goVideo" data-id="${v.id}">${watchedToday(v.id) ? "✓ " : ""}${esc(v.code || "▶")} ${esc(v.title)}</button>`).join("")}</div></div></div>` : ""}
+  ${vids.length ? `<h2 class="section">Watch first</h2><div class="group"><div class="row"><div class="pills" style="margin:0">${vids.map((v) => `<button class="pill" data-a="goVideo" data-id="${v.id}">${watchedToday(v.id) ? "✓ " : ""}${esc(v.code || "▶")} ${esc(v.title)}</button>`).join("")}<button class="pill blue" data-a="filmStart">Film study</button></div></div></div>` : ""}
   ${checkinCard(logOf(date))}
   <h2 class="section">How did it feel? <button data-a="editLogDay" data-date="${date}">Add notes</button></h2>
   <div class="group"><div class="row"><div class="emojis grow">${mood.map(([e, v]) => `<button class="${lg.energy === v ? "on" : ""}" data-a="energy" data-v="${v}" aria-label="Energy ${v}">${e}</button>`).join("")}</div></div>
@@ -385,6 +480,8 @@ function viewWeek() {
       <div class="grow"><div class="title strong">${esc(d.name)}${i === todayIdx() ? ' <span class="pill blue">Today</span>' : ""}</div><div class="detail">${esc(d.theme)}</div></div>
       <div class="detail">${c}/${d.blocks.length}</div><span class="chev">›</span></div>`;
   }).join("")}</div>
+  <button class="btn gray" data-a="calStart">Add the plan to my calendar</button>
+  <p class="small">Calendar events come with a reminder alert that works even when the app is closed.</p>
   <p class="small">Team practice, mandatory training and games replace that day's individual session. Do not double up to make up a missed day.</p>`;
 }
 
@@ -417,7 +514,8 @@ function viewVideos() {
   return `
   <h1 class="large">Videos</h1>
   <p class="sub">Watch the clip that matches today's drill.</p>
-  <a class="feature" href="https://jr.nba.com/jrnbaathome/" target="_blank" rel="noopener"><b>Jr. NBA at Home</b><span>Free drills and videos you can do anywhere ↗</span></a>
+  <button class="feature film-card" data-a="filmStart"><b>Film study</b><span>Watch a clip, answer 5 questions, score yourself. +20 XP</span></button>
+  <a class="feature" style="margin-top:10px" href="https://jr.nba.com/jrnbaathome/" target="_blank" rel="noopener"><b>Jr. NBA at Home</b><span>Free drills and videos you can do anywhere ↗</span></a>
   ${todaysIds.length ? `<h2 class="section">Watch first today</h2><div class="group">${todaysIds.map((id) => S.videos.find((v) => v.id === id)).filter(Boolean).map(card).join("")}</div>` : ""}
   <h2 class="section">All drill videos <button data-a="addVideo">Add</button></h2>
   <div class="group">${S.videos.map(card).join("") || `<div class="empty">No videos yet. Tap Add to save one.</div>`}</div>
@@ -539,7 +637,7 @@ function viewLog() {
     return `<div class="row tap" data-a="editLogDay" data-date="${date}">
       <div class="check ${lg.complete ? "on" : ""}">${lg.complete ? "✓" : ""}</div>
       <div class="grow"><div class="title strong">${esc(d.name)} <span class="detail" style="display:inline">${fmtShort(addDays(mon, i))}</span></div>
-      <div class="detail">${[lg.event, lg.sleep && "Slept " + lg.sleep + "h", lg.learned && "Learned: " + lg.learned].filter(Boolean).map(esc).join(" · ") || "Tap to log"}</div></div>
+      <div class="detail">${[lg.event, lg.sleep && "Slept " + lg.sleep + "h", lg.film && `Film study ${lg.film.score}/5`, lg.learned && "Learned: " + lg.learned].filter(Boolean).map(esc).join(" · ") || "Tap to log"}</div></div>
       <div style="font-size:22px">${e}</div><span class="chev">›</span></div>`;
   }).join("");
   const ach = achievements();
@@ -600,6 +698,11 @@ function viewGuide() {
   </div>
   <h2 class="section">Sound, voice and haptics</h2>
   <div class="group">${[["sound", "Sounds", "A swish on each finished block and a chime on level-ups."], ["voice", "Voice cues", "Spoken start, halfway, one minute left and time up."], ["haptic", "Vibration", "Short buzzes when you tap or a timer ends."]].map(([k, t, d]) => `<div class="row"><div class="grow"><div class="title strong">${t}</div><div class="detail">${d}</div></div><button class="switch ${Prefs[k] ? "on" : ""}" role="switch" aria-checked="${Prefs[k]}" aria-label="${t}" data-a="prefToggle" data-k="${k}"><i></i></button></div>`).join("")}</div>
+  <h2 class="section">Reminders</h2>
+  <div class="group">
+    <div class="row"><div class="grow"><div class="title strong">Reminder notification</div><div class="detail">Works while the app is open or recently used, and only if you added it to the Home Screen. For a reminder that always works, use Add the plan to my calendar in the Week tab.</div></div><button class="switch ${Prefs.remind ? "on" : ""}" role="switch" aria-checked="${Prefs.remind}" aria-label="Reminder notification" data-a="remindToggle"><i></i></button></div>
+    <div class="row tap" data-a="remindTime"><div class="grow">Reminder time</div><div class="detail">${esc(Prefs.remindTime)}</div><span class="chev">›</span></div>
+  </div>
   <h2 class="section">Your data</h2>
   <div class="group">
     <div class="row tap" data-a="share"><div class="grow">Send backup (AirDrop, Messages)</div><span class="chev">›</span></div>
@@ -695,6 +798,8 @@ function renderSummary() {
 }
 
 document.addEventListener("input", (e) => {
+  if (ui.film && e.target.id === "film-ans") ui.film.answers[ui.film.step - 1] = e.target.value;
+  if (ui.film && e.target.id === "film-clip") ui.film.clip = e.target.value;
   if (ui.welcome && e.target.id === "w-name") ui.welcome.name = e.target.value;
   if (ui.welcome && e.target.id === "w-why") ui.welcome.why = e.target.value;
 });
@@ -731,7 +836,8 @@ function render() {
   renderGuided();
   renderSummary();
   renderWelcome();
-  document.body.classList.toggle("noscroll", !!(ui.guided || ui.summary || ui.welcome));
+  renderFilm();
+  document.body.classList.toggle("noscroll", !!(ui.guided || ui.summary || ui.welcome || ui.film));
   document.querySelectorAll("video[data-file]").forEach(async (el) => {
     try { const b = await idb.get(el.dataset.file); if (b) el.src = URL.createObjectURL(b); } catch (e) {}
   });
@@ -744,9 +850,9 @@ function toast(msg) {
   setTimeout(() => t.remove(), 2400);
 }
 const Prefs = {
-  sound: true, voice: true, haptic: true,
+  sound: true, voice: true, haptic: true, remind: false, remindTime: "16:00", calTime: "16:00", calAlarm: "30",
   load() { try { Object.assign(this, JSON.parse(localStorage.getItem("tristan-prefs")) || {}); } catch (e) {} },
-  save() { try { localStorage.setItem("tristan-prefs", JSON.stringify({ sound: this.sound, voice: this.voice, haptic: this.haptic })); } catch (e) {} },
+  save() { try { localStorage.setItem("tristan-prefs", JSON.stringify({ sound: this.sound, voice: this.voice, haptic: this.haptic, remind: this.remind, remindTime: this.remindTime, calTime: this.calTime, calAlarm: this.calAlarm })); } catch (e) {} },
 };
 Prefs.load();
 const buzz = (p) => { if (Prefs.haptic && navigator.vibrate) navigator.vibrate(p); };
@@ -810,7 +916,7 @@ function checkNewDay() {
   ui.weekOffset = 0;
   if (!ui.form && !ui.guided) render();
 }
-document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { checkNewDay(); gTick(); } });
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { checkNewDay(); gTick(); scheduleReminder(); } });
 setInterval(checkNewDay, 60000);
 function gTick() {
   const g = ui.guided;
@@ -1123,6 +1229,44 @@ const ACTIONS = {
   challengeDone: () => { const w = (S.weekly[weekKeyNow()] ||= {}); if (!w.challenge) return; w.challenge.done = !w.challenge.done; if (w.challenge.done) { celebrate(); Sfx.chime(); toast("Challenge done! +25 XP"); } },
   bodySet: (d) => { const l = logOf(dateOf(ui.day)); l.body = l.body === Number(d.v) ? undefined : Number(d.v); },
   sleepAdj: (d) => { const l = logOf(dateOf(ui.day)); l.sleep = Math.min(14, Math.max(4, (l.sleep ?? 9) + Number(d.d))); },
+  filmStart: () => { ui.film = newFilm(); },
+  filmClose: () => { ui.film = null; },
+  filmNext: () => { ui.film.step = 1; },
+  filmScore: (d) => { const f = ui.film; f.scores[f.step - 1] = d.v === "1"; f.step += 1; },
+  filmFinish: () => { if (!ui.film.answers[4].trim()) { toast("Write one adjustment first."); return; } ui.film.step = 6; },
+  filmSave: () => {
+    const f = ui.film, l = logOf(todayKey());
+    const was = !!l.film;
+    l.film = { score: filmScore(f), total: 5, clip: f.clip, answers: f.answers, ts: Date.now() };
+    ui.film = null; celebrate(); Sfx.chime(); toast(was ? "Film study updated." : "Film study done! +20 XP");
+  },
+  calStart: () => openForm({
+    title: "Add to calendar",
+    fields: [{ k: "time", label: "Start time (24-hour, like 16:00)", value: Prefs.calTime }, { k: "alarm", label: "Reminder before", type: "select", value: Prefs.calAlarm, opts: [["10", "10 minutes"], ["30", "30 minutes"], ["60", "1 hour"]] }, { k: "weeks", label: "How many weeks", type: "select", value: "4", opts: [["1", "This week"], ["4", "Next 4 weeks"]] }, { k: "sunday", label: "Sunday film session", type: "select", value: "1", opts: [["1", "Include"], ["0", "Skip"]] }],
+    required: ["time"],
+    async save(f) {
+      if (!/^([01]?\d|2[0-3]):[0-5]\d$/.test(f.time)) { toast("Use a time like 16:00."); return false; }
+      Prefs.calTime = f.time; Prefs.calAlarm = f.alarm; Prefs.save();
+      const { text, count } = buildIcs({ time: f.time, alarm: f.alarm, weeks: Number(f.weeks), sunday: f.sunday === "1" });
+      if (!count) { toast("No upcoming sessions to add."); return false; }
+      const r = await deliverFile(new File([text], "rens-training.ics", { type: "text/calendar" }));
+      if (r !== "cancel") toast(r === "shared" ? `${count} sessions ready. Choose Calendar.` : `${count} sessions downloaded. Open the file to add them.`);
+    },
+  }),
+  remindToggle: async () => {
+    if (Prefs.remind) { Prefs.remind = false; Prefs.save(); scheduleReminder(); return; }
+    if (!("Notification" in window)) { toast("This browser can't show notifications. Use the calendar reminder instead."); return; }
+    let p = Notification.permission;
+    if (p === "default") p = await Notification.requestPermission();
+    if (p !== "granted") { toast("Notifications are blocked. Allow them in Settings, or use the calendar reminder."); return; }
+    Prefs.remind = true; Prefs.save(); scheduleReminder(); toast("Reminder on for " + Prefs.remindTime + " while the app is available."); render();
+  },
+  remindTime: () => openForm({
+    title: "Reminder time",
+    fields: [{ k: "t", label: "Time (24-hour, like 16:00)", value: Prefs.remindTime }],
+    required: ["t"],
+    save(f) { if (!/^([01]?\d|2[0-3]):[0-5]\d$/.test(f.t)) { toast("Use a time like 16:00."); return false; } Prefs.remindTime = f.t; Prefs.save(); scheduleReminder(); },
+  }),
   blockInfo: (d) => { ui.openBlocks[d.id] = !ui.openBlocks[d.id]; },
   gStart: () => {
     const day = S.days[ui.day];
@@ -1242,5 +1386,6 @@ document.addEventListener("click", async (e) => {
 
 if (!S.profile.onboarded && Object.keys(S.logs).length === 0 && !Sync.code) ui.welcome = { step: 1, name: S.profile.name, why: S.profile.why };
 render();
+scheduleReminder();
 Sync.start();
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js").catch(() => {});
