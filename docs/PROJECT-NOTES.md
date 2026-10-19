@@ -71,6 +71,13 @@ Everything (days, blocks, videos, links, notes, rewards, profile, logs) can be a
 - **Playbook**: 12 habit cards from the plan, unlocked every 120 XP; new cards appear in the finish summary.
 - Launch splash with the Rens logo.
 
+## Progress overview (for a parent)
+- Log tab and Guide have a **Progress overview** button. The screen shows, for the current week: sessions done, level, overall rating, XP and streak;
+  a "Worth a conversation" box (sore days, average sleep under 9 hours, 8 or more hours of basketball, no sessions by Thursday);
+  a day-by-day list with body, sleep, energy, team minutes and film study; hours, sleep, shot percentage, challenge and latest film score;
+  skills; and what Tristan wrote after training. It shows when the phone last synced and the latest activity from his phone, and warns if this phone
+  has not joined the family code. Refresh asks for new data. It reads the same synced data as every other screen.
+
 ## Motivation system
 - XP: +10 per finished block, +50 per finished session, +5 per video watched, +5 energy rating, +5 notes, +25 skill check, +15 reflection.
 - Levels by finished sessions: Rookie 0, Ball Handler 5, Playmaker 15, Floor General 30, All-Star 60, Franchise PG 100.
