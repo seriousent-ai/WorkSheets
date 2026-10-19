@@ -546,6 +546,8 @@ function viewGuide() {
     <div class="row tap" data-a="syncCreate"><div class="grow"><div class="title strong">Create a family code</div><div class="detail">Start here on one device, then join from the others.</div></div><span class="chev">›</span></div>
     <div class="row tap" data-a="syncJoin"><div class="grow"><div class="title strong">Join with a family code</div><div class="detail">Enter the code from your other device.</div></div><span class="chev">›</span></div>`}
   </div>
+  <h2 class="section">Sound, voice and haptics</h2>
+  <div class="group">${[["sound", "Sounds", "A swish on each finished block and a chime on level-ups."], ["voice", "Voice cues", "Spoken start, halfway, one minute left and time up."], ["haptic", "Vibration", "Short buzzes when you tap or a timer ends."]].map(([k, t, d]) => `<div class="row"><div class="grow"><div class="title strong">${t}</div><div class="detail">${d}</div></div><button class="switch ${Prefs[k] ? "on" : ""}" role="switch" aria-checked="${Prefs[k]}" aria-label="${t}" data-a="prefToggle" data-k="${k}"><i></i></button></div>`).join("")}</div>
   <h2 class="section">Your data</h2>
   <div class="group">
     <div class="row tap" data-a="share"><div class="grow">Send backup (AirDrop, Messages)</div><span class="chev">›</span></div>
@@ -560,7 +562,7 @@ const G_C = 553;
 function gLoad(i) {
   const b = S.days[ui.day].blocks[i];
   const t = Math.max(1, Number(b.minutes) || 1) * 60;
-  ui.guided = { i, total: t, remaining: t, end: null, started: false };
+  ui.guided = { i, total: t, remaining: t, end: null, started: false, cues: {}, spot: (ui.guided && ui.guided.spot) || "top" };
 }
 function gStartAt(i) { gLoad(i); keepAwake(true); }
 function gAdvance(markDone) {
@@ -573,10 +575,28 @@ function gAdvance(markDone) {
   if (n >= day.blocks.length) { ui.guided = null; keepAwake(false); return; }
   gLoad(n);
 }
+const SPOTS = [["lc", "Left corner"], ["lw", "Left wing"], ["top", "Top"], ["rw", "Right wing"], ["rc", "Right corner"]];
+function shotTotals(lg) {
+  let m = 0, x = 0;
+  for (const k in (lg && lg.shots) || {}) { m += lg.shots[k].m; x += lg.shots[k].x; }
+  return { m, x, att: m + x };
+}
+function tallyHtml(b, g, lg) {
+  if (/shoot/i.test(b.title)) {
+    const t = shotTotals(lg);
+    return `<div class="g-tally"><div class="g-spots" role="group" aria-label="Shooting spot">${SPOTS.map(([id, name]) => { const s = (lg.shots || {})[id] || { m: 0, x: 0 }; return `<button class="${g.spot === id ? "on" : ""}" data-a="gSpot" data-s="${id}" aria-pressed="${g.spot === id}"><b>${s.m}/${s.m + s.x}</b><span>${name}</span></button>`; }).join("")}</div>
+      <div class="g-shotrow"><button class="made" data-a="gShot" data-r="m">Made</button><button class="miss" data-a="gShot" data-r="x">Missed</button></div>
+      <p class="g-tl">${t.m} of ${t.att} shots${t.att ? " · " + Math.round((t.m / t.att) * 100) + "%" : ""}</p></div>`;
+  }
+  const n = (lg.reps || {})[b.id] || 0;
+  const label = /pass/i.test(b.title) ? "good passes" : /handl/i.test(b.title) ? "clean reps" : "reps";
+  return `<div class="g-tally"><div class="g-reps"><button data-a="gRep" data-d="-1" aria-label="Remove one">−</button><div><b>${n}</b><span>${label}</span></div><button class="plus" data-a="gRep" data-d="1" aria-label="Add one">+1</button></div></div>`;
+}
 function renderGuided() {
   const el = $("#guided");
   const g = ui.guided;
   if (!g) { el.innerHTML = ""; return; }
+  const keepScroll = el.firstElementChild ? el.firstElementChild.scrollTop : 0;
   const day = S.days[ui.day];
   const b = day.blocks[g.i];
   const next = day.blocks.slice(g.i + 1).find((x) => !logOf(dateOf(ui.day)).done[x.id]);
@@ -591,12 +611,14 @@ function renderGuided() {
       <h2>${esc(b.title)}</h2>
       <div class="g-ringwrap"><svg class="g-ring" viewBox="0 0 200 200"><circle cx="100" cy="100" r="88" class="rt"/><circle cx="100" cy="100" r="88" class="rf" data-gring stroke-dasharray="${G_C}" stroke-dashoffset="${(G_C * (1 - (g.total - left) / g.total)).toFixed(1)}"/></svg><div class="g-time" data-gtime>${fmtTime(left)}</div></div>
       ${b.text ? `<p class="g-text">${esc(b.text)}</p>` : ""}
+      ${tallyHtml(b, g, lg)}
     </div>
     <div class="g-actions">
       <button class="g-primary" data-a="gToggle">${g.end ? "Pause" : g.started ? "Resume" : "Start timer"}</button>
       <div class="g-row"><button data-a="gSkip">Skip</button><button data-a="gDone">Done, next</button></div>
       <p class="g-next">${next ? "Up next: " + esc(next.title) : "Last block. Finish strong."}</p>
     </div></div>`;
+  if (el.firstElementChild) el.firstElementChild.scrollTop = keepScroll;
 }
 
 function renderSummary() {
@@ -612,6 +634,8 @@ function renderSummary() {
       ${s.ups.map((u) => row(u.ic, `${u.name} reached level ${u.lvl}`, "Skill level up")).join("")}
       ${s.rewards.map((r) => row("gift", `Reward unlocked: ${r.title}`, r.note || "", "gold")).join("")}
       ${s.next ? `<div class="s-row">${badge("gift")}<div><b>Next reward: ${esc(s.next.next.title)}</b><span>${s.next.next.xp - s.xp} XP to go</span><div class="progress"><i style="width:${s.next.pct}%"></i></div></div></div>` : ""}
+      ${s.shots.att ? row("hoop", `${s.shots.m} of ${s.shots.att} shots made`, `${Math.round((s.shots.m / s.shots.att) * 100)}% from the spots you tracked`) : ""}
+      ${s.reps ? row("pass", `${s.reps} reps counted`, "Tracked in this session") : ""}
       ${row("flame", `${s.week} session${s.week === 1 ? "" : "s"} this week`, s.streak ? `${s.streak} week streak` : "Finish 4 this week to start a streak")}
     </div>
     <p class="s-msg">${esc(s.msg)}</p>
@@ -631,7 +655,7 @@ function renderWelcome() {
   if (!w) { el.innerHTML = ""; return; }
   const logo = S.profile.logo || "icons/team-logo.png";
   el.innerHTML = w.step === 1 ? `<div class="guided welcome" role="dialog" aria-label="Welcome">
-      <div class="w-main"><img class="w-logo" src="${esc(logo)}" alt=""><h2>Welcome to the ${esc(S.profile.team)} training plan</h2>
+      <div class="w-main"><img class="w-logo" src="${esc(logo)}" alt=""><h2>Welcome to ${esc(S.profile.name)}'s ${esc(S.profile.team)} Training Plan</h2>
       <p>Let's set it up. You can change anything later.</p>
       <label for="w-name">Your name</label><input id="w-name" type="text" autocomplete="off" value="${esc(w.name)}">
       <label for="w-why">My Why (why I train)</label><textarea id="w-why">${esc(w.why)}</textarea></div>
@@ -667,6 +691,43 @@ function toast(msg) {
   t.className = "toast"; t.textContent = msg; document.body.appendChild(t);
   setTimeout(() => t.remove(), 2400);
 }
+const Prefs = {
+  sound: true, voice: true, haptic: true,
+  load() { try { Object.assign(this, JSON.parse(localStorage.getItem("tristan-prefs")) || {}); } catch (e) {} },
+  save() { try { localStorage.setItem("tristan-prefs", JSON.stringify({ sound: this.sound, voice: this.voice, haptic: this.haptic })); } catch (e) {} },
+};
+Prefs.load();
+const buzz = (p) => { if (Prefs.haptic && navigator.vibrate) navigator.vibrate(p); };
+const Sfx = {
+  ctx: null,
+  unlock() {
+    if (this.ctx) { if (this.ctx.state === "suspended") this.ctx.resume(); return; }
+    try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
+  },
+  tone(f, d, type = "sine", g = 0.15, delay = 0) {
+    if (!Prefs.sound || !this.ctx) return;
+    const c = this.ctx, o = c.createOscillator(), v = c.createGain(), s = c.currentTime + delay;
+    o.type = type; o.frequency.value = f; o.connect(v); v.connect(c.destination);
+    v.gain.setValueAtTime(0, s); v.gain.linearRampToValueAtTime(g, s + 0.01); v.gain.exponentialRampToValueAtTime(0.0001, s + d);
+    o.start(s); o.stop(s + d + 0.02);
+  },
+  swish() {
+    if (!Prefs.sound || !this.ctx) return;
+    const c = this.ctx, len = Math.floor(c.sampleRate * 0.35), buf = c.createBuffer(1, len, c.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.2);
+    const src = c.createBufferSource(), f = c.createBiquadFilter(), v = c.createGain();
+    src.buffer = buf; f.type = "bandpass"; f.Q.value = 0.8;
+    f.frequency.setValueAtTime(3500, c.currentTime); f.frequency.exponentialRampToValueAtTime(900, c.currentTime + 0.3);
+    v.gain.value = 0.5; src.connect(f); f.connect(v); v.connect(c.destination); src.start();
+  },
+  beep() { this.tone(880, 0.35, "sine", 0.18); this.tone(880, 0.35, "sine", 0.18, 0.45); },
+  chime() { [523, 659, 784, 1047].forEach((f, i) => this.tone(f, 0.5, "triangle", 0.16, i * 0.12)); },
+};
+function say(text) {
+  if (!Prefs.voice || !("speechSynthesis" in window)) return;
+  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.rate = 1.02; speechSynthesis.speak(u); } catch (e) {}
+}
+
 function celebrate() {
   const em = ["🏀", "⭐", "🔥", "💪", "🎉"];
   for (let i = 0; i < 28; i++) {
@@ -678,17 +739,9 @@ function celebrate() {
     document.body.appendChild(s);
     setTimeout(() => s.remove(), 3200);
   }
-  if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
+  buzz([60, 40, 60]);
 }
-function beep() {
-  try {
-    const c = new (window.AudioContext || window.webkitAudioContext)();
-    const o = c.createOscillator(); const g = c.createGain();
-    o.connect(g); g.connect(c.destination); o.frequency.value = 880; g.gain.value = 0.15;
-    o.start(); o.stop(c.currentTime + 0.35);
-  } catch (e) {}
-  if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
-}
+function beep() { Sfx.beep(); buzz([200, 100, 200]); }
 let wake = null;
 async function keepAwake(on) {
   try {
@@ -713,11 +766,17 @@ function gTick() {
   const left = Math.ceil((g.end - Date.now()) / 1000);
   if (left <= 0) {
     const b = S.days[ui.day].blocks[g.i];
+    const done = logOf(dateOf(ui.day)).done;
+    const nxt = S.days[ui.day].blocks.slice(g.i + 1).find((x) => !done[x.id]);
     beep(); toast(`${b.title} done!`);
+    say(`Time.${nxt ? " Next up: " + nxt.title + "." : " Great work."}`);
     gAdvance(true); persist(); render();
     return;
   }
   g.remaining = left;
+  if (g.total >= 120 && !g.cues.half && left <= g.total / 2) { g.cues.half = true; say("Halfway."); }
+  if (g.total >= 180 && !g.cues.min && left <= 60) { g.cues.min = true; say("One minute left."); }
+  if (g.total >= 30 && !g.cues.ten && left <= 10) { g.cues.ten = true; say("Ten seconds."); }
   const t = $("[data-gtime]"); if (t) t.textContent = fmtTime(left);
   const r = $("[data-gring]"); if (r) r.setAttribute("stroke-dashoffset", (G_C * (1 - (g.total - left) / g.total)).toFixed(1));
 }
@@ -939,6 +998,7 @@ function buildSummary(date, crossed) {
     levelUp: now.cur[0] !== was.cur[0] ? now.cur : null, level: now,
     week: sessionsInWeek(dateKey(mondayOf(parseKey(date)))), streak: weekStreak(), next: nextReward(xp),
     msg: MESSAGES[(dayOfYear() + 3) % MESSAGES.length],
+    shots: shotTotals(lg), reps: Object.values(lg.reps || {}).reduce((p, q) => p + q, 0),
   };
 }
 function toggleBlock(id) {
@@ -950,13 +1010,14 @@ function toggleBlock(id) {
   if (!lg.done[id]) delete lg.done[id];
   lg.complete = day.blocks.length > 0 && day.blocks.every((b) => lg.done[b.id]);
   const gain = xpTotal() - before;
+  if (lg.done[id]) Sfx.swish();
   if (gain > 0) {
     xpPop("+" + gain + " XP");
-    if (navigator.vibrate) navigator.vibrate(15);
+    buzz(15);
     if (!(lg.complete && !wasComplete) && !ui.guided) toast(CHEERS[Math.floor(Math.random() * CHEERS.length)]);
   }
   const crossed = S.rewards.filter((r) => r.xp > before && r.xp <= xpTotal());
-  if (lg.complete && !wasComplete) { celebrate(); ui.summary = buildSummary(dateOf(ui.day), crossed); }
+  if (lg.complete && !wasComplete) { celebrate(); ui.summary = buildSummary(dateOf(ui.day), crossed); if (ui.summary.levelUp || crossed.length) setTimeout(() => Sfx.chime(), 400); }
   else if (crossed.length) setTimeout(() => { celebrate(); toast("Reward unlocked: " + crossed.map((r) => r.title).join(", ")); }, 1200);
 }
 function download(name, text) {
@@ -992,6 +1053,7 @@ const ACTIONS = {
   },
   watchOpen: (d) => { const l = logOf(todayKey()); l.watched ||= {}; if (!l.watched[d.id]) { l.watched[d.id] = true; toast("Marked watched. +5 XP"); } },
   sumClose: () => { ui.summary = null; },
+  prefToggle: (d) => { Prefs[d.k] = !Prefs[d.k]; Prefs.save(); if (Prefs[d.k]) { if (d.k === "sound") { Sfx.unlock(); Sfx.swish(); } if (d.k === "voice") say("Voice cues are on."); if (d.k === "haptic") buzz(40); } },
   blockInfo: (d) => { ui.openBlocks[d.id] = !ui.openBlocks[d.id]; },
   gStart: () => {
     const day = S.days[ui.day];
@@ -1003,8 +1065,15 @@ const ACTIONS = {
   gToggle: () => {
     const g = ui.guided;
     if (g.end) { g.remaining = Math.max(1, Math.ceil((g.end - Date.now()) / 1000)); g.end = null; }
-    else { g.end = Date.now() + g.remaining * 1000; g.started = true; }
+    else {
+      const b = S.days[ui.day].blocks[g.i];
+      if (!g.started) say(`${b.title}. ${Math.round(g.total / 60)} minute${Math.round(g.total / 60) === 1 ? "" : "s"}. Go.`);
+      g.end = Date.now() + g.remaining * 1000; g.started = true;
+    }
   },
+  gRep: (d) => { const lg = logOf(dateOf(ui.day)); const id = S.days[ui.day].blocks[ui.guided.i].id; lg.reps ||= {}; lg.reps[id] = Math.max(0, (lg.reps[id] || 0) + Number(d.d)); buzz(10); },
+  gShot: (d) => { const lg = logOf(dateOf(ui.day)); const s = ui.guided.spot; lg.shots ||= {}; const c = (lg.shots[s] ||= { m: 0, x: 0 }); c[d.r] += 1; buzz(10); if (d.r === "m") Sfx.swish(); },
+  gSpot: (d) => { ui.guided.spot = d.s; },
   gDone: () => gAdvance(true),
   gSkip: () => gAdvance(false),
   gClose: () => { ui.guided = null; keepAwake(false); },
@@ -1080,6 +1149,7 @@ const ACTIONS = {
 let delArmed = false;
 document.addEventListener("click", async (e) => {
   window.__pt = { x: e.clientX, y: e.clientY };
+  Sfx.unlock();
   if (e.target.classList.contains("scrim")) return closeForm();
   const t = e.target.closest("[data-a]");
   if (!t) return;
