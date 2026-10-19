@@ -518,10 +518,10 @@ function viewLog() {
   </div><div>
   ${trendsHtml()}
   <h2 class="section">Rewards <button data-a="addReward">Add</button></h2>
-  <div class="group">${sortedRewards().map((r) => { const got = xpTotal() >= r.xp; return `<div class="row tap" data-a="editReward" data-id="${r.id}" style="opacity:${got ? 1 : 0.55}">${badge(got ? "gift" : "lock", got ? "" : "off")}<div class="grow"><div class="title strong">${esc(r.title)}</div><div class="detail">${r.xp} XP${r.note ? " · " + esc(r.note) : ""}</div></div>${got ? '<span class="pill blue">Unlocked</span>' : ""}</div>`; }).join("") || '<div class="empty">No rewards yet. Tap Add.</div>'}</div>
+  <div class="group">${sortedRewards().map((r) => { const got = xpTotal() >= r.xp; return `<div class="row tap ${got ? "" : "locked"}" data-a="editReward" data-id="${r.id}">${badge(got ? "gift" : "lock", got ? "" : "off")}<div class="grow"><div class="title strong">${esc(r.title)}</div><div class="detail">${r.xp} XP${r.note ? " · " + esc(r.note) : ""}</div></div>${got ? '<span class="pill blue">Unlocked</span>' : ""}</div>`; }).join("") || '<div class="empty">No rewards yet. Tap Add.</div>'}</div>
   <p class="small">Earn XP: +10 per finished block, +50 per finished session, +5 per video watched, +25 for a skill check, plus small bonuses for notes and reflections.</p>
   <h2 class="section">Achievements</h2>
-  <div class="group">${ach.map(([e, t, d, got]) => `<div class="row" style="opacity:${got ? 1 : 0.4}">${badge(e, got ? "" : "off")}<div class="grow"><div class="title strong">${t}</div><div class="detail">${d}</div></div>${got ? '<span class="pill blue">Earned</span>' : ""}</div>`).join("")}</div>
+  <div class="group">${ach.map(([e, t, d, got]) => `<div class="row ${got ? "" : "locked"}">${badge(e, got ? "" : "off")}<div class="grow"><div class="title strong">${t}</div><div class="detail">${d}</div></div>${got ? '<span class="pill blue">Earned</span>' : ""}</div>`).join("")}</div>
   </div></div>`;
 }
 
@@ -542,7 +542,7 @@ function viewGuide() {
     <div class="row"><div class="grow"><div class="detail">Family code</div><div class="title strong" style="font-family:ui-monospace,Menlo,monospace;font-size:17px;overflow-wrap:anywhere;user-select:all">${esc(Sync.pretty(Sync.code))}</div><div class="detail" data-sync-status>${esc(Sync.statusText())}</div></div></div>
     <div class="row tap" data-a="syncShare"><div class="grow">Share code</div><span class="chev">›</span></div>
     <div class="row tap" data-a="syncNow"><div class="grow">Sync now</div><span class="chev">›</span></div>
-    <div class="row tap" data-a="syncOff"><div class="grow" style="color:var(--red)">Turn off sync on this device</div></div>` : `
+    <div class="row tap" data-a="syncOff"><div class="grow" style="color:var(--red-text)">Turn off sync on this device</div></div>` : `
     <div class="row tap" data-a="syncCreate"><div class="grow"><div class="title strong">Create a family code</div><div class="detail">Start here on one device, then join from the others.</div></div><span class="chev">›</span></div>
     <div class="row tap" data-a="syncJoin"><div class="grow"><div class="title strong">Join with a family code</div><div class="detail">Enter the code from your other device.</div></div><span class="chev">›</span></div>`}
   </div>
@@ -551,7 +551,7 @@ function viewGuide() {
     <div class="row tap" data-a="share"><div class="grow">Send backup (AirDrop, Messages)</div><span class="chev">›</span></div>
     <div class="row tap" data-a="export"><div class="grow">Export backup</div><span class="chev">›</span></div>
     <div class="row tap" data-a="import"><div class="grow">Import backup</div><span class="chev">›</span></div>
-    <div class="row tap" data-a="reset"><div class="grow" style="color:var(--red)">Reset to original plan</div></div></div>
+    <div class="row tap" data-a="reset"><div class="grow" style="color:var(--red-text)">Reset to original plan</div></div></div>
   <p class="small">Everything is saved on this device. Uploaded video clips stay on this device and are not part of the backup file. Each device keeps its own copy. To move progress or changes between devices, use Send backup on one and Import backup on the other. Install: in Safari tap Share, then Add to Home Screen.</p>`;
 }
 

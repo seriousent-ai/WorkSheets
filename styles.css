@@ -241,7 +241,7 @@ main { padding-top: calc(env(safe-area-inset-top) + 16px); }
 .cue { padding: 10px 14px; font-size: 15px; }
 .blk.current { background: color-mix(in srgb, var(--orange) 10%, var(--card)); }
 .blk.current::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--orange); }
-.blk.done .detail, .blk.done .linkbtn { opacity: .85; }
+.locked .title, .locked .detail { color: var(--label2); }
 .linkbtn { font-size: 15px; margin-top: 4px; min-height: 32px; text-align: left; }
 .side { flex-direction: row; gap: 4px; align-items: center; }
 .play, .more { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; }
