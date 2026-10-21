@@ -19,6 +19,7 @@ function load() {
   if (!s || !Array.isArray(s.days)) s = JSON.parse(JSON.stringify(DEFAULT_DATA));
   s.logs ||= {}; s.weekly ||= {}; s.videos ||= []; s.links ||= []; s.notes ||= [];
   s.games ||= []; s.events ||= []; s.badges ||= []; s.monthly ||= null; s.goal ||= null; s.sugHidden ||= [];
+  if (s.profile && /\| Intermediate \|/.test(s.profile.subtitle || "")) s.profile.subtitle = s.profile.subtitle.replace("| Intermediate |", "| Advanced |");
   s.rewards ||= JSON.parse(JSON.stringify(DEFAULT_DATA.rewards));
   s.planTs ||= 0;
   s.profile.cycleStart ||= dateKey(mondayOf(new Date()));
