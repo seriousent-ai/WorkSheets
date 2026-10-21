@@ -270,7 +270,7 @@ const cmpPlayer = (s) => {
   return el ? { s, el, yt: el.tagName === "IFRAME" } : null;
 };
 const cmpPlayers = () => ["a", "b"].map(cmpPlayer).filter(Boolean);
-const ytCmd = (p, func, args = []) => { try { p.el.contentWindow.postMessage(JSON.stringify({ event: "command", func, args }), "https://www.youtube.com"); } catch (e) {} };
+const ytCmd = (p, func, args = []) => { if (Array.isArray(window.__ytSpy)) window.__ytSpy.push(func); try { p.el.contentWindow.postMessage(JSON.stringify({ event: "command", func, args }), "https://www.youtube.com"); } catch (e) {} };
 const pTime = (p) => (p.yt ? cmpYT[p.s].t : p.el.currentTime || 0);
 const pDur = (p) => (p.yt ? cmpYT[p.s].d : p.el.duration);
 function pSeek(p, t) {
