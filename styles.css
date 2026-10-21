@@ -587,3 +587,5 @@ button[data-a="toggle"]::after, [data-a="blockInfo"]::after, [data-a="bodySet"]:
 .pc-top .pc-photo { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 3px solid var(--t1); }
 
 [data-count] { font-variant-numeric: tabular-nums; }
+
+.syncline { margin: 2px 0 0; color: var(--label2); }

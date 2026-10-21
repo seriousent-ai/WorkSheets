@@ -123,3 +123,21 @@ Everything (days, blocks, videos, links, notes, rewards, profile, logs) can be a
   with `host: "http://localhost:PORT"` (the `host` option exists for that).
 - The cloud environment blocks nyrhoops.org and firebase hosts; logo and Firebase values were supplied by the user.
 - Claude artifacts made during the build: a game plan page and an iPhone/iPad simulator page (the simulator copy is from before sync was added).
+
+
+## Phase 7 (built after the family started using it)
+
+Files: `extras.js` holds the newer features; `tests/` holds the phone-emulator check (`npm test` from `tests/`), which also runs in GitHub on every pull request.
+
+- Game log (Log), team schedule (Week), recovery score and monthly challenge (Today), family recap picture (progress overview), Film a drill and Compare clips (Videos), read-only coach page (`?coach=CODE`, switched on in Guide, needs family sync).
+- Plan sync is split into pieces (`plan-days`, `plan-videos`, `plan-links`, `plan-notes`, `plan-rewards`, `plan-profile`, `plan-misc`) so edits to different pieces on two phones both survive. Two edits to the same piece still overwrite each other. The old single `plan` record is read only if no pieces exist.
+- Plan history: one snapshot a day on each device (last eight), restorable in Guide. Progress logs are not part of it.
+- Family view (Guide, This device): a per-device name for a parent or sibling. It opens on the progress overview, blocks taps that would log training, and never writes logs back.
+- Player card photo is kept on that phone only (`tristan-photo` in local storage).
+- Text size (Normal, Large, Larger) uses CSS zoom on that phone only. It works in the emulator; confirm it on a real iPhone.
+- Coach page shows first name, sessions, skill ratings, recent games and the week's priority. It writes a summary under its own code (`families/{coachCode}/items/summary`) and deleting the link deletes the summary.
+- XP count-up, check-mark pop, update banner, clearer sync errors and 44-point tap areas.
+
+Privacy review (Oct 2026): no last name, email address or token is in the current files. The Firebase web key in `firebase-config.js` is meant to be public. The old last name is still in git history. The repo is public so free hosting works. `firestore.rules` in the repo is a proposed tighter version; the live rules are whatever is published in the Firebase console.
+
+Not built: real push notifications (needs a server on a paid Firebase plan), Firebase App Check (needs console setup), dark and tinted Home Screen icons (iOS does not apply them to web apps as far as I can tell).

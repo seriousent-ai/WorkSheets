@@ -499,3 +499,13 @@ function animateCounts() {
     requestAnimationFrame(step);
   });
 }
+
+/* ---------- sync line and text size ---------- */
+const syncLine = () => (Sync.code ? `<p class="small syncline" data-sync-status>${esc(Sync.statusText())}</p>` : "");
+const TEXT_SIZES = [["1", "Normal"], ["1.12", "Large"], ["1.25", "Larger"]];
+function applyTextSize() { document.documentElement.style.zoom = Prefs.textSize && Prefs.textSize !== "1" ? Prefs.textSize : ""; }
+function textSizeGroup() {
+  return `<h2 class="section">Text size</h2><div class="group"><div class="row"><div class="grow"><div class="title strong">Size of everything in the app</div><div class="detail">Applies to this phone only.</div></div>
+    <div class="chips" role="group" aria-label="Text size">${TEXT_SIZES.map(([v, l]) => `<button class="chip ${Prefs.textSize === v ? "on" : ""}" data-a="textSize" data-v="${v}" aria-pressed="${Prefs.textSize === v}">${l}</button>`).join("")}</div></div></div>`;
+}
+EXTRA_ACTIONS.textSize = (d) => { Prefs.textSize = d.v; Prefs.save(); applyTextSize(); };

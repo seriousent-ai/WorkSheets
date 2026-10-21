@@ -51,6 +51,15 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
     await p.waitForTimeout(1300);
     ok((await p.textContent("[data-ck=hero-xp]")) === String(roll.now), "XP counter lands on the new total");
 
+    console.log("Text size");
+    await tab(p, "guide");
+    await p.click("[data-a=textSize][data-v='1.25']");
+    ok(await p.evaluate(() => document.documentElement.style.zoom === "1.25"), "Larger text size applies");
+    ok(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth), "no sideways scrolling at the larger size");
+    await p.click("[data-a=textSize][data-v='1']");
+    ok(await p.evaluate(() => document.documentElement.style.zoom === ""), "Normal size restores the layout");
+    await tab(p, "today");
+
     console.log("Game log");
     await tab(p, "log");
     await p.click("[data-a=addGame]");
@@ -130,6 +139,9 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
     await p.waitForSelector("[data-sync-status]");
     await p.waitForFunction(() => Sync.status === "ok");
     const code = await p.evaluate(() => Sync.code);
+    await tab(p, "log");
+    ok((await p.textContent(".syncline")).includes("Synced"), "Log shows when it last synced");
+    await tab(p, "guide");
     ok(code && code.length === 20, "family code created");
     await p.click("[data-a=coachCreate]");
     await p.waitForFunction(() => !!S.profile.coachCode);

@@ -2,8 +2,15 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     // Each family's data lives under a long secret code. Listing all families is not allowed.
+    // Proposed tighter version: reads and deletes stay open to anyone with the code, but a write
+    // must be exactly the two fields the app sends ({json, ts}) and the text must be under 400 KB.
+    // Test it in the Firebase console Rules Playground before you publish it.
     match /families/{familyId}/items/{itemId} {
-      allow read, write: if true;
+      allow read, delete: if true;
+      allow create, update: if request.resource.data.keys().hasOnly(['json', 'ts'])
+        && request.resource.data.json is string
+        && request.resource.data.json.size() < 400000
+        && request.resource.data.ts is int;
     }
   }
 }
