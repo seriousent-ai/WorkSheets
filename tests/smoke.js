@@ -195,6 +195,38 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
     await p.evaluate(() => { S.videos = S.videos.filter((v) => v.id !== "yt1"); });
     ok((await p.locator(".cmp").count()) === 0, "compare screen closes");
 
+    console.log("Skill ladder, game stats and heat map");
+    await tab(p, "log");
+    ok((await p.locator("[data-a=ladderPass]").count()) === 5, "the skill ladder shows a test for each of five skills");
+    const xp0 = await p.evaluate(() => xpTotal());
+    await p.click("[data-a=ladderPass][data-k=shoot]");
+    ok((await p.evaluate(() => xpTotal())) === xp0 + 30 && (await p.evaluate(() => S.ladder.shoot)) === 1, "passing a rung gives 30 XP and moves to the next test");
+    await p.click("[data-a=ladderUndo][data-k=shoot]");
+    ok((await p.evaluate(() => S.ladder.shoot)) === 0 && (await p.evaluate(() => xpTotal())) === xp0, "undo moves back one rung");
+    for (let i = 0; i < 6; i++) await p.evaluate(() => EXTRA_ACTIONS.ladderPass({ k: "pass" }));
+    ok((await p.evaluate(() => S.ladder.pass)) === 5, "a skill stops at its top rung");
+    await p.evaluate(() => { S.ladder = {}; });
+    // game stats: record, last 5 and per-game steals
+    await p.evaluate(() => {
+      window.__games = S.games;
+      const k = (n) => dateKey(addDays(new Date(), -n));
+      S.games = [[20, "L", 6, 4, 1], [18, "W", 8, 3, 2], [14, "W", 10, 2, 1], [10, "W", 12, 3, 0], [6, "L", 7, 5, 2], [2, "W", 14, 2, 3]].map(([d, r, a, t, st], i) => ({ id: "gs" + i, date: k(d), opp: "T" + i, result: r, pts: 10, ast: a, tov: t, stl: st }));
+      render();
+    });
+    const gtxt = await p.evaluate(() => document.querySelector("#main, main, body").innerText);
+    ok(/4 wins, 2 losses/.test(gtxt) && /Last 5 games/.test(gtxt) && /stl/.test(gtxt), "game stats show the record, last 5 games and steals");
+    // heat map: this 4 weeks versus the 4 weeks before
+    await p.evaluate(() => {
+      const k = (n) => dateKey(addDays(new Date(), -n));
+      S.logs[k(3)] = Object.assign(S.logs[k(3)] || {}, { shots: { lw: { m: 8, x: 2 } } });
+      S.logs[k(40)] = Object.assign(S.logs[k(40)] || {}, { shots: { lw: { m: 4, x: 6 } } });
+      ui.chartSpot = "lw"; render();
+    });
+    const chart = await p.evaluate(() => document.querySelector(".court").closest(".chartcard").innerText);
+    ok(/up 40 points from the 4 weeks before/.test(chart) && /Most improved: Left wing/.test(chart), "the shot chart compares with the 4 weeks before");
+    ok((await p.locator(".spot .glow").count()) === 5, "each spot has a heat glow");
+    await p.evaluate(() => { S.games = window.__games; delete S.logs[dateKey(addDays(new Date(), -3))].shots; delete S.logs[dateKey(addDays(new Date(), -40))].shots; ui.chartSpot = null; render(); });
+
     console.log("Video library");
     await tab(p, "videos");
     const lib = await p.evaluate(() => ({ n: SUGGESTED_VIDEOS.length, uniq: new Set(SUGGESTED_VIDEOS.map((v) => v.id)).size, urls: new Set(SUGGESTED_VIDEOS.map((v) => v.url)).size, lv: [1, 2, 3].map((l) => SUGGESTED_VIDEOS.filter((v) => v.level === l).length), cats: SUGGESTED_CATS.map((c) => SUGGESTED_VIDEOS.filter((v) => v.cat === c[0]).length) }));

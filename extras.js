@@ -17,6 +17,18 @@ function gameStats() {
   const ast = sum("ast"), tov = sum("tov"), n = g.length;
   return { g, n, pts: n ? sum("pts") / n : 0, ast: n ? ast / n : 0, tov: n ? tov / n : 0, ratio: tov ? ast / tov : ast, ratios: g.map(ratioOf) };
 }
+function guardRows(st) {
+  const w = st.g.filter((x) => x.result === "W").length, l = st.g.filter((x) => x.result === "L").length;
+  const last = st.g.slice(-5), n = last.length, sum = (k) => last.reduce((p, x) => p + (Number(x[k]) || 0), 0);
+  const stl = st.g.length ? st.g.reduce((p, x) => p + (Number(x.stl) || 0), 0) / st.g.length : 0;
+  let out = `<div class="row"><div class="grow">Per game</div><div class="detail">${st.pts.toFixed(1)} pts · ${st.ast.toFixed(1)} ast · ${st.tov.toFixed(1)} TO · ${stl.toFixed(1)} stl</div></div>`;
+  if (w + l) out += `<div class="row"><div class="grow">Record</div><div class="detail">${w} win${w === 1 ? "" : "s"}, ${l} loss${l === 1 ? "" : "es"}</div></div>`;
+  if (st.n >= 4) {
+    const r5 = sum("tov") ? sum("ast") / sum("tov") : sum("ast"), d = r5 - st.ratio;
+    out += `<div class="row"><div class="grow"><div class="title">Last ${n} games</div><div class="detail">Assist to turnover ${r5.toFixed(1)} · ${(sum("pts") / n).toFixed(1)} pts · ${(sum("ast") / n).toFixed(1)} ast</div></div><span class="${d > 0.05 ? "up" : d < -0.05 ? "down" : ""}">${Math.abs(d) <= 0.05 ? "Steady" : (d > 0 ? "Up " : "Down ") + Math.abs(d).toFixed(1)} vs season</span></div>`;
+  }
+  return out;
+}
 function gamesHtml() {
   const st = gameStats();
   const rows = [...st.g].reverse().slice(0, 8).map((x) => {
@@ -25,7 +37,7 @@ function gamesHtml() {
   }).join("");
   const top = st.n
     ? `<div class="row"><div class="grow"><div class="title strong">Assist to turnover</div><div class="detail">Higher is better. ${st.n} game${st.n > 1 ? "s" : ""} logged.</div></div>${st.ratios.length > 1 ? spark(st.ratios.slice(-8), Math.max(4, ...st.ratios), true) : ""}<div class="tval">${st.ratio.toFixed(1)}</div></div>
-       <div class="row"><div class="grow">Per game</div><div class="detail">${st.pts.toFixed(1)} pts · ${st.ast.toFixed(1)} ast · ${st.tov.toFixed(1)} TO</div></div>`
+       ${guardRows(st)}`
     : "";
   return `<h2 class="section">Games <button data-a="addGame">Add</button></h2>
   <div class="group">${goalRow()}${top}${rows || '<div class="empty">After a Rens game, log points, assists and turnovers. +15 XP each. The assist to turnover ratio is the point guard number.</div>'}</div>`;
@@ -1015,3 +1027,33 @@ Object.assign(EXTRA_ACTIONS, {
     toast("Added: " + title);
   },
 });
+
+
+/* ---------- skill ladder ---------- */
+const LADDER_XP = 30;
+const ladderN = (k) => Math.min(5, Math.max(0, Number((S.ladder || {})[k]) || 0));
+function ladderXp() { return typeof LADDER === "undefined" ? 0 : SKILLS.reduce((p, s) => p + ladderN(s[0]) * LADDER_XP, 0); }
+function ladderHtml() {
+  if (typeof LADDER === "undefined") return "";
+  const rows = SKILLS.map(([k, name, ic]) => {
+    const n = ladderN(k), steps = LADDER[k] || [];
+    const dots = steps.map((_, i) => `<i class="${i < n ? "on" : ""}"></i>`).join("");
+    const body = n >= steps.length
+      ? `<div class="detail">Top rung reached. Keep it sharp.</div>`
+      : `<div class="detail"><b>Next test:</b> ${esc(steps[n])}</div>`;
+    const btns = `${n < steps.length ? `<button class="pill blue" data-a="ladderPass" data-k="${k}">Passed it</button>` : ""}${n > 0 ? `<button class="pill" data-a="ladderUndo" data-k="${k}">Undo last</button>` : ""}`;
+    return `<div class="row">${badge(ic)}<div class="grow"><div class="title strong">${name} <span class="detail" style="display:inline">rung ${Math.min(n + 1, steps.length)} of ${steps.length}</span></div><div class="rungs" role="img" aria-label="${n} of ${steps.length} rungs passed">${dots}</div>${body}<div class="pills">${btns}</div></div></div>`;
+  }).join("");
+  return `<h2 class="section">Skill ladder</h2><div class="group">${rows}</div><p class="small">Each rung is a test. When he meets it, tap Passed it for +${LADDER_XP} XP and the next test.</p>`;
+}
+Object.assign(EXTRA_ACTIONS, {
+  ladderPass: (d) => {
+    S.ladder ||= {};
+    const n = ladderN(d.k);
+    if (n >= (LADDER[d.k] || []).length) return;
+    S.ladder[d.k] = n + 1;
+    celebrateSmall(`Rung ${n + 1} passed. +${LADDER_XP} XP`);
+  },
+  ladderUndo: (d) => { S.ladder ||= {}; S.ladder[d.k] = Math.max(0, ladderN(d.k) - 1); toast("Moved back one rung."); },
+});
+function celebrateSmall(msg) { toast(msg); if (typeof buzz === "function") buzz([20, 40, 20]); }
