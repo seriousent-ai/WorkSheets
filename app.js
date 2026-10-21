@@ -546,6 +546,7 @@ function viewToday() {
   ${brand()}
   <h1 class="greet">${greet}, ${esc(Prefs.parent ? firstName(Prefs.parent) : firstName(S.profile.name))}</h1>
   <p class="sub tight">${Prefs.parent ? esc("Family view. You are following " + firstName(S.profile.name) + "'s training.") : esc(msg)}</p>
+  ${syncLine()}
   ${firstWeekCard()}
   ${noteCard()}
   ${eventBanner()}
@@ -616,6 +617,7 @@ function viewWeek() {
   return `
   <h1 class="large">This Week</h1>
   <p class="sub">Week of ${fmtShort(mon)}</p>
+  ${syncLine()}
   <div class="hero"><div class="eyebrow">Weekly goal</div>
     <div class="big">${n} of ${goal} sessions</div>
     <div class="progress"><i style="width:${Math.min(100, (n / goal) * 100)}%"></i></div>
@@ -806,6 +808,7 @@ function viewLog() {
   const ach = achievements();
   return `
   <h1 class="large">Progress</h1>
+  ${syncLine()}
   <div class="nav-row"><button data-a="wkPrev">‹ Earlier</button><span class="week-title">${isNow ? "This week" : "Week of " + fmtShort(mon)}</span><button data-a="wkNext" ${isNow ? 'disabled style="opacity:.3"' : ""}>Later ›</button></div>
   <button class="btn" style="margin:0 0 12px" data-a="ovrOpen">Progress overview</button>
   <div class="cols"><div>
@@ -868,6 +871,7 @@ function viewGuide() {
   <h2 class="section">This device</h2>
   <div class="group"><div class="row tap" data-a="parentSet"><div class="grow"><div class="title strong">Family view</div><div class="detail">${Prefs.parent ? "On for " + esc(Prefs.parent) + ". Greets you by name, opens the progress overview, and blocks taps that would log training for " + esc(firstName(p.name)) + "." : "For a parent or sibling. Put your own name on this phone. It only changes this device, not " + esc(firstName(p.name)) + "'s."}</div></div><span class="chev">›</span></div></div>
   ${coachGroup()}
+  ${textSizeGroup()}
   <h2 class="section">Sound, voice and haptics</h2>
   <div class="group">${[["sound", "Sounds", "A swish on each finished block and a chime on level-ups."], ["voice", "Voice cues", "Spoken start, halfway, one minute left and time up."], ["haptic", "Vibration", "Short buzzes when you tap or a timer ends."]].map(([k, t, d]) => `<div class="row"><div class="grow"><div class="title strong">${t}</div><div class="detail">${d}</div></div><button class="switch ${Prefs[k] ? "on" : ""}" role="switch" aria-checked="${Prefs[k]}" aria-label="${t}" data-a="prefToggle" data-k="${k}"><i></i></button></div>`).join("")}</div>
   <h2 class="section">Reminders</h2>
@@ -1108,9 +1112,9 @@ function toast(msg) {
   setTimeout(() => t.remove(), 2400);
 }
 const Prefs = {
-  sound: true, voice: true, haptic: true, remind: false, remindTime: "16:00", calTime: "16:00", calAlarm: "30", parent: "",
+  sound: true, voice: true, haptic: true, remind: false, remindTime: "16:00", calTime: "16:00", calAlarm: "30", parent: "", textSize: "1",
   load() { try { Object.assign(this, JSON.parse(localStorage.getItem("tristan-prefs")) || {}); } catch (e) {} },
-  save() { try { localStorage.setItem("tristan-prefs", JSON.stringify({ sound: this.sound, voice: this.voice, haptic: this.haptic, remind: this.remind, remindTime: this.remindTime, calTime: this.calTime, calAlarm: this.calAlarm, parent: this.parent })); } catch (e) {} },
+  save() { try { localStorage.setItem("tristan-prefs", JSON.stringify({ sound: this.sound, voice: this.voice, haptic: this.haptic, remind: this.remind, remindTime: this.remindTime, calTime: this.calTime, calAlarm: this.calAlarm, parent: this.parent, textSize: this.textSize })); } catch (e) {} },
 };
 Prefs.load();
 const buzz = (p) => { if (Prefs.haptic && navigator.vibrate) navigator.vibrate(p); };
@@ -1688,6 +1692,7 @@ if (coachParam) {
   renderCoachPage(Sync.normalize(coachParam));
 } else {
   if (!S.profile.onboarded && Object.keys(S.logs).length === 0 && !Sync.code) ui.welcome = { step: 1, name: S.profile.name, why: S.profile.why };
+  applyTextSize();
   settleMonthly();
   takeSnapshot();
   if (Prefs.parent) ui.overview = true;
