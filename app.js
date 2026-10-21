@@ -18,6 +18,7 @@ function load() {
   try { s = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
   if (!s || !Array.isArray(s.days)) s = JSON.parse(JSON.stringify(DEFAULT_DATA));
   s.logs ||= {}; s.weekly ||= {}; s.videos ||= []; s.links ||= []; s.notes ||= [];
+  s.games ||= []; s.events ||= []; s.badges ||= []; s.monthly ||= null;
   s.rewards ||= JSON.parse(JSON.stringify(DEFAULT_DATA.rewards));
   s.planTs ||= 0;
   s.profile.cycleStart ||= dateKey(mondayOf(new Date()));
@@ -64,7 +65,7 @@ const idb = {
 };
 
 /* ---------- state ---------- */
-const ui = { overview: false, card: false, chartRange: "4w", chartSpot: null, film: null, welcome: null, summary: null, tab: "today", day: todayIdx(), openVideo: null, weekOffset: 0, guided: null, openBlocks: {}, form: null };
+const ui = { overview: false, card: false, chartRange: "4w", chartSpot: null, film: null, welcome: null, summary: null, tab: "today", day: todayIdx(), openVideo: null, weekOffset: 0, guided: null, openBlocks: {}, form: null, compare: null };
 const dateOf = (i) => dateKey(addDays(mondayOf(new Date()), i));
 const logOf = (date) => (S.logs[date] ||= { done: {} });
 
@@ -135,7 +136,7 @@ function xpTotal() {
     if (w.improved || w.adjust) x += 15;
     if (w.challenge && w.challenge.done) x += 25;
   }
-  return x;
+  return x + gamesXp() + monthlyXp();
 }
 const SKILLS = [["handle", "Ball handling", "ball", /handl/], ["pass", "Passing and reads", "pass", /pass/], ["shoot", "Shooting", "hoop", /shoot/], ["finish", "Finishing and defense", "bolt", /finish|defen/], ["iq", "Court IQ", "eye", /film|discuss|review|check-in|decision/]];
 const SK_LV = [0, 30, 80, 150, 250, 400, 600];
@@ -359,7 +360,10 @@ function weekLoad(monKey) {
   const mon = parseKey(monKey);
   let total = 0, active = 0;
   for (let i = 0; i < 7; i++) {
-    const l = S.logs[dateKey(addDays(mon, i))];
+    const ds = dateKey(addDays(mon, i));
+    const l = S.logs[ds];
+    const ev = eventMinutes(ds);
+    if (ev) { total += ev; active++; }
     if (!l) continue;
     const team = Number(l.team) || 0;
     const own = l.minutes ? Number(l.minutes) || 0 : l.complete && i < 6 && S.days[i] ? S.days[i].blocks.reduce((p, b) => p + (Number(b.minutes) || 0), 0) : 0;
@@ -542,6 +546,7 @@ function viewToday() {
   <h1 class="greet">${greet}, ${esc(Prefs.parent ? firstName(Prefs.parent) : firstName(S.profile.name))}</h1>
   <p class="sub tight">${Prefs.parent ? esc("Family view. You are following " + firstName(S.profile.name) + "'s training.") : esc(msg)}</p>
   ${noteCard()}
+  ${eventBanner()}
   <div class="seg">${seg}</div>
   <div class="cols"><div>
   <div class="hero">
@@ -562,7 +567,7 @@ function viewToday() {
       const cur = b.id === curId;
       const open = !!ui.openBlocks[b.id];
       return `<div class="row blk ${on ? "done" : ""} ${cur ? "current" : ""}">
-        <button class="check ${on ? "on" : ""}" data-a="toggle" data-id="${b.id}" aria-label="Mark ${esc(b.title)} done">${on ? "✓" : ""}</button>
+        <button class="check ${on ? "on" : ""}${on && ui.fresh === b.id ? " fresh" : ""}" data-a="toggle" data-id="${b.id}" aria-label="Mark ${esc(b.title)} done">${on ? "✓" : ""}</button>
         <div class="grow"><div class="title strong">${esc(b.title)}</div>
           <div class="detail"><span class="pill">${times[i]}</span>${cur ? ' <span class="pill blue">Up next</span>' : ""}</div>
           ${b.text ? `<button class="linkbtn" data-a="blockInfo" data-id="${b.id}">${open ? "Hide details" : "Details"}</button>${open ? `<div class="detail">${esc(b.text)}</div>` : ""}` : ""}</div>
@@ -576,6 +581,7 @@ function viewToday() {
   </div><div>
   ${vids.length ? `<h2 class="section">Watch first</h2><div class="group"><div class="row"><div class="pills" style="margin:0">${vids.map((v) => `<button class="pill" data-a="goVideo" data-id="${v.id}">${watchedToday(v.id) ? "✓ " : ""}${esc(v.code || "▶")} ${esc(v.title)}</button>`).join("")}<button class="pill blue" data-a="filmStart">Film study</button></div></div></div>` : ""}
   ${checkinCard(logOf(date))}
+  ${recoveryCard()}
   <h2 class="section">How did it feel? <button data-a="editLogDay" data-date="${date}">Add notes</button></h2>
   <div class="group"><div class="row"><div class="emojis grow">${mood.map(([e, v]) => `<button class="${lg.energy === v ? "on" : ""}" data-a="energy" data-v="${v}" aria-label="Energy ${v}">${e}</button>`).join("")}</div></div>
   ${lg.improve || lg.challenge ? `<div class="row"><div class="grow">${lg.improve ? `<div class="detail"><b>Improved:</b> ${esc(lg.improve)}</div>` : ""}${lg.challenge ? `<div class="detail"><b>Challenge:</b> ${esc(lg.challenge)}</div>` : ""}</div></div>` : ""}</div>
@@ -591,6 +597,7 @@ function viewToday() {
   <div class="level"><div class="progress"><i style="width:${lv.pct}%"></i></div>
     <p class="small">${lv.next ? `${lv.toGo} more session${lv.toGo === 1 ? "" : "s"} to reach <b>${esc(lv.next[1])}</b> ${badge(lv.next[2], "xs")}` : "You reached the top level. Franchise PG."}</p></div>
   ${challengeCard()}
+  ${monthlyCard()}
   ${nr ? `<div class="reward"><div class="rtitle">${badge("gift", "xs")} Next reward: <b>${esc(nr.next.title)}</b></div><div class="progress"><i style="width:${nr.pct}%"></i></div><p class="small" style="margin:6px 0 0">${nr.next.xp - xp} XP to go · each block is +10, a full session +50</p></div>` : ""}
   <div class="group" style="margin-top:12px">${SKILLS.map(([k, name, em]) => { const sp = skillPoints()[k] || 0; const sl = skillLevel(sp); return `<div class="row">${badge(em)}<div class="grow"><div class="title strong">${name}</div><div class="progress" style="margin-top:6px"><i style="width:${sl.pct}%"></i></div></div><span class="pill blue">Lv ${sl.l}</span></div>`; }).join("")}</div>
   <p class="small">Finish blocks to level up each skill. The best point guards build all five.</p>
@@ -629,6 +636,7 @@ function viewWeek() {
       <div class="grow"><div class="title strong">${esc(d.name)}${i === todayIdx() ? ' <span class="pill blue">Today</span>' : ""}</div><div class="detail">${esc(d.theme)}</div></div>
       <div class="detail">${c}/${d.blocks.length}</div><span class="chev">›</span></div>`;
   }).join("")}</div>
+  ${scheduleHtml()}
   <button class="btn gray" data-a="calStart">Add the plan to my calendar</button>
   <p class="small">Calendar events come with a reminder alert that works even when the app is closed.</p>
   <p class="small">Team practice, mandatory training and games replace that day's individual session. Do not double up to make up a missed day.</p>`;
@@ -663,6 +671,7 @@ function viewVideos() {
   return `
   <h1 class="large">Videos</h1>
   <p class="sub">Watch the clip that matches today's drill.</p>
+  ${clipsHtml()}
   <button class="feature film-card" data-a="filmStart"><b>Film study</b><span>Watch a clip, answer 5 questions, score yourself. +20 XP</span></button>
   <a class="feature" style="margin-top:10px" href="https://jr.nba.com/jrnbaathome/" target="_blank" rel="noopener"><b>Jr. NBA at Home</b><span>Free drills and videos you can do anywhere ↗</span></a>
   ${todaysIds.length ? `<h2 class="section">Watch first today</h2><div class="group">${todaysIds.map((id) => S.videos.find((v) => v.id === id)).filter(Boolean).map(card).join("")}</div>` : ""}
@@ -691,6 +700,9 @@ function xpByWeek(n = 8) {
   const map = {};
   for (const k in S.logs) { const w = dateKey(mondayOf(parseKey(k))); map[w] = (map[w] || 0) + xpOfLog(S.logs[k]); }
   for (const w in S.weekly) { const o = S.weekly[w]; map[w] = (map[w] || 0) + (o.right || o.shoot ? 25 : 0) + (o.improved || o.adjust ? 15 : 0) + (o.challenge && o.challenge.done ? 25 : 0); }
+  (S.games || []).forEach((g) => { const w = dateKey(mondayOf(parseKey(g.date))); map[w] = (map[w] || 0) + GAME_XP; });
+  (S.badges || []).forEach((b) => { const w = dateKey(mondayOf(parseKey(b.date))); map[w] = (map[w] || 0) + b.done * 5 + (b.earned ? 100 : 0); });
+  if (S.monthly) { const w = dateKey(mondayOf(new Date())); map[w] = (map[w] || 0) + monthlyDays(S.monthly) * 5; }
   const out = [];
   let mon = mondayOf(new Date());
   for (let i = 0; i < n; i++) { const k = dateKey(mon); out.unshift({ k, mon, xp: map[k] || 0, now: i === 0 }); mon = addDays(mon, -7); }
@@ -816,6 +828,7 @@ function viewLog() {
   </div><div>
   ${trendsHtml()}
   ${shotChartHtml()}
+  ${gamesHtml()}
   ${playbookHtml()}
   ${bests()}
   <h2 class="section">Rewards <button data-a="addReward">Add</button></h2>
@@ -852,6 +865,7 @@ function viewGuide() {
   </div>
   <h2 class="section">This device</h2>
   <div class="group"><div class="row tap" data-a="parentSet"><div class="grow"><div class="title strong">Family view</div><div class="detail">${Prefs.parent ? "On for " + esc(Prefs.parent) + ". Greets you by name, opens the progress overview, and blocks taps that would log training for " + esc(firstName(p.name)) + "." : "For a parent or sibling. Put your own name on this phone. It only changes this device, not " + esc(firstName(p.name)) + "'s."}</div></div><span class="chev">›</span></div></div>
+  ${coachGroup()}
   <h2 class="section">Sound, voice and haptics</h2>
   <div class="group">${[["sound", "Sounds", "A swish on each finished block and a chime on level-ups."], ["voice", "Voice cues", "Spoken start, halfway, one minute left and time up."], ["haptic", "Vibration", "Short buzzes when you tap or a timer ends."]].map(([k, t, d]) => `<div class="row"><div class="grow"><div class="title strong">${t}</div><div class="detail">${d}</div></div><button class="switch ${Prefs[k] ? "on" : ""}" role="switch" aria-checked="${Prefs[k]}" aria-label="${t}" data-a="prefToggle" data-k="${k}"><i></i></button></div>`).join("")}</div>
   <h2 class="section">Reminders</h2>
@@ -1031,6 +1045,7 @@ function overviewHtml() {
   <div class="group">${notes.map(({ k, l }) => `<div class="row"><div class="grow"><div class="detail">${fmtShort(parseKey(k))}</div>${l.improve ? `<div class="title">Improved: ${esc(l.improve)}</div>` : ""}${l.challenge ? `<div class="title">Challenge: ${esc(l.challenge)}</div>` : ""}${l.learned ? `<div class="title">Learned: ${esc(l.learned)}</div>` : ""}</div></div>`).join("") || '<div class="empty">Notes he writes after training will show up here.</div>'}
   ${w.improved || w.hard || w.adjust ? `<div class="row"><div class="grow"><div class="detail">This week's reflection</div>${w.improved ? `<div class="title">Improved: ${esc(w.improved)}</div>` : ""}${w.hard ? `<div class="title">Hard: ${esc(w.hard)}</div>` : ""}${w.adjust ? `<div class="title">Next week: ${esc(w.adjust)}</div>` : ""}</div></div>` : ""}</div>
   <button class="btn" data-a="shareReport">Share this week's report</button>
+  <button class="btn gray" data-a="recapShare">Share a family recap picture</button>
   <button class="btn gray" data-a="noteWrite">Write a note to ${esc(first)}</button>
   <p class="small">Everything on this screen comes from what ${esc(first)} checks off and logs in the app.</p>`;
 }
@@ -1075,7 +1090,8 @@ function render() {
   renderFilm();
   renderCard();
   renderOverview();
-  document.body.classList.toggle("noscroll", !!(ui.guided || ui.summary || ui.welcome || ui.film || ui.card || ui.overview));
+  renderCompare();
+  document.body.classList.toggle("noscroll", !!(ui.guided || ui.summary || ui.welcome || ui.film || ui.card || ui.overview || ui.compare));
   document.querySelectorAll("video[data-file]").forEach(async (el) => {
     try { const b = await idb.get(el.dataset.file); if (b) el.src = URL.createObjectURL(b); } catch (e) {}
   });
@@ -1159,6 +1175,7 @@ function checkNewDay() {
   lastDay = k;
   ui.day = todayIdx();
   ui.weekOffset = 0;
+  if (settleMonthly()) persist();
   if (!ui.form && !ui.guided) render();
 }
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { checkNewDay(); gTick(); scheduleReminder(); } });
@@ -1193,7 +1210,7 @@ function fieldHtml(f) {
   if (f.type === "select") return `<div class="field">${lab}<select id="f-${f.k}" name="${f.k}">${f.opts.map(([ov, ol]) => `<option value="${esc(ov)}" ${String(ov) === String(v) ? "selected" : ""}>${esc(ol)}</option>`).join("")}</select></div>`;
   if (f.type === "checks") return `<div class="field"><label>${esc(f.label)}</label><div class="group checks">${f.opts.map(([ov, ol]) => `<label class="row"><span class="grow">${esc(ol)}</span><input type="checkbox" name="${f.k}" value="${esc(ov)}" ${(v || []).includes(ov) ? "checked" : ""}></label>`).join("")}</div></div>`;
   if (f.type === "file") return `<div class="field">${lab}<input id="f-${f.k}" type="file" name="${f.k}" accept="${f.accept || "video/*"}"></div>`;
-  const t = f.type === "number" ? 'type="text" inputmode="decimal"' : f.type === "url" ? 'type="url" inputmode="url" autocapitalize="off"' : 'type="text"';
+  const t = f.type === "date" || f.type === "time" ? `type="${f.type}"` : f.type === "number" ? 'type="text" inputmode="decimal"' : f.type === "url" ? 'type="url" inputmode="url" autocapitalize="off"' : 'type="text"';
   return `<div class="field">${lab}<input id="f-${f.k}" name="${f.k}" ${t} value="${esc(v)}" placeholder="${esc(f.ph || "")}"></div>`;
 }
 function openForm(o) {
@@ -1412,6 +1429,7 @@ function toggleBlock(id) {
   const wasComplete = !!lg.complete;
   const before = xpTotal();
   lg.done[id] = !lg.done[id];
+  ui.fresh = lg.done[id] ? id : null;
   if (!lg.done[id]) delete lg.done[id];
   lg.complete = day.blocks.length > 0 && day.blocks.every((b) => lg.done[b.id]);
   const gain = xpTotal() - before;
@@ -1431,14 +1449,15 @@ function download(name, text) {
   a.download = name; document.body.appendChild(a); a.click(); a.remove();
 }
 let confirmReset = false;
-const PARENT_BLOCKED = new Set(["toggle", "gStart", "challengeDone", "bodySet", "sleepAdj", "energy", "watchMark", "filmStart", "editReflect", "editSkill", "editLogDay"]);
+const PARENT_BLOCKED = new Set(["toggle", "gStart", "challengeDone", "bodySet", "sleepAdj", "energy", "watchMark", "filmStart", "editReflect", "editSkill", "editLogDay", "monthlyDone"]);
 const ACTIONS = {
+  ...EXTRA_ACTIONS,
   tab: (d) => { ui.tab = d.t; window.scrollTo(0, 0); },
   day: (d) => { ui.day = +d.i; },
   openDay: (d) => { ui.day = +d.i; ui.tab = "today"; window.scrollTo(0, 0); },
   toggle: (d) => toggleBlock(d.id),
   wNext: () => { const n = ui.welcome.name.trim(); if (n) S.profile.name = n; if (ui.welcome.why.trim()) S.profile.why = ui.welcome.why.trim(); ui.welcome.step = 2; },
-  wCreate: async () => { try { ui.welcome.code = await Sync.create(); render(); } catch (e) { toast("Could not reach the sync service."); } },
+  wCreate: async () => { try { ui.welcome.code = await Sync.create(); render(); } catch (e) { toast(e.message || "Could not reach the sync service."); } },
   wJoin: () => ACTIONS.syncJoin(),
   wFinish: () => finishWelcome(),
   shareReport: async () => {
@@ -1587,7 +1606,7 @@ const ACTIONS = {
   export: () => { download(`training-backup-${dateKey(new Date())}.json`, JSON.stringify(S, null, 2)); toast("Backup saved to downloads."); },
   syncCreate: async () => {
     toast("Creating your family code…");
-    try { await Sync.create(); render(); toast("Sync is on. Join from your other devices with this code."); } catch (e) { toast("Could not reach the sync service."); }
+    try { await Sync.create(); render(); toast("Sync is on. Join from your other devices with this code."); } catch (e) { toast(e.message || "Could not reach the sync service."); }
   },
   syncJoin: () => openForm({
     title: "Join family",
@@ -1658,10 +1677,30 @@ document.addEventListener("click", async (e) => {
   if (ACTIONS[a]) { ACTIONS[a](t.dataset); persist(); if (!ui.form) render(); }
 });
 
-if (!S.profile.onboarded && Object.keys(S.logs).length === 0 && !Sync.code) ui.welcome = { step: 1, name: S.profile.name, why: S.profile.why };
-if (Prefs.parent) ui.overview = true;
-render();
-scheduleReminder();
-Sync.start();
+const coachParam = new URLSearchParams(location.search).get("coach");
+if (coachParam) {
+  renderCoachPage(Sync.normalize(coachParam));
+} else {
+  if (!S.profile.onboarded && Object.keys(S.logs).length === 0 && !Sync.code) ui.welcome = { step: 1, name: S.profile.name, why: S.profile.why };
+  settleMonthly();
+  if (Prefs.parent) ui.overview = true;
+  render();
+  scheduleReminder();
+  Sync.start();
+}
 setTimeout(() => { const s = document.getElementById("splash"); if (s) { s.classList.add("gone"); setTimeout(() => s.remove(), 450); } }, 700);
-if ("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js").catch(() => {});
+if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+  const hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.register("sw.js").then((reg) => {
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") reg.update().catch(() => {}); });
+  }).catch(() => {});
+  // A new service worker takes over after an update. Offer a reload so this copy of the app catches up.
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!hadController || document.getElementById("update-bar")) return;
+    const bar = document.createElement("div");
+    bar.id = "update-bar"; bar.setAttribute("role", "status");
+    bar.innerHTML = '<span>A new version is ready.</span><button type="button">Update now</button>';
+    bar.querySelector("button").onclick = () => location.reload();
+    document.body.appendChild(bar);
+  });
+}

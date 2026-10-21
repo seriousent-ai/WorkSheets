@@ -1,0 +1,28 @@
+name: Checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install test tools
+        working-directory: tests
+        run: |
+          npm install --no-audit --no-fund
+          npx playwright install --with-deps chromium
+          sudo apt-get install -y ffmpeg
+      - name: Syntax check
+        run: |
+          cat data.js sync.js extras.js app.js > /tmp/all.js
+          node --check /tmp/all.js
+      - name: Run the phone emulator checks
+        working-directory: tests
+        run: npm test
