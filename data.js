@@ -374,3 +374,54 @@ const LADDER = {
   finish: ["Layups with both hands: 8 of 10 on each side", "Euro-step or reverse layup against a pad or defender: 6 of 10", "Finish through contact against a pad: 6 of 10", "Floater over a defender or a chair: 5 of 10", "Contain a dribbler for 10 seconds without a foul, 3 times in a row"],
   iq: ["Name the defense (man, zone or press) at the start of 3 possessions in a game", "Watch a clip and write down 3 reads before the play ends", "Explain drop, hedge and switch on a ball screen, and your best attack against each", "Hold an assist to turnover ratio of 2.5 or better over a game", "Lead a timeout: tell the team one adjustment and why"]
 };
+
+/* Harder versions of the core drill blocks, by block kind and weekday. Used by "Make this harder" in the drill details. */
+const LEVELUP = {
+  handle: {
+    Monday: "Do the whole block with a defender in a chair-and-cone gauntlet: attack, change pace, and keep your eyes up. Add a second ball for the last 3 minutes.",
+    Tuesday: "Add a live defender who only plays the first two dribbles. Try a hesitation and a snatchback before the crossover.",
+    Wednesday: "Weak-hand-only for the full block, then a 30-second go at game speed against a partner who reaches.",
+    Thursday: "Have a partner pressure full-court. Beat the trap with a pivot, a split or a retreat dribble, and count turnovers. Aim for none in 3 trips.",
+    Friday: "Push the ball up the floor at full speed, and decide at the line: pull up, hit a trailer, or attack. Do 10 trips and keep a score.",
+    Saturday: "Run the cone course against a clock and add a counter move after every crossover. Beat last week's time."
+  },
+  pass: {
+    Monday: "Pass to a moving target and add a defender with one hand up. Count turnovers and keep them under 2.",
+    Tuesday: "Run 3 on 2 and make the read in under 2 seconds. Hit the open man with a one-hand or skip pass.",
+    Wednesday: "Add a pass fake, then a pocket pass or a wrap pass. Aim for 8 of 10 on target.",
+    Thursday: "Throw passes against a live defender who is trying to steal. Add a ball-screen read: reject, split or pocket pass to the roller.",
+    Friday: "Live 2 on 1 and 3 on 2 on the break. Pass ahead early and aim a lead pass at the receiver's far hand.",
+    Saturday: "Play 3 on 3 with two dribbles maximum. Count assists and turnovers and write the ratio down."
+  },
+  shoot: {
+    Monday: "Shoot from the elbow off one dribble. Move for every catch. Aim for 6 of 10, then step back one foot.",
+    Tuesday: "Use a pull-up off a ball screen from a chair. Read the defender: pull up if he drops, attack if he steps up.",
+    Wednesday: "Shoot off a step-back or snatchback. Keep the form the same as the close-range work. 5 of 10.",
+    Thursday: "Add a closeout defender with a hand up. Catch, one dribble, shoot over the hand. Count makes in a row.",
+    Friday: "Catch on the run in transition and shoot in rhythm. 10 shots from three different spots at game speed.",
+    Saturday: "25 shots from five spots, but each one after a move: a dribble pull-up, a hesitation or a step-back. Compare with last week."
+  },
+  finish: {
+    Monday: "Finish with a Euro-step or a reverse layup against a pad. 6 of 10 on each side.",
+    Tuesday: "On defense, mirror a partner who changes pace, then close out and contain for 10 seconds without fouling.",
+    Wednesday: "Finish through contact: take a bump from a pad and still make the layup. Add a floater over a chair.",
+    Thursday: "Defend a live dribbler for 10 seconds without a foul. Keep your chest in front and your hands up. Do 3 in a row.",
+    Friday: "Finish at speed after a controlled approach, with a defender trailing. Use either hand and a floater when the big steps up.",
+    Saturday: "Play 1 on 1 to 5 points. Win with a finish through contact and a stop on defense."
+  }
+};
+const levelKind = (title) => (/handle|dribbl/i.test(title) ? "handle" : /pass/i.test(title) ? "pass" : /shoot/i.test(title) ? "shoot" : /finish|defen/i.test(title) ? "finish" : null);
+
+/* Watch, then try it. Each pairs a suggested video (by YouTube id) with a short drill. */
+const DECISIONS = [
+  { id: "w-hedge", title: "Read the hard hedge", yt: "btpuIhLSg8E", drill: "Set two chairs as a screen with a partner as the big. Dribble at it and call the coverage out loud: hedge. Then reject or split. 5 reps each way." },
+  { id: "w-drop", title: "Attack drop coverage", yt: "TbovZAZRRL4", drill: "Have a partner back up under the screen. Pull up if he drops. Take 8 shots, then attack the gap and finish 4 times." },
+  { id: "w-cp", title: "Study a great point guard", yt: "qUqvYc773qY", drill: "Watch it twice. The second time, pause 3 times before the pass and say what the guard sees. Write down one read to copy." },
+  { id: "w-pace", title: "Change of pace", yt: "K5f-E_-if00", drill: "Walk, then explode, for 5 trips each side. Go from half speed to full speed in two steps, with your eyes up." },
+  { id: "w-pocket", title: "The pocket pass", yt: "lt3BlXJx3do", drill: "Dribble toward a chair, then pass through a gap to a partner. 10 passes with each hand. The pass should be low and on target." },
+  { id: "w-contain", title: "Contain a quick guard", yt: "sEn1sQkmJkI", drill: "Slide and keep your chest in front of a partner. Stop him from reaching the free-throw line for 10 seconds. Do 3 in a row." },
+  { id: "w-iq", title: "Make quicker decisions", yt: "j16FCb3BbDs", drill: "Watch each clip and pause. Say the decision out loud before the answer. Then repeat the best one in a 2 on 1." }
+];
+
+const LEAD_PROMPTS = ["Talk on every defensive possession", "Calm the team after a turnover", "Call the play early and loudly", "Say something positive to a teammate after a mistake", "Be first to a loose ball", "Speak up in the huddle with one adjustment", "Ask a teammate what they see on the floor", "Show a younger player how to do a drill"];
+const PREGAME = ["Eat a good meal 2 to 3 hours before", "Fill a water bottle and drink", "Warm up: 8 minutes of footwork and layups", "Pick one read to make in the game", "Pack shoes, jersey, ball and water"];

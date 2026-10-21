@@ -54,14 +54,16 @@ function formGame(id) {
       { k: "ast", label: "Assists", type: "number", value: g.ast },
       { k: "tov", label: "Turnovers", type: "number", value: g.tov },
       { k: "stl", label: "Steals", type: "number", value: g.stl },
-      { k: "good", label: "One thing I did well", type: "textarea", value: g.good, ph: "Found the open man on the wing." },
+      { k: "good", label: "One good read or thing I did well", type: "textarea", value: g.good, ph: "Found the open man on the wing." },
+      { k: "mistake", label: "One mistake", type: "textarea", value: g.mistake, ph: "Forced a pass into traffic." },
+      { k: "change", label: "One change for next time", type: "textarea", value: g.change, ph: "Look for the skip pass first." },
     ],
     required: ["date"],
     save(f) {
       S.games ||= [];
       let o = S.games.find((x) => x.id === id);
       if (!o) { o = { id: uid("g") }; S.games.push(o); }
-      Object.assign(o, { date: f.date, opp: f.opp, result: f.result, pts: num(f.pts), ast: num(f.ast), tov: num(f.tov), stl: num(f.stl), good: f.good });
+      Object.assign(o, { date: f.date, opp: f.opp, result: f.result, pts: num(f.pts), ast: num(f.ast), tov: num(f.tov), stl: num(f.stl), good: f.good, mistake: f.mistake, change: f.change });
     },
     del: id ? () => { S.games = S.games.filter((x) => x.id !== id); } : null,
     delLabel: "Delete game",
@@ -1032,7 +1034,10 @@ Object.assign(EXTRA_ACTIONS, {
 /* ---------- skill ladder ---------- */
 const LADDER_XP = 30;
 const ladderN = (k) => Math.min(5, Math.max(0, Number((S.ladder || {})[k]) || 0));
-function ladderXp() { return typeof LADDER === "undefined" ? 0 : SKILLS.reduce((p, s) => p + ladderN(s[0]) * LADDER_XP, 0); }
+function bonusXp() {
+  if (typeof LADDER === "undefined") return 0;
+  return SKILLS.reduce((p, s) => p + ladderN(s[0]) * LADDER_XP, 0) + Object.keys(S.watchTry || {}).length * 15 + (S.filmNotes || []).length * 5;
+}
 function ladderHtml() {
   if (typeof LADDER === "undefined") return "";
   const rows = SKILLS.map(([k, name, ic]) => {
@@ -1057,3 +1062,117 @@ Object.assign(EXTRA_ACTIONS, {
   ladderUndo: (d) => { S.ladder ||= {}; S.ladder[d.k] = Math.max(0, ladderN(d.k) - 1); toast("Moved back one rung."); },
 });
 function celebrateSmall(msg) { toast(msg); if (typeof buzz === "function") buzz([20, 40, 20]); }
+
+
+/* ---------- harder drill versions ---------- */
+function levelUpHtml(b) {
+  const kind = levelKind(b.title);
+  if (!kind) return "";
+  const day = S.days.find((d) => d.blocks.some((x) => x.id === b.id));
+  const text = (LEVELUP[kind] || {})[day && day.name];
+  if (!text) return "";
+  const on = !!(S.levelUp || {})[b.id];
+  return `<div class="detail cycnote ${on ? "lvon" : ""}"><b>${on ? "Harder version, on:" : "Too easy?"}</b> ${on ? esc(text) : "Try a harder version of this drill."}</div>
+    <button class="linkbtn" data-a="levelUpToggle" data-id="${b.id}" aria-pressed="${on}">${on ? "Back to the normal version" : "Make this harder"}</button>`;
+}
+
+/* ---------- watch, then try it ---------- */
+const suggestedByYt = (yt) => sugList().find((v) => v.yt === yt);
+function watchTrySection() {
+  const rows = DECISIONS.map((x) => {
+    const v = suggestedByYt(x.yt), done = (S.watchTry || {})[x.id];
+    return `<div class="row"><div class="grow"><div class="title strong">${esc(x.title)}</div><div class="detail"><b>Then try:</b> ${esc(x.drill)}</div><div class="pills">${v ? `<button class="pill blue" data-a="sugPlay" data-id="${v.id}">Watch</button>` : ""}<button class="pill ${done ? "green" : ""}" data-a="wtDone" data-id="${x.id}" aria-pressed="${!!done}">${done ? "Done, tap to undo" : "I tried it (+15 XP)"}</button></div></div></div>`;
+  }).join("");
+  return `<h2 class="section">Watch, then try it</h2><div class="group">${rows}</div>`;
+}
+
+/* ---------- film notes ---------- */
+function filmNotesSection() {
+  const list = [...(S.filmNotes || [])].sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 5);
+  const rows = list.map((n) => `<div class="row tap" data-a="editFilmNote" data-id="${n.id}"><div class="grow"><div class="detail">${fmtShort(parseKey(n.date))}${n.clip ? " · " + esc(n.clip) : ""}</div>${n.saw ? `<div class="title"><b>I saw:</b> ${esc(n.saw)}</div>` : ""}${n.fix ? `<div class="title"><b>To fix:</b> ${esc(n.fix)}</div>` : ""}</div><span class="chev">›</span></div>`).join("");
+  return `<h2 class="section">Film notes <button data-a="addFilmNote">Add</button></h2><div class="group">${rows || '<div class="empty">After watching a clip of yourself, write one thing you saw and one thing to fix. +5 XP each.</div>'}</div>`;
+}
+function formFilmNote(id) {
+  const n = (S.filmNotes || []).find((x) => x.id === id) || {};
+  openForm({
+    title: id ? "Edit film note" : "Film note",
+    fields: [
+      { k: "date", label: "Date", type: "date", value: n.date || dateKey(new Date()) },
+      { k: "clip", label: "Which clip? (optional)", value: n.clip, ph: "Tuesday pull-ups" },
+      { k: "saw", label: "One thing I saw", type: "textarea", value: n.saw, ph: "My eyes drop when I cross over." },
+      { k: "fix", label: "One thing to fix", type: "textarea", value: n.fix, ph: "Keep my head up through the move." },
+    ],
+    required: ["date"],
+    save(f) {
+      S.filmNotes ||= [];
+      let o = S.filmNotes.find((x) => x.id === id);
+      if (!o) { o = { id: uid("f") }; S.filmNotes.push(o); }
+      Object.assign(o, { date: f.date, clip: f.clip, saw: f.saw, fix: f.fix });
+    },
+    del: id ? () => { S.filmNotes = S.filmNotes.filter((x) => x.id !== id); } : null,
+    delLabel: "Delete note",
+  });
+}
+
+/* ---------- game day routine ---------- */
+function gameDayCard() {
+  const today = dateKey(new Date());
+  const ev = (S.events || []).find((x) => x.type === "game" && x.date === today);
+  const game = (S.games || []).find((g) => g.date === today);
+  if (!ev && !game) return "";
+  const pre = ((S.logs[today] || {}).pre) || {};
+  const rows = PREGAME.map((t, i) => `<div class="row tap" data-a="preToggle" data-i="${i}" role="checkbox" aria-checked="${!!pre[i]}" tabindex="0"><div class="check ${pre[i] ? "on" : ""}" aria-hidden="true">${pre[i] ? "✓" : ""}</div><div class="grow"><div class="title ${pre[i] ? "struck" : ""}">${esc(t)}</div></div></div>`).join("");
+  return `<h2 class="section">Game day</h2><div class="group">${rows}
+    <div class="row tap" data-a="${game ? "editGame" : "addGame"}" ${game ? `data-id="${game.id}"` : ""}><div class="grow"><div class="title strong">${game ? "After the game: edit my answers" : "After the game: three questions"}</div><div class="detail">One good read, one mistake, one change for next time.</div></div><span class="chev">›</span></div></div>`;
+}
+
+/* ---------- leadership goal ---------- */
+function leadOf() {
+  const wk = weekKeyNow();
+  const w = S.weekly[wk] || {};
+  const defI = Math.floor(mondayOf(new Date()).getTime() / 6048e5) % LEAD_PROMPTS.length;
+  const l = w.lead || { i: defI, done: false };
+  return { w, l: { i: l.i % LEAD_PROMPTS.length, done: !!l.done } };
+}
+function leadHtml() {
+  const { l } = leadOf();
+  return `<h2 class="section">Leadership this week</h2><div class="group"><div class="row"><div class="grow"><div class="title strong">${esc(LEAD_PROMPTS[l.i])}</div><div class="detail">A point guard leads too. Try this in every practice and game this week.</div><div class="pills"><button class="pill ${l.done ? "green" : "blue"}" data-a="leadDone" aria-pressed="${l.done}">${l.done ? "Done, tap to undo" : "I did it (+15 XP)"}</button><button class="pill" data-a="leadNew">Another goal</button></div></div></div></div>`;
+}
+
+/* ---------- plain-English week ---------- */
+function plainWeekText() {
+  const first = firstName(S.profile.name);
+  const mon = mondayOf(new Date());
+  const logs = Array.from({ length: 7 }, (_, i) => S.logs[dateKey(addDays(mon, i))]).filter(Boolean);
+  const n = logs.filter((l) => l.complete).length, goal = Math.min(6, S.days.length);
+  const out = [];
+  out.push(`${first} finished ${n} of ${goal} sessions this week${n >= goal - 1 && n > 0 ? ", a strong week" : n === 0 ? ", so nothing yet" : ""}.`);
+  const sl = logs.map((l) => l.sleep).filter(Boolean);
+  if (sl.length) { const av = Math.round((sl.reduce((p, q) => p + q, 0) / sl.length) * 10) / 10; out.push(`Sleep averaged ${av} hours${av < 9 ? ", under the 9 to 12 hours he needs" : ", which is healthy"}.`); }
+  const cur = shotAgg("4w"), prev = shotAgg("prev");
+  const mv = SPOTS.map(([id, name]) => { const o = cur[id] || { m: 0, x: 0 }, q = prev[id] || { m: 0, x: 0 }, a1 = o.m + o.x, a0 = q.m + q.x; return a1 >= 5 && a0 >= 5 ? [name, Math.round((o.m / a1 - q.m / a0) * 100)] : null; }).filter(Boolean).sort((p, q) => q[1] - p[1]);
+  let M = 0, X = 0; Object.values(cur).forEach((o) => { M += o.m; X += o.x; });
+  if (M + X) out.push(`Shooting is ${Math.round((M / (M + X)) * 100)}% over the last four weeks${mv.length && mv[0][1] > 0 ? `, with the biggest gain from the ${mv[0][0].toLowerCase()}` : ""}.`);
+  const g = (S.games || []).slice().sort((a, b) => (a.date < b.date ? -1 : 1)).slice(-1)[0];
+  if (g) out.push(`Last game${g.opp ? " against " + g.opp : ""}: ${g.result === "W" ? "a win" : g.result === "L" ? "a loss" : "played"}, ${g.pts ?? 0} points, ${g.ast ?? 0} assists and ${g.tov ?? 0} turnovers.`);
+  const rungs = SKILLS.reduce((p, s) => p + ladderN(s[0]), 0);
+  const low = SKILLS.slice().sort((p, q) => ladderN(p[0]) - ladderN(q[0]))[0];
+  out.push(`Skill ladder: ${rungs} of ${SKILLS.length * 5} rungs passed.`);
+  const { l } = leadOf();
+  out.push(`Leadership goal: ${LEAD_PROMPTS[l.i].toLowerCase()} (${l.done ? "done" : "not yet"}).`);
+  const next = mv.length && mv[mv.length - 1][1] < 0 ? `shooting from the ${mv[mv.length - 1][0].toLowerCase()}` : low && ladderN(low[0]) < 5 ? low[1].toLowerCase() : "keeping the habits going";
+  out.push(`Good thing to work on next week: ${next}.`);
+  return out.join(" ");
+}
+function plainWeekHtml() {
+  return `<h2 class="section">This week in plain words</h2><div class="plainweek"><p>${esc(plainWeekText())}</p></div>`;
+}
+
+Object.assign(EXTRA_ACTIONS, {
+  levelUpToggle: (d) => { S.levelUp ||= {}; if (S.levelUp[d.id]) delete S.levelUp[d.id]; else S.levelUp[d.id] = true; },
+  wtDone: (d) => { S.watchTry ||= {}; if (S.watchTry[d.id]) delete S.watchTry[d.id]; else { S.watchTry[d.id] = dateKey(new Date()); toast("Nice. +15 XP"); } },
+  addFilmNote: () => formFilmNote(), editFilmNote: (d) => formFilmNote(d.id),
+  preToggle: (d) => { const lg = logOf(dateKey(new Date())); lg.pre ||= {}; if (lg.pre[d.i]) delete lg.pre[d.i]; else lg.pre[d.i] = true; },
+  leadDone: () => { const { l } = leadOf(); const w = (S.weekly[weekKeyNow()] ||= {}); w.lead = { i: l.i, done: !l.done }; if (w.lead.done) toast("Great leadership. +15 XP"); },
+  leadNew: () => { const { l } = leadOf(); const w = (S.weekly[weekKeyNow()] ||= {}); w.lead = { i: (l.i + 1) % LEAD_PROMPTS.length, done: false }; },
+});

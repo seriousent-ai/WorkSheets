@@ -1,6 +1,12 @@
 # Changes
 
 ## Phase 9
+- Drill details have a "Make this harder" button with a harder version for each core drill, by day.
+- "Watch, then try it" (Videos tab): seven advanced videos each paired with a short drill (+15 XP).
+- Film notes (Videos tab): one thing seen and one thing to fix (+5 XP each).
+- Game day card on Today with a pre-game checklist, and three after-game questions (good read, mistake, change) saved with the game.
+- Leadership goal each week (Log tab, +15 XP), with another goal button.
+- "This week in plain words" at the top of the parent progress overview, also added to the shared weekly report.
 - Skill ladder (Log tab): five rungs for each of the five skills, each with a test such as "pull-up off one dribble from the elbow: 6 of 10". Tapping Passed it gives 30 XP and shows the next test. Synced between phones.
 - Game stats: record, steals per game, and the last five games against the season, next to the assist to turnover number.
 - Shot chart: a glow behind each spot, how each spot compares with the four weeks before, and a line naming the most improved and weakest spot.
