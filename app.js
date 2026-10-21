@@ -18,7 +18,7 @@ function load() {
   try { s = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
   if (!s || !Array.isArray(s.days)) s = JSON.parse(JSON.stringify(DEFAULT_DATA));
   s.logs ||= {}; s.weekly ||= {}; s.videos ||= []; s.links ||= []; s.notes ||= [];
-  s.games ||= []; s.events ||= []; s.badges ||= []; s.monthly ||= null; s.goal ||= null; s.sugHidden ||= []; s.ladder ||= {};
+  s.games ||= []; s.events ||= []; s.badges ||= []; s.monthly ||= null; s.goal ||= null; s.sugHidden ||= []; s.ladder ||= {}; s.levelUp ||= {}; s.watchTry ||= {}; s.filmNotes ||= [];
   if (s.profile && /\| Intermediate \|/.test(s.profile.subtitle || "")) s.profile.subtitle = s.profile.subtitle.replace("| Intermediate |", "| Advanced |");
   s.rewards ||= JSON.parse(JSON.stringify(DEFAULT_DATA.rewards));
   s.planTs ||= 0;
@@ -138,8 +138,9 @@ function xpTotal() {
     if (w.right || w.shoot) x += 25;
     if (w.improved || w.adjust) x += 15;
     if (w.challenge && w.challenge.done) x += 25;
+    if (w.lead && w.lead.done) x += 15;
   }
-  return x + gamesXp() + monthlyXp() + ladderXp();
+  return x + gamesXp() + monthlyXp() + bonusXp();
 }
 const SKILLS = [["handle", "Ball handling", "ball", /handl/], ["pass", "Passing and reads", "pass", /pass/], ["shoot", "Shooting", "hoop", /shoot/], ["finish", "Finishing and defense", "bolt", /finish|defen/], ["iq", "Court IQ", "eye", /film|discuss|review|check-in|decision/]];
 const SK_LV = [0, 30, 80, 150, 250, 400, 600];
@@ -564,6 +565,7 @@ function viewToday() {
   ${noteCard()}
   ${milestoneCard()}
   ${eventBanner()}
+  ${gameDayCard()}
   <div class="seg">${seg}</div>
   <div class="cols"><div>
   <div class="hero">
@@ -587,7 +589,7 @@ function viewToday() {
         <button class="check ${on ? "on" : ""}${on && ui.fresh === b.id ? " fresh" : ""}" data-a="toggle" data-id="${b.id}" aria-label="Mark ${esc(b.title)} done">${on ? "✓" : ""}</button>
         <div class="grow"><div class="title strong">${esc(b.title)}</div>
           <div class="detail"><span class="pill">${times[i]}</span>${cur ? ' <span class="pill blue">Up next</span>' : ""}</div>
-          ${b.text ? `<button class="linkbtn" data-a="blockInfo" data-id="${b.id}">${open ? "Hide details" : "Details"}</button>${open ? `<div class="detail">${esc(b.text)}</div>${cycleNoteHtml(b)}` : ""}` : ""}</div>
+          ${b.text ? `<button class="linkbtn" data-a="blockInfo" data-id="${b.id}">${open ? "Hide details" : "Details"}</button>${open ? `<div class="detail">${esc(b.text)}</div>${cycleNoteHtml(b)}${levelUpHtml(b)}` : ""}` : ""}</div>
         <div class="side">
           <button class="play" data-a="gFrom" data-id="${b.id}" aria-label="Start ${esc(b.title)} timer">▶</button>
           <button class="more" data-a="editBlock" data-id="${b.id}" aria-label="Edit ${esc(b.title)}">•••</button>
@@ -692,6 +694,8 @@ function viewVideos() {
   <h1 class="large">Videos</h1>
   <p class="sub">Watch the clip that matches today's drill.</p>
   ${clipsHtml()}
+  ${watchTrySection()}
+  ${filmNotesSection()}
   ${watchSection()}
   <button class="feature film-card" data-a="filmStart"><b>Film study</b><span>Watch a clip, answer 5 questions, score yourself. +20 XP</span></button>
   <a class="feature" style="margin-top:10px" href="https://jr.nba.com/jrnbaathome/" target="_blank" rel="noopener"><b>Jr. NBA at Home</b><span>Free drills and videos you can do anywhere ↗</span></a>
@@ -753,7 +757,7 @@ function reportData() {
   let sessions = 0, xp = 0;
   for (let i = 0; i < 7; i++) { const l = S.logs[dateKey(addDays(mon, i))]; if (l) { if (l.complete) sessions++; xp += xpOfLog(l); } }
   xp += (w.right || w.shoot ? 25 : 0) + (w.improved || w.adjust ? 15 : 0) + (w.challenge && w.challenge.done ? 25 : 0);
-  return { mon, wk, w, sessions, xp, goal: Math.min(6, S.days.length), hours: weekLoad(wk).hours };
+  return { mon, wk, w, sessions, xp, goal: Math.min(6, S.days.length), hours: weekLoad(wk).hours, plain: ui.weekOffset === 0 ? plainWeekText() : "" };
 }
 function reportText(r) {
   const w = r.w, sk = [];
@@ -766,7 +770,7 @@ function reportText(r) {
   return [`${firstName(S.profile.name)}'s week, ${fmtShort(r.mon)} to ${fmtShort(end)} (${S.profile.team} ${S.profile.league})`,
     `Sessions finished: ${r.sessions} of ${r.goal}`, `Organized basketball: ${r.hours.toFixed(1)} of 10 hours`, `XP earned: ${r.xp}`,
     sk.length ? `Skill check: ${sk.join(", ")}` : "", w.priority ? `Coach's priority: ${w.priority}` : "", w.goal ? `${firstName(S.profile.name)}'s goal: ${w.goal}` : "",
-    w.improved ? `Improved: ${w.improved}` : "", w.hard ? `Difficult: ${w.hard}` : "", w.adjust ? `Next week's one adjustment: ${w.adjust}` : ""].filter(Boolean).join("\n");
+    w.improved ? `Improved: ${w.improved}` : "", w.hard ? `Difficult: ${w.hard}` : "", w.adjust ? `Next week's one adjustment: ${w.adjust}` : "", r.plain ? `In plain words: ${r.plain}` : ""].filter(Boolean).join("\n");
 }
 async function reportImage(r) {
   const c = document.createElement("canvas");
@@ -851,6 +855,7 @@ function viewLog() {
   </div><div>
   ${trendsHtml()}
   ${ladderHtml()}
+  ${leadHtml()}
   ${shotChartHtml()}
   ${gamesHtml()}
   ${playbookHtml()}
@@ -1052,6 +1057,7 @@ function overviewHtml() {
   const faces = { 1: "Wiped out", 2: "Tired", 3: "Okay", 4: "Good", 5: "Great" };
   return `<header class="ovr-top"><button data-a="ovrClose">Done</button><b>${esc(first)}'s progress</b><button data-a="ovrRefresh">Refresh</button></header>
   <p class="ovr-sync ${Sync.code ? "" : "warn"}">${esc(synced)}</p>
+  ${plainWeekHtml()}
   <div class="hero"><div class="herorow"><div class="grow"><div class="eyebrow">This week</div><div class="big">${sessions} of ${goal} sessions</div><div class="detail">${esc(lv.cur[1])} · Overall ${ovr} · ${xp} XP · ${weekStreak()} week streak</div></div>${badge(lv.cur[2], "lg")}</div>
     <div class="progress"><i style="width:${Math.min(100, (sessions / goal) * 100)}%"></i></div></div>
   ${flags.length ? `<div class="ovr-flags"><b>Worth a conversation</b>${flags.map((f) => `<p>${esc(f)}</p>`).join("")}</div>` : `<div class="ovr-ok"><b>Looking good</b><p>Nothing needs attention this week.</p></div>`}

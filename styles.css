@@ -647,3 +647,7 @@ details.fold > summary { margin-top: 8px; }
 .court .spot.mid { color: var(--orange, #ff9f0a); }
 .court .spot.lo { color: var(--red, #ff453a); }
 .court .spot.none .glow { opacity: 0; }
+
+.plainweek { background: var(--card); border-radius: var(--card-r); padding: 14px 16px; margin-bottom: 12px; }
+.plainweek p { margin: 0; font-size: var(--fs-body); line-height: 1.45; }
+.cycnote.lvon { border-left: 3px solid var(--blue-fill); padding-left: 8px; }
