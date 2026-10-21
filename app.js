@@ -1132,9 +1132,9 @@ function toast(msg) {
   setTimeout(() => t.remove(), 2400);
 }
 const Prefs = {
-  sound: true, voice: true, haptic: true, remind: false, remindTime: "16:00", calTime: "16:00", calAlarm: "30", parent: "", textSize: "1", moreOpen: false, checks: {}, roleAsked: false, libOpen: {}, shuffle: false, minLevel: 2,
+  sound: true, voice: true, haptic: true, remind: false, remindTime: "16:00", calTime: "16:00", calAlarm: "30", parent: "", textSize: "1", moreOpen: false, checks: {}, roleAsked: false, libOpen: {}, shuffle: false, libLevel: 3,
   load() { try { Object.assign(this, JSON.parse(localStorage.getItem("tristan-prefs")) || {}); } catch (e) {} },
-  save() { try { localStorage.setItem("tristan-prefs", JSON.stringify({ sound: this.sound, voice: this.voice, haptic: this.haptic, remind: this.remind, remindTime: this.remindTime, calTime: this.calTime, calAlarm: this.calAlarm, parent: this.parent, textSize: this.textSize, moreOpen: this.moreOpen, checks: this.checks, roleAsked: this.roleAsked, libOpen: this.libOpen, shuffle: this.shuffle, minLevel: this.minLevel })); } catch (e) {} },
+  save() { try { localStorage.setItem("tristan-prefs", JSON.stringify({ sound: this.sound, voice: this.voice, haptic: this.haptic, remind: this.remind, remindTime: this.remindTime, calTime: this.calTime, calAlarm: this.calAlarm, parent: this.parent, textSize: this.textSize, moreOpen: this.moreOpen, checks: this.checks, roleAsked: this.roleAsked, libOpen: this.libOpen, shuffle: this.shuffle, libLevel: this.libLevel })); } catch (e) {} },
 };
 Prefs.load();
 const buzz = (p) => { if (Prefs.haptic && navigator.vibrate) navigator.vibrate(p); };

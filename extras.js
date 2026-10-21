@@ -939,14 +939,14 @@ const sugList = () => (typeof SUGGESTED_VIDEOS !== "undefined" ? SUGGESTED_VIDEO
 const inLibrary = (v) => S.videos.some((x) => x.url === v.url || (v.yt && x.url && ytIdOf(x.url) === v.yt));
 const LIB_LEVELS = [[1, "All levels"], [2, "Intermediate and up"], [3, "Advanced only"]];
 const LEVEL_NAME = { 1: "Basics", 2: "Intermediate", 3: "Advanced" };
-const sugVisible = () => sugList().filter((v) => !(S.sugHidden || []).includes(v.id) && (v.level || 2) >= (Prefs.minLevel || 2));
+const sugVisible = () => sugList().filter((v) => !(S.sugHidden || []).includes(v.id) && (v.level || 2) >= (Prefs.libLevel || 3));
 const sugYouTube = (cat) => sugVisible().filter((v) => v.yt && (!cat || v.cat === cat));
 function watchSection() {
   const chips = SUGGESTED_CATS.map(([k, label]) => `<button class="chip" data-a="watchAll" data-c="${k}">${esc(label)} <small>${sugYouTube(k).length}</small></button>`).join("");
   return `<h2 class="section">Watch non-stop</h2><div class="group"><div class="row"><div class="grow"><div class="title strong">Play a whole topic back to back</div><div class="detail">Tap a topic. The videos play one after another.</div>
     <div class="chips wrapchips" role="group" aria-label="Topics">${chips}</div></div></div>
-    <div class="row"><div class="grow"><div class="title strong">Level</div><div class="detail">Basics are hidden by default.</div>
-    <div class="chips wrapchips" role="group" aria-label="Level">${LIB_LEVELS.map(([n, l]) => `<button class="chip ${(Prefs.minLevel || 2) === n ? "on" : ""}" aria-pressed="${(Prefs.minLevel || 2) === n}" data-a="setLevel" data-n="${n}">${l}</button>`).join("")}</div></div></div>
+    <div class="row"><div class="grow"><div class="title strong">Level</div><div class="detail">Basics and intermediate are hidden by default.</div>
+    <div class="chips wrapchips" role="group" aria-label="Level">${LIB_LEVELS.map(([n, l]) => `<button class="chip ${(Prefs.libLevel || 3) === n ? "on" : ""}" aria-pressed="${(Prefs.libLevel || 3) === n}" data-a="setLevel" data-n="${n}">${l}</button>`).join("")}</div></div></div>
     <div class="row"><div class="grow"><div class="title strong">Shuffle</div><div class="detail">Mix up the order each time.</div></div><button class="switch ${Prefs.shuffle ? "on" : ""}" role="switch" aria-checked="${Prefs.shuffle}" aria-label="Shuffle" data-a="shuffleToggle"><i></i></button></div>
     <div class="row tap" data-a="ytPaste"><div class="grow"><div class="title strong">Paste a YouTube link</div><div class="detail">Copy a video or playlist link in YouTube, then tap here to add it.</div></div><span class="chev">›</span></div></div>`;
 }
@@ -975,7 +975,7 @@ function playerSheet(title, src, listHtml) {
 function shuffled(a) { const b = a.slice(); for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; }
 const ytTitleFallback = (list) => (list ? "YouTube playlist" : "YouTube video");
 Object.assign(EXTRA_ACTIONS, {
-  setLevel: (d) => { Prefs.minLevel = +d.n; Prefs.save(); },
+  setLevel: (d) => { Prefs.libLevel = +d.n; Prefs.save(); },
   shuffleToggle: () => { Prefs.shuffle = !Prefs.shuffle; Prefs.save(); },
   watchAll: (d) => {
     let items = sugYouTube(d.c);
