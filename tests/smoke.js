@@ -192,6 +192,35 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
     const coach = await p.evaluate(() => S.profile.coachCode);
     ok(coach && coach !== code, "coach code created");
 
+    // QR code: show it on phone 1, scan it with a fake camera on phone 3
+    await p.click("[data-a=syncQr]");
+    await p.waitForSelector(".qrbox svg");
+    ok(true, "QR code is shown for the family code");
+    if (process.env.BROWSER !== "webkit") {
+      let y4m = null;
+      try {
+        const png = path.join(os.tmpdir(), "rens-qr.png"); y4m = path.join(os.tmpdir(), "rens-qr.y4m");
+        await p.evaluate(() => document.querySelectorAll(".toast").forEach((x) => x.remove()));
+        await p.locator(".qrbox").screenshot({ path: png });
+        cp.execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-loop", "1", "-i", png, "-vf", "scale=440:440:force_original_aspect_ratio=decrease,pad=640:480:(ow-iw)/2:(oh-ih)/2:white,format=yuv420p", "-t", "4", "-r", "10", y4m]);
+      } catch (e) { y4m = null; }
+      if (y4m) {
+        await p.click("[data-a=close]");
+        const cam = await engine.launch({ ...(process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {}), args: ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream", "--use-file-for-fake-video-capture=" + y4m] });
+        const cc3 = await cam.newContext({ ...phone, permissions: ["camera"] });
+        const sp3 = await cc3.newPage();
+        await sp3.goto(url + "/index.html"); await sp3.waitForSelector("#splash", { state: "detached" }); await finishWelcome(sp3);
+        await tab(sp3, "guide");
+        await sp3.click("[data-a=syncJoin]");
+        await sp3.click("[data-a=extra]");
+        await sp3.waitForSelector(".scanview");
+        await sp3.waitForFunction((c) => Sync.code === c, code, { timeout: 20000 });
+        ok(true, "scanning the QR code joins the family");
+        await sp3.waitForFunction(() => (S.games || []).length === 1, null, { timeout: 15000 });
+        ok(true, "the scanned phone received the family's data");
+        await cam.close();
+      } else console.log("  skip  could not build a fake camera video");
+    }
     const par = await boot(browser, url);
     const q = par.page;
     await finishWelcome(q).catch(() => {});

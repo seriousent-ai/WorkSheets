@@ -600,7 +600,7 @@ Object.assign(EXTRA_ACTIONS, {
 });
 
 /* ---------- focus handling for full-screen views ---------- */
-const OVERLAYS = [["#modal .sheet", "[data-a=close]"], ["#extra .cmp", "[data-a=cmpClose]"], ["#overview .ovr", "[data-a=ovrClose]"], ["#card .cardview", "[data-a=cardClose]"], ["#film > *", "[data-a=filmClose]"], ["#summary > *", "[data-a=sumClose]"], ["#guided > *", "[data-a=gClose]"], ["#welcome > *", ""]];
+const OVERLAYS = [["#modal .sheet", "[data-a=close]"], ["#scan .scanview", "[data-a=scanClose]"], ["#extra .cmp", "[data-a=cmpClose]"], ["#overview .ovr", "[data-a=ovrClose]"], ["#card .cardview", "[data-a=cardClose]"], ["#film > *", "[data-a=filmClose]"], ["#summary > *", "[data-a=sumClose]"], ["#guided > *", "[data-a=gClose]"], ["#welcome > *", ""]];
 let focusKey = "", returnSel = "", lastActionSel = "";
 const topOverlay = () => { for (const [sel, close] of OVERLAYS) { const el = document.querySelector(sel); if (el) return { el, close, id: sel }; } return null; };
 document.addEventListener("click", (e) => {
@@ -673,3 +673,60 @@ EXTRA_ACTIONS.clipDelete = async (d) => {
   if (v.code === "Me" && !v.url) S.videos = S.videos.filter((x) => x.id !== v.id); else delete v.fileId;
   persist(); render(); toast("Clip deleted.");
 };
+
+/* ---------- QR code for the family code: show it here, scan it on the other phone ---------- */
+const loadedScripts = {};
+const loadScript = (src) => (loadedScripts[src] ||= new Promise((res, rej) => {
+  const s = document.createElement("script");
+  s.src = src; s.onload = res; s.onerror = () => { delete loadedScripts[src]; rej(new Error("Could not load " + src)); };
+  document.head.appendChild(s);
+}));
+let scanStream = null, scanTimer = null, scanBusy = false;
+function stopScan() { clearInterval(scanTimer); scanTimer = null; if (scanStream) { scanStream.getTracks().forEach((t) => t.stop()); scanStream = null; } }
+function renderScan() {
+  const el = document.getElementById("scan");
+  if (!el) return;
+  if (!ui.scan) { if (el.firstChild) { stopScan(); el.innerHTML = ""; } return; }
+  if (el.firstChild) return;
+  el.innerHTML = `<div class="scanview" role="dialog" aria-label="Scan QR code"><header class="ovr-top"><button data-a="scanClose">Cancel</button><b>Scan the QR code</b><span style="min-width:56px"></span></header>
+    <div class="scanbox"><video id="scan-v" playsinline muted></video></div><canvas id="scan-c" hidden></canvas>
+    <p class="small" id="scan-msg" role="status">Point the camera at the QR code on the other phone.</p></div>`;
+  startScan();
+}
+async function startScan() {
+  const msg = (t) => { const m = document.getElementById("scan-msg"); if (m) m.textContent = t; };
+  try {
+    await loadScript("vendor/jsqr.js");
+    scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+  } catch (e) { msg("The camera is not available. Go back and type the code instead."); return; }
+  const v = document.getElementById("scan-v");
+  if (!v) { stopScan(); return; }
+  v.srcObject = scanStream;
+  try { await v.play(); } catch (e) {}
+  const c = document.getElementById("scan-c"), g = c.getContext("2d", { willReadFrequently: true });
+  scanTimer = setInterval(async () => {
+    if (!ui.scan || scanBusy || !v.videoWidth) return;
+    c.width = v.videoWidth; c.height = v.videoHeight;
+    g.drawImage(v, 0, 0);
+    const r = jsQR(g.getImageData(0, 0, c.width, c.height).data, c.width, c.height);
+    if (!r || !r.data) return;
+    let code = r.data;
+    try { code = new URL(code).searchParams.get("join") || code; } catch (e) {}
+    scanBusy = true;
+    msg("Joining…");
+    try { await Sync.join(code); stopScan(); ui.scan = null; toast("Joined. Your plan and progress are syncing."); render(); }
+    catch (e) { msg((e.message || "That code did not work.") + " Try again."); setTimeout(() => (scanBusy = false), 1500); return; }
+    scanBusy = false;
+  }, 250);
+}
+Object.assign(EXTRA_ACTIONS, {
+  scanClose: () => { ui.scan = null; },
+  syncQr: async () => {
+    if (!Sync.code) return;
+    try { await loadScript("vendor/qrcode.js"); } catch (e) { toast("Could not make the QR code. Check your connection."); return; }
+    const qr = qrcode(0, "M");
+    qr.addData(Sync.code); qr.make();
+    const svg = qr.createSvgTag({ cellSize: 6, margin: 3, scalable: true, alt: { text: "QR code for the family code", id: "qr-alt" } });
+    openInfo("Family code QR", `<div class="qrbox">${svg}</div><p class="small">On the other phone, open Guide, choose Join with a family code, then Scan the QR code instead. Only show this to your own family. Anyone who scans it can read and change the family's data.</p>`);
+  },
+});

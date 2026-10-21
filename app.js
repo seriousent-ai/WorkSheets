@@ -65,7 +65,7 @@ const idb = {
 };
 
 /* ---------- state ---------- */
-const ui = { overview: false, card: false, chartRange: "4w", chartSpot: null, film: null, welcome: null, summary: null, tab: "today", day: todayIdx(), openVideo: null, weekOffset: 0, guided: null, openBlocks: {}, form: null, compare: null };
+const ui = { overview: false, card: false, chartRange: "4w", chartSpot: null, film: null, welcome: null, summary: null, tab: "today", day: todayIdx(), openVideo: null, weekOffset: 0, guided: null, openBlocks: {}, form: null, compare: null, scan: null };
 const dateOf = (i) => dateKey(addDays(mondayOf(new Date()), i));
 const logOf = (date) => (S.logs[date] ||= { done: {} });
 
@@ -869,6 +869,7 @@ function viewGuide() {
     ${!Sync.ready ? `<div class="row"><div class="grow detail">Sync is not set up in this build.</div></div>` : Sync.code ? `
     <div class="row"><div class="grow"><div class="detail">Family code</div><div class="title strong" style="font-family:ui-monospace,Menlo,monospace;font-size:17px;overflow-wrap:anywhere;user-select:all">${esc(Sync.pretty(Sync.code))}</div><div class="detail" data-sync-status>${esc(Sync.statusText())}</div></div></div>
     <div class="row tap" data-a="syncShare"><div class="grow">Share code</div><span class="chev">›</span></div>
+    <div class="row tap" data-a="syncQr"><div class="grow">Show QR code for another phone</div><span class="chev">›</span></div>
     <div class="row tap" data-a="syncNow"><div class="grow">Sync now</div><span class="chev">›</span></div>
     <div class="row tap" data-a="syncOff"><div class="grow" style="color:var(--red-text)">Turn off sync on this device</div></div>` : `
     <div class="row tap" data-a="syncCreate"><div class="grow"><div class="title strong">Create a family code</div><div class="detail">Start here on one device, then join from the others.</div></div><span class="chev">›</span></div>
@@ -1106,9 +1107,10 @@ function render() {
   renderCard();
   renderOverview();
   renderCompare();
+  renderScan();
   animateCounts();
   manageFocus();
-  document.body.classList.toggle("noscroll", !!(ui.guided || ui.summary || ui.welcome || ui.film || ui.card || ui.overview || ui.compare));
+  document.body.classList.toggle("noscroll", !!(ui.guided || ui.summary || ui.welcome || ui.film || ui.card || ui.overview || ui.compare || ui.scan));
   document.querySelectorAll("video[data-file]").forEach(async (el) => {
     try { const b = await idb.get(el.dataset.file); if (b) el.src = URL.createObjectURL(b); } catch (e) {}
   });
@@ -1632,6 +1634,7 @@ const ACTIONS = {
     title: "Join family",
     fields: [{ k: "code", label: "Family code", value: "", ph: "xxxx-xxxx-xxxx-xxxx-xxxx" }],
     required: ["code"],
+    extra: [{ label: "Scan the QR code instead", fn: () => { ui.scan = {}; } }],
     async save(f) {
       try { await Sync.join(f.code); toast("Joined. Your plan and progress are syncing."); } catch (e) { toast(e.message || "Could not join."); }
     },
