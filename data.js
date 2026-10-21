@@ -124,6 +124,66 @@ const DEFAULT_DATA = {
 };
 
 
+/* Skill ladder: five rungs per skill. A rung is passed when Tristan (or a parent watching) says the test was met. */
+const LADDER = {
+  handle: ["Two-ball stationary dribble for 30 seconds with no lost ball", "Cone course with both hands in under 12 seconds, no lost ball", "Change of pace into a crossover against a live defender: get past 5 of 5 times", "Weak-hand-only dribble up the floor against pressure: no turnovers in 3 trips", "Escape a trap with a pivot or a split against two defenders: 4 of 5 reps"],
+  pass: ["20 chest and bounce passes on target in one minute with a partner (18 or more)", "Left-hand pocket passes: 8 of 10 on target", "Pass off the dribble on the move: 8 of 10 hit the target hand", "Ball-screen read, 3 on 2: the right pass 4 of 5 times", "Skip pass across the floor: 8 of 10 on target and in rhythm"],
+  shoot: ["Form shooting from 5 feet: 8 of 10", "Free throws: 8 of 10 in two different weeks", "Catch and shoot: 7 of 10 from his best spot", "Pull-up off one dribble from the elbow: 6 of 10", "Off the dribble at game speed from three spots: 5 of 10 from each"],
+  finish: ["Layups with both hands: 8 of 10 on each side", "Euro-step or reverse layup against a pad or defender: 6 of 10", "Finish through contact against a pad: 6 of 10", "Floater over a defender or a chair: 5 of 10", "Contain a dribbler for 10 seconds without a foul, 3 times in a row"],
+  iq: ["Name the defense (man, zone or press) at the start of 3 possessions in a game", "Watch a clip and write down 3 reads before the play ends", "Explain drop, hedge and switch on a ball screen, and your best attack against each", "Hold an assist to turnover ratio of 2.5 or better over a game", "Lead a timeout: tell the team one adjustment and why"]
+};
+
+/* Harder versions of the core drill blocks, by block kind and weekday. Used by "Make this harder" in the drill details. */
+const LEVELUP = {
+  handle: {
+    Monday: "Do the whole block with a defender in a chair-and-cone gauntlet: attack, change pace, and keep your eyes up. Add a second ball for the last 3 minutes.",
+    Tuesday: "Add a live defender who only plays the first two dribbles. Try a hesitation and a snatchback before the crossover.",
+    Wednesday: "Weak-hand-only for the full block, then a 30-second go at game speed against a partner who reaches.",
+    Thursday: "Have a partner pressure full-court. Beat the trap with a pivot, a split or a retreat dribble, and count turnovers. Aim for none in 3 trips.",
+    Friday: "Push the ball up the floor at full speed, and decide at the line: pull up, hit a trailer, or attack. Do 10 trips and keep a score.",
+    Saturday: "Run the cone course against a clock and add a counter move after every crossover. Beat last week's time."
+  },
+  pass: {
+    Monday: "Pass to a moving target and add a defender with one hand up. Count turnovers and keep them under 2.",
+    Tuesday: "Run 3 on 2 and make the read in under 2 seconds. Hit the open man with a one-hand or skip pass.",
+    Wednesday: "Add a pass fake, then a pocket pass or a wrap pass. Aim for 8 of 10 on target.",
+    Thursday: "Throw passes against a live defender who is trying to steal. Add a ball-screen read: reject, split or pocket pass to the roller.",
+    Friday: "Live 2 on 1 and 3 on 2 on the break. Pass ahead early and aim a lead pass at the receiver's far hand.",
+    Saturday: "Play 3 on 3 with two dribbles maximum. Count assists and turnovers and write the ratio down."
+  },
+  shoot: {
+    Monday: "Shoot from the elbow off one dribble. Move for every catch. Aim for 6 of 10, then step back one foot.",
+    Tuesday: "Use a pull-up off a ball screen from a chair. Read the defender: pull up if he drops, attack if he steps up.",
+    Wednesday: "Shoot off a step-back or snatchback. Keep the form the same as the close-range work. 5 of 10.",
+    Thursday: "Add a closeout defender with a hand up. Catch, one dribble, shoot over the hand. Count makes in a row.",
+    Friday: "Catch on the run in transition and shoot in rhythm. 10 shots from three different spots at game speed.",
+    Saturday: "25 shots from five spots, but each one after a move: a dribble pull-up, a hesitation or a step-back. Compare with last week."
+  },
+  finish: {
+    Monday: "Finish with a Euro-step or a reverse layup against a pad. 6 of 10 on each side.",
+    Tuesday: "On defense, mirror a partner who changes pace, then close out and contain for 10 seconds without fouling.",
+    Wednesday: "Finish through contact: take a bump from a pad and still make the layup. Add a floater over a chair.",
+    Thursday: "Defend a live dribbler for 10 seconds without a foul. Keep your chest in front and your hands up. Do 3 in a row.",
+    Friday: "Finish at speed after a controlled approach, with a defender trailing. Use either hand and a floater when the big steps up.",
+    Saturday: "Play 1 on 1 to 5 points. Win with a finish through contact and a stop on defense."
+  }
+};
+const levelKind = (title) => (/handle|dribbl/i.test(title) ? "handle" : /pass/i.test(title) ? "pass" : /shoot/i.test(title) ? "shoot" : /finish|defen/i.test(title) ? "finish" : null);
+
+/* Watch, then try it. Each pairs a suggested video (by YouTube id) with a short drill. */
+const DECISIONS = [
+  { id: "w-hedge", title: "Read the hard hedge", yt: "btpuIhLSg8E", drill: "Set two chairs as a screen with a partner as the big. Dribble at it and call the coverage out loud: hedge. Then reject or split. 5 reps each way." },
+  { id: "w-drop", title: "Attack drop coverage", yt: "TbovZAZRRL4", drill: "Have a partner back up under the screen. Pull up if he drops. Take 8 shots, then attack the gap and finish 4 times." },
+  { id: "w-cp", title: "Study a great point guard", yt: "qUqvYc773qY", drill: "Watch it twice. The second time, pause 3 times before the pass and say what the guard sees. Write down one read to copy." },
+  { id: "w-pace", title: "Change of pace", yt: "K5f-E_-if00", drill: "Walk, then explode, for 5 trips each side. Go from half speed to full speed in two steps, with your eyes up." },
+  { id: "w-pocket", title: "The pocket pass", yt: "lt3BlXJx3do", drill: "Dribble toward a chair, then pass through a gap to a partner. 10 passes with each hand. The pass should be low and on target." },
+  { id: "w-contain", title: "Contain a quick guard", yt: "sEn1sQkmJkI", drill: "Slide and keep your chest in front of a partner. Stop him from reaching the free-throw line for 10 seconds. Do 3 in a row." },
+  { id: "w-iq", title: "Make quicker decisions", yt: "j16FCb3BbDs", drill: "Watch each clip and pause. Say the decision out loud before the answer. Then repeat the best one in a 2 on 1." }
+];
+
+const LEAD_PROMPTS = ["Talk on every defensive possession", "Calm the team after a turnover", "Call the play early and loudly", "Say something positive to a teammate after a mistake", "Be first to a loose ball", "Speak up in the huddle with one adjustment", "Ask a teammate what they see on the floor", "Show a younger player how to do a drill"];
+const PREGAME = ["Eat a good meal 2 to 3 hours before", "Fill a water bottle and drink", "Warm up: 8 minutes of footwork and layups", "Pick one read to make in the game", "Pack shoes, jersey, ball and water"];
+
 /* Suggested videos for a 12U point guard. Titles and links come from web searches and have not all been watched; a parent should check each one plays and fits. */
 const SUGGESTED_CATS = [["offense", "Offense"], ["defense", "Defense"], ["teamwork", "Teamwork"], ["pg", "Point guard"], ["warmup", "Warm-up and footwork"]];
 const SUGGESTED_VIDEOS = [
@@ -364,64 +424,14 @@ const SUGGESTED_VIDEOS = [
   {"id": "s-o124", "cat": "offense", "group": "Advanced full workouts", "code": "O124", "level": 3, "title": "Shooting and Ball Handling Workouts for Serious Players (17 drills)", "url": "https://www.breakthroughbasketball.com/drills/shooting-ballhandling-workout", "src": "Breakthrough Basketball", "note": "Breakthrough Basketball. Includes speed layups off dribble moves."},
   {"id": "s-w13", "cat": "warmup", "group": "Advanced footwork", "code": "W13", "level": 2, "title": "The Basketball Footwork Every Player Needs to Master", "yt": "etk7bUa-0s8", "url": "https://www.youtube.com/watch?v=etk7bUa-0s8", "src": "YouTube"},
   {"id": "s-p22", "cat": "pg", "group": "Advanced decisions", "code": "P22", "level": 3, "title": "Basketball IQ Test #1: Making Quick Decisions", "yt": "j16FCb3BbDs", "url": "https://www.youtube.com/watch?v=j16FCb3BbDs", "src": "YouTube", "note": "Pause and decide before the answer."},
+  {"id": "s-o125", "cat": "offense", "group": "Advanced web guides and drills", "code": "O125", "level": 3, "title": "Pick-and-Roll Fundamentals: Guide, Variations and Drills", "url": "https://www.breakthroughbasketball.com/fundamentals/pick-and-roll", "src": "Breakthrough Basketball", "note": "Breakthrough Basketball. Reads for the ball handler."},
+  {"id": "s-o126", "cat": "offense", "group": "Advanced web guides and drills", "code": "O126", "level": 3, "title": "Chris Paul Hesitation Move and the Importance of Counter Moves", "url": "https://www.breakthroughbasketball.com/fundamentals/chris-paul-hesitation-move.html", "src": "Breakthrough Basketball", "note": "Breakthrough Basketball. Has a video."},
+  {"id": "s-o127", "cat": "offense", "group": "Advanced web guides and drills", "code": "O127", "level": 3, "title": "The Rocker Shooting Drills for Guards", "url": "https://www.breakthroughbasketball.com/drills/rocker-shooting", "src": "Breakthrough Basketball", "note": "Breakthrough Basketball. Step-back and re-attack."},
+  {"id": "s-o128", "cat": "offense", "group": "Advanced web guides and drills", "code": "O128", "level": 3, "title": "Tennis Ball Moves", "url": "https://www.breakthroughbasketball.com/training/tennis-ball-moves", "src": "Breakthrough Basketball", "note": "Breakthrough Basketball. Hesitation into an explosive finish."},
+  {"id": "s-o129", "cat": "offense", "group": "Advanced web guides and drills", "code": "O129", "level": 3, "title": "Hesi Shooting Drill: Hesitation Jumper Reps", "url": "https://www.levelupbasket.com/basketball-drills/shooting-drills/hesi-shooting", "src": "LevelUp Basketball", "note": "LevelUp Basketball."},
+  {"id": "s-o130", "cat": "offense", "group": "Advanced web guides and drills", "code": "O130", "level": 3, "title": "Eurostep Drill: How to Do It, Tips and Video", "url": "https://www.levelupbasket.com/basketball-drills/finishing-drills/eurostep", "src": "LevelUp Basketball", "note": "LevelUp Basketball. Wide, tight and Euro-to-floater versions."},
+  {"id": "s-o131", "cat": "offense", "group": "Advanced web guides and drills", "code": "O131", "level": 3, "title": "Guard Skills Workout: Craft, Power and Pace", "url": "https://proskillsbasketball.com/nba-final-four-guard-skills-workout-craft-power-pace/", "src": "ProSkills Basketball", "note": "ProSkills Basketball. Slow-down pull-ups and step-back re-attacks."},
+  {"id": "s-d54", "cat": "defense", "group": "Advanced web guides and drills", "code": "D54", "level": 3, "title": "How To Defend Ball Screens", "url": "https://www.breakthroughbasketball.com/defense/defend-ball-screens", "src": "Breakthrough Basketball", "note": "Breakthrough Basketball."},
+  {"id": "s-d55", "cat": "defense", "group": "Advanced web guides and drills", "code": "D55", "level": 3, "title": "Use This Drill To Master Ball Screen Defense", "url": "https://www.breakthroughbasketball.com/drills/balls-screen-defense", "src": "Breakthrough Basketball", "note": "Breakthrough Basketball. Going over the screen."},
+  {"id": "s-t26", "cat": "teamwork", "group": "Advanced web guides and drills", "code": "T26", "level": 3, "title": "Transition and Fast Break Offense: Guide, Drills and Tips", "url": "https://www.breakthroughbasketball.com/offense/transition-fast-break-offense", "src": "Breakthrough Basketball", "note": "Breakthrough Basketball. The point guard's role in transition."},
 ];
-
-/* Skill ladder: five rungs per skill. A rung is passed when Tristan (or a parent watching) says the test was met. */
-const LADDER = {
-  handle: ["Two-ball stationary dribble for 30 seconds with no lost ball", "Cone course with both hands in under 12 seconds, no lost ball", "Change of pace into a crossover against a live defender: get past 5 of 5 times", "Weak-hand-only dribble up the floor against pressure: no turnovers in 3 trips", "Escape a trap with a pivot or a split against two defenders: 4 of 5 reps"],
-  pass: ["20 chest and bounce passes on target in one minute with a partner (18 or more)", "Left-hand pocket passes: 8 of 10 on target", "Pass off the dribble on the move: 8 of 10 hit the target hand", "Ball-screen read, 3 on 2: the right pass 4 of 5 times", "Skip pass across the floor: 8 of 10 on target and in rhythm"],
-  shoot: ["Form shooting from 5 feet: 8 of 10", "Free throws: 8 of 10 in two different weeks", "Catch and shoot: 7 of 10 from his best spot", "Pull-up off one dribble from the elbow: 6 of 10", "Off the dribble at game speed from three spots: 5 of 10 from each"],
-  finish: ["Layups with both hands: 8 of 10 on each side", "Euro-step or reverse layup against a pad or defender: 6 of 10", "Finish through contact against a pad: 6 of 10", "Floater over a defender or a chair: 5 of 10", "Contain a dribbler for 10 seconds without a foul, 3 times in a row"],
-  iq: ["Name the defense (man, zone or press) at the start of 3 possessions in a game", "Watch a clip and write down 3 reads before the play ends", "Explain drop, hedge and switch on a ball screen, and your best attack against each", "Hold an assist to turnover ratio of 2.5 or better over a game", "Lead a timeout: tell the team one adjustment and why"]
-};
-
-/* Harder versions of the core drill blocks, by block kind and weekday. Used by "Make this harder" in the drill details. */
-const LEVELUP = {
-  handle: {
-    Monday: "Do the whole block with a defender in a chair-and-cone gauntlet: attack, change pace, and keep your eyes up. Add a second ball for the last 3 minutes.",
-    Tuesday: "Add a live defender who only plays the first two dribbles. Try a hesitation and a snatchback before the crossover.",
-    Wednesday: "Weak-hand-only for the full block, then a 30-second go at game speed against a partner who reaches.",
-    Thursday: "Have a partner pressure full-court. Beat the trap with a pivot, a split or a retreat dribble, and count turnovers. Aim for none in 3 trips.",
-    Friday: "Push the ball up the floor at full speed, and decide at the line: pull up, hit a trailer, or attack. Do 10 trips and keep a score.",
-    Saturday: "Run the cone course against a clock and add a counter move after every crossover. Beat last week's time."
-  },
-  pass: {
-    Monday: "Pass to a moving target and add a defender with one hand up. Count turnovers and keep them under 2.",
-    Tuesday: "Run 3 on 2 and make the read in under 2 seconds. Hit the open man with a one-hand or skip pass.",
-    Wednesday: "Add a pass fake, then a pocket pass or a wrap pass. Aim for 8 of 10 on target.",
-    Thursday: "Throw passes against a live defender who is trying to steal. Add a ball-screen read: reject, split or pocket pass to the roller.",
-    Friday: "Live 2 on 1 and 3 on 2 on the break. Pass ahead early and aim a lead pass at the receiver's far hand.",
-    Saturday: "Play 3 on 3 with two dribbles maximum. Count assists and turnovers and write the ratio down."
-  },
-  shoot: {
-    Monday: "Shoot from the elbow off one dribble. Move for every catch. Aim for 6 of 10, then step back one foot.",
-    Tuesday: "Use a pull-up off a ball screen from a chair. Read the defender: pull up if he drops, attack if he steps up.",
-    Wednesday: "Shoot off a step-back or snatchback. Keep the form the same as the close-range work. 5 of 10.",
-    Thursday: "Add a closeout defender with a hand up. Catch, one dribble, shoot over the hand. Count makes in a row.",
-    Friday: "Catch on the run in transition and shoot in rhythm. 10 shots from three different spots at game speed.",
-    Saturday: "25 shots from five spots, but each one after a move: a dribble pull-up, a hesitation or a step-back. Compare with last week."
-  },
-  finish: {
-    Monday: "Finish with a Euro-step or a reverse layup against a pad. 6 of 10 on each side.",
-    Tuesday: "On defense, mirror a partner who changes pace, then close out and contain for 10 seconds without fouling.",
-    Wednesday: "Finish through contact: take a bump from a pad and still make the layup. Add a floater over a chair.",
-    Thursday: "Defend a live dribbler for 10 seconds without a foul. Keep your chest in front and your hands up. Do 3 in a row.",
-    Friday: "Finish at speed after a controlled approach, with a defender trailing. Use either hand and a floater when the big steps up.",
-    Saturday: "Play 1 on 1 to 5 points. Win with a finish through contact and a stop on defense."
-  }
-};
-const levelKind = (title) => (/handle|dribbl/i.test(title) ? "handle" : /pass/i.test(title) ? "pass" : /shoot/i.test(title) ? "shoot" : /finish|defen/i.test(title) ? "finish" : null);
-
-/* Watch, then try it. Each pairs a suggested video (by YouTube id) with a short drill. */
-const DECISIONS = [
-  { id: "w-hedge", title: "Read the hard hedge", yt: "btpuIhLSg8E", drill: "Set two chairs as a screen with a partner as the big. Dribble at it and call the coverage out loud: hedge. Then reject or split. 5 reps each way." },
-  { id: "w-drop", title: "Attack drop coverage", yt: "TbovZAZRRL4", drill: "Have a partner back up under the screen. Pull up if he drops. Take 8 shots, then attack the gap and finish 4 times." },
-  { id: "w-cp", title: "Study a great point guard", yt: "qUqvYc773qY", drill: "Watch it twice. The second time, pause 3 times before the pass and say what the guard sees. Write down one read to copy." },
-  { id: "w-pace", title: "Change of pace", yt: "K5f-E_-if00", drill: "Walk, then explode, for 5 trips each side. Go from half speed to full speed in two steps, with your eyes up." },
-  { id: "w-pocket", title: "The pocket pass", yt: "lt3BlXJx3do", drill: "Dribble toward a chair, then pass through a gap to a partner. 10 passes with each hand. The pass should be low and on target." },
-  { id: "w-contain", title: "Contain a quick guard", yt: "sEn1sQkmJkI", drill: "Slide and keep your chest in front of a partner. Stop him from reaching the free-throw line for 10 seconds. Do 3 in a row." },
-  { id: "w-iq", title: "Make quicker decisions", yt: "j16FCb3BbDs", drill: "Watch each clip and pause. Say the decision out loud before the answer. Then repeat the best one in a 2 on 1." }
-];
-
-const LEAD_PROMPTS = ["Talk on every defensive possession", "Calm the team after a turnover", "Call the play early and loudly", "Say something positive to a teammate after a mistake", "Be first to a loose ball", "Speak up in the huddle with one adjustment", "Ask a teammate what they see on the floor", "Show a younger player how to do a drill"];
-const PREGAME = ["Eat a good meal 2 to 3 hours before", "Fill a water bottle and drink", "Warm up: 8 minutes of footwork and layups", "Pick one read to make in the game", "Pack shoes, jersey, ball and water"];
