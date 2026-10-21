@@ -37,8 +37,8 @@ const Sync = {
   },
   strip(o) { const c = { ...o }; delete c._ts; return JSON.stringify(c); },
   planJson() {
-    const { days, videos, links, notes, rewards, profile, note } = S;
-    return JSON.stringify({ days, videos, links, notes, rewards, profile, note });
+    const { days, videos, links, notes, rewards, profile, note, games, events, monthly, badges } = S;
+    return JSON.stringify({ days, videos, links, notes, rewards, profile, note, games, events, monthly, badges });
   },
 
   load() {
@@ -109,7 +109,7 @@ const Sync = {
     if (id === "plan") {
       this.last.plan = this.hash(json);
       if (ts <= (S.planTs || 0)) return false;
-      ["days", "videos", "links", "notes", "rewards", "profile", "note"].forEach((k) => { if (o[k] !== undefined) S[k] = o[k]; });
+      ["days", "videos", "links", "notes", "rewards", "profile", "note", "games", "events", "monthly", "badges"].forEach((k) => { if (o[k] !== undefined) S[k] = o[k]; });
       S.planTs = ts;
       return true;
     }
@@ -161,6 +161,7 @@ const Sync = {
     try {
       const changed = await this.pull();
       await this.pushNow();
+      if (typeof Coach !== "undefined") await Coach.publish().catch(() => {});
       this.lastOk = Date.now();
       this.err = "";
       this.setStatus("ok");

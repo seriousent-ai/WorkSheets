@@ -1,0 +1,6 @@
+{
+  "name": "rens-training-tests",
+  "private": true,
+  "scripts": { "test": "node smoke.js" },
+  "devDependencies": { "axe-core": "4.10.2", "playwright": "1.49.1" }
+}

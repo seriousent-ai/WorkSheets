@@ -538,9 +538,44 @@ textarea.f-input { min-height: 120px; }
 [data-a="editDay"], [data-a="blockInfo"], [data-a="goVideo"], [data-a="filmStart"], [data-a="editLogDay"], [data-a="challengePick"],
 [data-a="addVideo"], [data-a="addLink"], [data-a="editLink"], [data-a="wkPrev"], [data-a="wkNext"], [data-a="editWeekGoals"],
 [data-a="editSkill"], [data-a="editReflect"], [data-a="addReward"], [data-a="addNote"], a[target="_blank"],
-button[data-a="toggle"], [data-a="bodySet"], [data-a="energy"], [data-a="prefToggle"], [data-a="remindToggle"] { position: relative; }
-[data-a="editDay"]::after, [data-a="blockInfo"]::after, [data-a="goVideo"]::after, [data-a="filmStart"]::after, [data-a="editLogDay"]::after,
+button[data-a="toggle"], [data-a="bodySet"], [data-a="energy"], [data-a="prefToggle"], [data-a="remindToggle"] { position: relative; z-index: 1; }
+[data-a="editDay"]::after, [data-a="goVideo"]::after, [data-a="filmStart"]::after, [data-a="editLogDay"]::after,
 [data-a="challengePick"]::after, [data-a="addVideo"]::after, [data-a="addLink"]::after, [data-a="editLink"]::after, [data-a="wkPrev"]::after,
 [data-a="wkNext"]::after, [data-a="editWeekGoals"]::after, [data-a="editSkill"]::after, [data-a="editReflect"]::after, [data-a="addReward"]::after,
-[data-a="addNote"]::after, a[target="_blank"]::after { content: ""; position: absolute; inset: -11px -8px; }
-button[data-a="toggle"]::after, [data-a="bodySet"]::after, [data-a="energy"]::after, [data-a="prefToggle"]::after, [data-a="remindToggle"]::after { content: ""; position: absolute; inset: -7px; }
+[data-a="addNote"]::after, a[target="_blank"]::after { content: ""; position: absolute; inset: -13px -10px; place-self: stretch; }
+button[data-a="toggle"]::after, [data-a="blockInfo"]::after, [data-a="bodySet"]::after, [data-a="energy"]::after, [data-a="prefToggle"]::after, [data-a="remindToggle"]::after { content: ""; position: absolute; inset: -10px; place-self: stretch; }
+
+/* Phase 7 features */
+.evt { margin: 12px 0 0; padding: 12px 16px; border-radius: var(--radius); background: color-mix(in srgb, var(--blue) 12%, var(--card)); display: flex; flex-direction: column; gap: 2px; }
+.evt.game { background: color-mix(in srgb, var(--orange) 16%, var(--card)); }
+.evt b { font-size: 17px; }
+.evt span { font-size: 15px; color: var(--label2); }
+.evt p { margin: 6px 0 0; font-size: 15px; }
+.recov { margin: 12px 0 0; padding: 12px 16px; border-radius: var(--radius); background: var(--card); }
+.recov .hrs-top { display: flex; justify-content: space-between; gap: 8px; font-size: 15px; }
+.recov p { margin: 8px 0 0; font-size: 15px; color: var(--label2); }
+.mdots { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+.mdots i { width: 14px; height: 14px; border-radius: 50%; background: var(--fill); }
+.mdots i.on { background: var(--green); }
+.mdots i.now { outline: 2px solid var(--blue); outline-offset: 1px; }
+.mchal { align-items: flex-start; }
+.clips { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+.clips .feature { margin: 0; }
+.cmp { position: fixed; inset: 0; z-index: 55; background: var(--bg); overflow-y: auto; padding: calc(env(safe-area-inset-top, 0px) + 8px) 16px calc(env(safe-area-inset-bottom, 0px) + 24px); display: flex; flex-direction: column; gap: 10px; }
+.cmp-panel { display: flex; flex-direction: column; gap: 6px; }
+.cmp-panel select { width: 100%; min-height: 44px; font-size: 16px; border-radius: 10px; border: 1px solid var(--sep); background: var(--card); color: var(--label); padding: 0 10px; }
+.cmp-stage { position: relative; background: #000; border-radius: 12px; overflow: hidden; aspect-ratio: 16 / 9; }
+.cmp-stage video, .cmp-stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.cmp-stage video { object-fit: contain; }
+.cmp-stage canvas { pointer-events: none; touch-action: none; }
+.cmp-stage canvas.on { pointer-events: auto; }
+.cmp-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.cmp-bar span { color: var(--label2); font-size: 15px; }
+.cmp-bar button { min-height: 44px; padding: 0 14px; border-radius: 10px; background: var(--fill); color: var(--label); font: inherit; border: 0; }
+.cmp-bar button.on { background: var(--blue-fill); color: #fff; }
+#cmp-seek { width: 100%; min-height: 44px; }
+.coachpage { max-width: 640px; margin: 0 auto; }
+.coachpage .brandrow { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.coachpage .brandrow .logo { width: 44px; height: 44px; object-fit: contain; }
+.coachpage .brandrow div { display: flex; flex-direction: column; }
+.coachpage .brandrow span { color: var(--label2); font-size: 14px; }
