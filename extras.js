@@ -552,7 +552,7 @@ function weekNeeded(monKey) {
 /* ---------- Today: the "More" fold remembers if it is open ---------- */
 const moreIsOpen = () => (window.innerWidth >= 900 ? true : !!Prefs.moreOpen);
 document.addEventListener("toggle", (e) => {
-  if (e.target && e.target.classList && e.target.classList.contains("more")) { Prefs.moreOpen = e.target.open; Prefs.save(); }
+  if (e.target && e.target.classList && e.target.classList.contains("fold")) { Prefs.moreOpen = e.target.open; Prefs.save(); }
 }, true);
 
 /* ---------- errors, version and diagnostics ---------- */
@@ -917,7 +917,7 @@ function checkTz() {
 /* ---------- pull down to sync, swipe to change the day ---------- */
 {
   let sx = 0, sy = 0, tracking = false;
-  const blocked = (t) => !!(t.closest && t.closest("input, textarea, select, .cmp, .guided, .sheet, .scanview, .ovr, details.more[open] .stats"));
+  const blocked = (t) => !!(t.closest && t.closest("input, textarea, select, .cmp, .guided, .sheet, .scanview, .ovr, details.fold[open] .stats"));
   document.addEventListener("touchstart", (e) => { tracking = e.touches.length === 1 && ui.tab === "today" && !ui.form && !blocked(e.target); sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
   document.addEventListener("touchend", (e) => {
     if (!tracking) return;

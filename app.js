@@ -596,7 +596,7 @@ function viewToday() {
   <div class="group"><div class="row"><div class="emojis grow">${mood.map(([e, v]) => `<button class="${lg.energy === v ? "on" : ""}" data-a="energy" data-v="${v}" aria-label="Energy ${v}">${e}</button>`).join("")}</div></div>
   ${lg.improve || lg.challenge ? `<div class="row"><div class="grow">${lg.improve ? `<div class="detail"><b>Improved:</b> ${esc(lg.improve)}</div>` : ""}${lg.challenge ? `<div class="detail"><b>Challenge:</b> ${esc(lg.challenge)}</div>` : ""}</div></div>` : ""}</div>
   ${S.monthly ? monthlyCard() : ""}
-  <details class="more" ${moreIsOpen() ? "open" : ""}><summary>More: progress, challenges and skills</summary>
+  <details class="fold" ${moreIsOpen() ? "open" : ""}><summary>More: progress, challenges and skills</summary>
   ${cycleCard()}
   <button class="cardbtn" data-a="cardOpen">${badge("card")}<div class="grow"><b>Player card</b><span>Overall ${ratings().ovr} · ${esc(levelInfo(completeDates().length).cur[1])}</span></div><span class="chev">›</span></button>
   ${hoursCard(weekKeyNow(), true)}

@@ -594,13 +594,13 @@ button[data-a="toggle"]::after, [data-a="blockInfo"]::after, [data-a="bodySet"]:
 :root { --card-r: 14px; --card-pad: 12px 14px; --fs-cap: 13px; --fs-sm: 15px; --fs-body: 17px; }
 .evt, .recov, .firstwk, .hours, .pnote, .chal, .reward, .cardbtn { border-radius: var(--card-r); padding: var(--card-pad); margin: 0 0 12px; }
 .hours { margin: 12px 0; }
-details.more { margin: 8px 0 0; }
-details.more > summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; min-height: 48px; padding: 0 14px; border-radius: var(--card-r); background: var(--card); font-weight: 600; font-size: var(--fs-body); color: var(--blue-text); }
-details.more > summary::-webkit-details-marker { display: none; }
-details.more > summary::after { content: "›"; font-size: 22px; transform: rotate(90deg); transition: transform .2s; }
-details.more[open] > summary::after { transform: rotate(-90deg); }
-details.more[open] > summary { margin-bottom: 8px; }
-@media (prefers-reduced-motion: reduce) { details.more > summary::after { transition: none; } }
+details.fold { margin: 8px 0 0; }
+details.fold > summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; min-height: 48px; padding: 0 14px; border-radius: var(--card-r); background: var(--card); font-weight: 600; font-size: var(--fs-body); color: var(--blue-text); }
+details.fold > summary::-webkit-details-marker { display: none; }
+details.fold > summary::after { content: "›"; font-size: 22px; transform: rotate(90deg); transition: transform .2s; }
+details.fold[open] > summary::after { transform: rotate(-90deg); }
+details.fold[open] > summary { margin-bottom: 8px; }
+@media (prefers-reduced-motion: reduce) { details.fold > summary::after { transition: none; } }
 [tabindex="-1"]:focus { outline: none; }
 .row .badge { margin-right: 0; }
 .feature .badge.xs { vertical-align: -4px; margin-right: 4px; background: rgba(255, 255, 255, .22); color: #fff; }

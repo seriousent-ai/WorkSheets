@@ -141,3 +141,11 @@ Files: `extras.js` holds the newer features; `tests/` holds the phone-emulator c
 Privacy review (Oct 2026): no last name, email address or token is in the current files. The Firebase web key in `firebase-config.js` is meant to be public. The old last name is still in git history. The repo is public so free hosting works. `firestore.rules` in the repo is a proposed tighter version; the live rules are whatever is published in the Firebase console.
 
 Not built: real push notifications (needs a server on a paid Firebase plan), Firebase App Check (needs console setup), dark and tinted Home Screen icons (iOS does not apply them to web apps as far as I can tell).
+
+## Phase 8
+
+- `vendor/` holds the QR code maker (MIT) and scanner (Apache 2.0), loaded only when needed.
+- Plan sync is one record per day (`plan-day-<id>`) plus `plan-videos`, `plan-links`, `plan-notes`, `plan-rewards`, `plan-profile` and `plan-misc` (note, games, events, monthly, badges, goal). Same-day logs on two phones are merged (checked blocks are unioned; an un-check made on one phone can come back from the other).
+- Device-only settings live in `tristan-prefs` (sound, voice, text size, Family view name, the More fold, the phone test list). Other device-only keys: `tristan-photo`, `tristan-snapshots`, `tristan-errors`, `tristan-milestones`, `tristan-tz`.
+- Compare with YouTube uses the player's postMessage commands (play, pause, seek, rate). It could not be tested against live YouTube from the build machine, only against a stand-in.
+- The checks workflow runs the emulator test in Chromium and in the Safari engine (WebKit); the WebKit run does not block a merge yet.

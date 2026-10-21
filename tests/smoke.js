@@ -56,12 +56,12 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
 
     console.log("Today fold, rest days, focus and diagnostics");
     const hClosed = await p.evaluate(() => document.documentElement.scrollHeight);
-    ok(await p.locator("details.more").count() === 1 && await p.evaluate(() => !document.querySelector("details.more").open), "More fold starts closed");
-    await p.click("details.more > summary");
+    ok(await p.locator("details.fold").count() === 1 && await p.evaluate(() => !document.querySelector("details.fold").open), "More fold starts closed");
+    await p.click("details.fold > summary");
     await p.waitForFunction(() => Prefs.moreOpen === true);
     ok(true, "opening More is remembered");
     ok((await p.evaluate(() => document.documentElement.scrollHeight)) > hClosed, "Today is shorter with More closed (" + hClosed + " px)");
-    await p.click("details.more > summary");
+    await p.click("details.fold > summary");
     await p.click("[data-a=offSet][data-v='rest']");
     ok(await p.evaluate(() => weekNeeded(weekKeyNow()) === 3 && Object.values(S.logs).some((l) => l.off === "rest")), "a rest day lowers the sessions a streak week needs to 3");
     await p.click("[data-a=offSet][data-v='rest']");
@@ -140,7 +140,7 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
     console.log("Recovery and monthly challenge");
     await p.click("[data-a=bodySet][data-v='1']");
     ok(await p.locator(".recov").count() > 0, "recovery card shows after a check-in");
-    await p.click("details.more > summary");
+    await p.click("details.fold > summary");
     await p.click("[data-a=monthlyStart]");
     await p.selectOption('#f [name="days"]', "14");
     await p.click("[data-a=save]");
