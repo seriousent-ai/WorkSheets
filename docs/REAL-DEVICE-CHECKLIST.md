@@ -13,4 +13,6 @@ The automated test runs in an emulator. These things only show up on a real phon
 9. **Text size and layout.** Try Normal, Large and Larger on every tab, in portrait and landscape. Nothing should be cut off, and nothing should scroll sideways. On the 17 Pro Max also check the area around the Dynamic Island and the home bar.
 10. **Film a drill and Compare.** Film a short clip, then Compare clips with a second clip. Try a YouTube link too.
 11. **Dark mode.** Switch the phone to dark mode and look at Today, Log and Guide.
-12. **If anything is wrong:** Guide, Send diagnostics, and send the text to Claude.
+12. **Videos.** Open Videos, tap Watch non-stop on a topic, and check the playlist plays with sound and that the next video follows. Tap Play on three single videos and one Open link. Use the Level switch, then Paste a YouTube link after copying a link in YouTube. Hide anything that does not fit.
+13. **Track 7.** Log: pass a rung on the Skill ladder and undo it. Today: open a drill's Details and tap Make this harder. Videos: tap Watch on a Watch, then try it row. Add a game for today in Week and check the Game day checklist appears. On a parent phone, check This week in plain words in the progress overview.
+14. **If anything is wrong:** Guide, Send diagnostics, and send the text to Claude.
