@@ -12,7 +12,7 @@
 - Shot chart: a glow behind each spot, how each spot compares with the four weeks before, and a line naming the most improved and weakest spot.
 - Video library: 229 suggested videos on offense, defense, teamwork, point guard play and warm-up. Each is tagged Basics, Intermediate or Advanced; only Advanced shows by default (a level switch brings the rest back).
 - "Watch non-stop" plays a whole topic as one YouTube playlist, with optional shuffle. Paste a YouTube video or playlist link to add it. Add to my videos, or hide, any suggestion.
-- 49 more advanced entries added over three rounds (278 in all): workouts, pick-and-roll defense, pull-ups and step-backs, passing, defensive footwork, small-sided games, plus 17 written guides that open in the browser.
+- 67 more advanced entries added over four rounds (296 in all): workouts, pick-and-roll defense, pull-ups and step-backs, floaters, passing, defensive footwork, speed and agility, small-sided games, plus 22 written guides that open in the browser.
 - Titles and links come from web searches and were not all watched; a parent should check them.
 
 ## Phase 8
