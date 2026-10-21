@@ -429,7 +429,7 @@ function cardHtml() {
   return `<div class="pcard ${c.tier}"><div class="pc-top"><img src="${esc(logo)}" alt="" onerror="this.remove()">${photoUrl() ? `<img class="pc-photo" src="${photoUrl()}" alt="">` : ""}<div class="pc-ovr"><b>${c.ovr}</b><span>OVR</span></div></div>
     <div class="pc-name">${esc(c.name)}</div><div class="pc-sub">PG · ${esc(S.profile.team)} ${esc(S.profile.league)}${c.num ? " · " + esc(c.num) : ""}</div>
     <div class="pc-rate">${SKILLS.map(([k, name]) => `<div class="pc-row"><span>${name}</span><div class="pc-bar"><i style="width:${Math.round(((c.r[k] - 40) / 60) * 100)}%"></i></div><b>${c.r[k]}</b></div>`).join("")}</div>
-    <div class="pc-foot"><span>${badge(c.lv.cur[2], "xs")} ${esc(c.lv.cur[1])}</span><span>${c.total} sessions</span><span>${c.xp} XP</span></div></div>`;
+    <div class="pc-foot"><span>${badge(c.lv.cur[2], "xs")} ${esc(c.lv.cur[1])}</span><span>${c.total} sessions</span><span><span data-count="${c.xp}" data-ck="card-xp">${c.xp}</span> XP</span></div></div>`;
 }
 async function cardImage() {
   const c = cardData();
@@ -560,7 +560,7 @@ function viewToday() {
     </div>
     <svg class="ring" viewBox="0 0 72 72" aria-label="${Math.round(pct)} percent done"><circle cx="36" cy="36" r="30" class="rt"/><circle cx="36" cy="36" r="30" class="rf ${pct === 100 ? "full" : ""}" stroke-dasharray="188.5" stroke-dashoffset="${(188.5 * (1 - pct / 100)).toFixed(1)}"/><text x="36" y="41" text-anchor="middle">${Math.round(pct)}%</text></svg></div>
     ${pct === 100 ? `<p class="win">Session complete. That's how point guards are made, ${esc(firstName(S.profile.name))}!</p>` : day.blocks.length ? `<button class="startbtn" data-a="gStart">${startLabel}</button>` : ""}
-    <div class="herometa"><span>${xp} XP</span><span>${esc(lv.cur[1])}</span><span>${weekStreak()} week streak</span><span>Cycle ${cycleInfo().n}/4</span></div>
+    <div class="herometa"><span><span data-count="${xp}" data-ck="hero-xp">${xp}</span> XP</span><span>${esc(lv.cur[1])}</span><span>${weekStreak()} week streak</span><span>Cycle ${cycleInfo().n}/4</span></div>
   </div>
   <h2 class="section">Session <button data-a="editDay">Edit day</button></h2>
   <div class="group">
@@ -592,7 +592,7 @@ function viewToday() {
   <button class="cardbtn" data-a="cardOpen">${badge("card")}<div class="grow"><b>Player card</b><span>Overall ${ratings().ovr} · ${esc(levelInfo(completeDates().length).cur[1])}</span></div><span class="chev">›</span></button>
   ${hoursCard(weekKeyNow(), true)}
   <div class="stats">
-    <div class="stat"><b>${xp}</b><span>XP points</span></div>
+    <div class="stat"><b data-count="${xp}" data-ck="stat-xp">${xp}</b><span>XP points</span></div>
     <div class="stat"><b>${weekStreak()}</b><span>Week streak</span></div>
     <div class="stat"><b>${badge(lv.cur[2])}</b><span>${esc(lv.cur[1])}</span></div>
   </div>
@@ -954,7 +954,7 @@ function renderSummary() {
   const row = (ic, title, sub, cls = "") => `<div class="s-row ${cls}">${badge(ic)}<div><b>${esc(title)}</b>${sub ? `<span>${esc(sub)}</span>` : ""}</div></div>`;
   paint(el, `<div class="guided summary" role="dialog" aria-label="Session complete">
     <div class="s-top"><svg class="s-check" viewBox="0 0 72 72"><circle cx="36" cy="36" r="30" class="rt"/><circle cx="36" cy="36" r="30" class="rf full" stroke-dasharray="188.5" stroke-dashoffset="0"/><path d="M24 37l8 8 16-17" class="ck"/></svg>
-      <h2>Session complete</h2><p>${esc(s.theme)}</p><div class="s-xp">+${s.xpDay} XP</div><p class="s-sub">${s.xp} XP in total</p></div>
+      <h2>Session complete</h2><p>${esc(s.theme)}</p><div class="s-xp">+<span data-count="${s.xpDay}" data-ck="sum-xp-${s.xp}" data-from="0">${s.xpDay}</span> XP</div><p class="s-sub"><span data-count="${s.xp}" data-ck="sum-total-${s.xp}" data-from="${s.xp - s.xpDay}">${s.xp}</span> XP in total</p></div>
     <div class="s-list">
       ${s.levelUp ? `<div class="s-level">${badge(s.levelUp[2], "lg pulse")}<div><span>Level up</span><b>You're now a ${esc(s.levelUp[1])}</b></div></div>` : ""}
       ${s.ups.map((u) => row(u.ic, `${u.name} reached level ${u.lvl}`, "Skill level up")).join("")}
@@ -1094,6 +1094,7 @@ function render() {
   renderCard();
   renderOverview();
   renderCompare();
+  animateCounts();
   document.body.classList.toggle("noscroll", !!(ui.guided || ui.summary || ui.welcome || ui.film || ui.card || ui.overview || ui.compare));
   document.querySelectorAll("video[data-file]").forEach(async (el) => {
     try { const b = await idb.get(el.dataset.file); if (b) el.src = URL.createObjectURL(b); } catch (e) {}

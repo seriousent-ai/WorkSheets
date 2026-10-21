@@ -477,3 +477,25 @@ function formRestore() {
   });
 }
 EXTRA_ACTIONS.restoreOpen = () => formRestore();
+
+/* ---------- XP count-up: numbers roll from the old value to the new one ---------- */
+const COUNT_PREV = {}, COUNT_RUN = {};
+function animateCounts() {
+  const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  document.querySelectorAll("[data-count]").forEach((el) => {
+    const key = el.dataset.ck || el.dataset.count, to = Number(el.dataset.count);
+    const from = COUNT_PREV[key] !== undefined ? COUNT_PREV[key] : el.dataset.from !== undefined ? Number(el.dataset.from) : to;
+    COUNT_PREV[key] = to;
+    if (reduce || isNaN(from) || from === to) return;
+    const run = (COUNT_RUN[key] = (COUNT_RUN[key] || 0) + 1);
+    const t0 = performance.now(), dur = Math.min(900, 350 + Math.abs(to - from) * 6);
+    el.textContent = from;
+    const step = (now) => {
+      if (COUNT_RUN[key] !== run || !el.isConnected) return;
+      const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+      el.textContent = k < 1 ? Math.round(from + (to - from) * e) : to;
+      if (k < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  });
+}
