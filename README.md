@@ -1,13 +1,27 @@
-# Tristan's Basketball Training Plan (app)
+# Rens Training (Tristan's basketball plan app)
 
-An installable web app (PWA) for Tristan's weekly basketball plan. Works on phones, tablets and computers, offline, with no build step.
+An installable web app (PWA) for Tristan's weekly basketball plan with the NY Rens. Works on phones, tablets and computers, offline, with no build step.
 
-- **Today**: session checklist with per-block timers, coaching cue, videos, quick log, levels, week streak, celebration on finishing a session.
-- **Week**: Monday to Sunday progress. **Videos**: V1 to V11, Jr. NBA at Home, add your own links or clips. **Log**: daily log, Saturday skill check, weekly reflection, achievements. **Guide**: plan notes, "My Why", backup and reset.
-- Everything (sessions, blocks, videos, links, notes) can be added, edited, deleted and reordered. Data is stored on the device; use Guide > Export backup to move it.
+## What is in it
+- **Today**: the session with per-block timers and a guided mode, the morning check-in (body, sleep, rest or sick day), recovery score, game banner, monthly challenge, levels, week streak and cycle notes. Progress and skills sit under a "More" fold.
+- **Week**: Monday to Sunday progress, the team schedule and calendar export.
+- **Videos**: the drill videos, your own links, **Film a drill**, **Compare clips** (side by side, slow motion, draw; works with clips on the phone and YouTube links).
+- **Log**: daily log, Saturday skill check, trends, shot chart, **games** (assist to turnover) and a season goal, playbook, rewards and achievements.
+- **Guide**: profile, family sync (with QR code), Family view, coach link, text size, sounds and voice, plan history and restore, clips on this phone, version and diagnostics, a "Test this phone" list, backups and a coach spreadsheet.
+- Everything can be added, edited and deleted in the app. Data is stored on the device and can be shared between phones with a family code.
+
+## Family sync and Family view
+Create a family code in Guide on one phone and join from the others (type it, share it, or scan the QR code). A parent or sibling turns on **Family view** (Guide, This device) to put their own name on their phone, see progress first, and avoid logging anything for Tristan. The optional **coach link** shares a read-only summary with no sleep, body or private notes.
 
 ## Run locally
-`python3 -m http.server 8000` and open http://localhost:8000
+`python3 -m http.server 8000` and open http://localhost:8000 (sync is off unless `firebase-config.js` has a project).
+
+## Tests
+`cd tests && npm install && npx playwright install chromium webkit && npm test`
+The test runs the app in an emulated phone: core flow, every feature, two-phone sync, Family view, the coach page, the QR scan with a fake camera, a real video clip, and an accessibility audit in light and dark. Set `BROWSER=webkit` for the Safari engine. The same test runs in GitHub on every pull request.
 
 ## Install on a phone
-Publish with GitHub Pages (Settings > Pages > Source: GitHub Actions; the workflow deploys `main`). Open the link in Safari, tap Share, then Add to Home Screen.
+Open the live link in Safari, tap the Share menu (or the three dots in newer iOS), then Add to Home Screen. See `docs/REAL-DEVICE-CHECKLIST.md` for a ten-minute check on each phone.
+
+## Deploy
+The workflow in `.github/workflows/pages.yml` publishes `main` to GitHub Pages and versions the offline cache by commit. More detail is in `docs/PROJECT-NOTES.md`.
