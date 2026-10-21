@@ -46,6 +46,11 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
     ok(await p.locator(".firstwk").count() === 0, "first-session guide goes away after the first finished session");
     await p.evaluate(() => { const k = dateKey(new Date()); logOf(k).complete = false; render(); });
 
+    const roll = await p.evaluate(() => { const before = xpTotal(); logOf(dateKey(new Date())).done["monday-1"] = true; logOf(dateKey(new Date())).done["monday-2"] = true; render(); return { before, start: document.querySelector("[data-ck=hero-xp]").textContent, now: xpTotal() }; });
+    ok(String(roll.before) === roll.start && roll.now > roll.before, "XP counter starts at the old value and rolls up (" + roll.start + " to " + roll.now + ")");
+    await p.waitForTimeout(1300);
+    ok((await p.textContent("[data-ck=hero-xp]")) === String(roll.now), "XP counter lands on the new total");
+
     console.log("Game log");
     await tab(p, "log");
     await p.click("[data-a=addGame]");
