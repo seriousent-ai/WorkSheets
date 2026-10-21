@@ -95,7 +95,13 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
     ok(await p.locator("[data-a=milestoneSeen]").count() === 0, "dismissing it hides the card");
     await p.evaluate(() => { logOf(dateKey(new Date())).complete = false; render(); });
     const day1 = await p.evaluate(() => ui.day);
-    await p.evaluate(() => { const el = document.querySelector(".hero"); const mk = (x) => new Touch({ identifier: 1, target: el, clientX: x, clientY: 300 }); el.dispatchEvent(new TouchEvent("touchstart", { touches: [mk(300)], changedTouches: [mk(300)], bubbles: true })); el.dispatchEvent(new TouchEvent("touchend", { touches: [], changedTouches: [mk(120)], bubbles: true })); });
+    await p.evaluate(() => {
+      const el = document.querySelector(".hero");
+      const pt = (x) => ({ clientX: x, clientY: 300 });
+      const ev = (type, touches, changed) => { const e = new Event(type, { bubbles: true }); Object.defineProperty(e, "touches", { value: touches }); Object.defineProperty(e, "changedTouches", { value: changed }); return e; };
+      el.dispatchEvent(ev("touchstart", [pt(300)], [pt(300)]));
+      el.dispatchEvent(ev("touchend", [], [pt(120)]));
+    });
     ok(await p.evaluate((d) => ui.day === Math.min(6, d + 1), day1), "swiping left moves to the next day");
     await p.evaluate(() => { ui.day = todayIdx(); render(); });
     await p.evaluate(() => { localStorage.setItem("tristan-tz", "Mars/Olympus"); checkTz(); });
