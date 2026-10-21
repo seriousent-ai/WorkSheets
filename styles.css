@@ -519,3 +519,28 @@ textarea.f-input { min-height: 120px; }
 .ovr-ok { background: color-mix(in srgb, var(--green) 14%, var(--card)); border-radius: 14px; padding: 12px 14px; margin-top: 12px; }
 .ovr .hero .badge.lg { width: 64px; height: 64px; }
 .ovr .row.current { background: color-mix(in srgb, var(--blue) 8%, var(--card)); }
+
+/* check pop on the block just finished */
+@keyframes tick { 0% { transform: scale(.6); } 60% { transform: scale(1.18); } 100% { transform: scale(1); } }
+.check.fresh { animation: tick .32s ease-out; }
+@media (prefers-reduced-motion: reduce) { .check.fresh { animation: none; } }
+
+/* update banner */
+#update-bar {
+  position: fixed; left: 12px; right: 12px; bottom: calc(var(--tab-h) + env(safe-area-inset-bottom, 0px) + 10px); z-index: 60;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  background: var(--card); color: var(--label); border: 1px solid var(--sep); border-radius: 14px; padding: 10px 12px 10px 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .25); font-size: 15px;
+}
+#update-bar button { min-height: 44px; padding: 0 16px; border: 0; border-radius: 10px; background: var(--blue-fill); color: #fff; font: inherit; font-weight: 600; }
+
+/* larger touch areas: the visible size stays, the tappable area grows to at least 44 points */
+[data-a="editDay"], [data-a="blockInfo"], [data-a="goVideo"], [data-a="filmStart"], [data-a="editLogDay"], [data-a="challengePick"],
+[data-a="addVideo"], [data-a="addLink"], [data-a="editLink"], [data-a="wkPrev"], [data-a="wkNext"], [data-a="editWeekGoals"],
+[data-a="editSkill"], [data-a="editReflect"], [data-a="addReward"], [data-a="addNote"], a[target="_blank"],
+button[data-a="toggle"], [data-a="bodySet"], [data-a="energy"], [data-a="prefToggle"], [data-a="remindToggle"] { position: relative; }
+[data-a="editDay"]::after, [data-a="blockInfo"]::after, [data-a="goVideo"]::after, [data-a="filmStart"]::after, [data-a="editLogDay"]::after,
+[data-a="challengePick"]::after, [data-a="addVideo"]::after, [data-a="addLink"]::after, [data-a="editLink"]::after, [data-a="wkPrev"]::after,
+[data-a="wkNext"]::after, [data-a="editWeekGoals"]::after, [data-a="editSkill"]::after, [data-a="editReflect"]::after, [data-a="addReward"]::after,
+[data-a="addNote"]::after, a[target="_blank"]::after { content: ""; position: absolute; inset: -11px -8px; }
+button[data-a="toggle"]::after, [data-a="bodySet"]::after, [data-a="energy"]::after, [data-a="prefToggle"]::after, [data-a="remindToggle"]::after { content: ""; position: absolute; inset: -7px; }

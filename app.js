@@ -562,7 +562,7 @@ function viewToday() {
       const cur = b.id === curId;
       const open = !!ui.openBlocks[b.id];
       return `<div class="row blk ${on ? "done" : ""} ${cur ? "current" : ""}">
-        <button class="check ${on ? "on" : ""}" data-a="toggle" data-id="${b.id}" aria-label="Mark ${esc(b.title)} done">${on ? "✓" : ""}</button>
+        <button class="check ${on ? "on" : ""}${on && ui.fresh === b.id ? " fresh" : ""}" data-a="toggle" data-id="${b.id}" aria-label="Mark ${esc(b.title)} done">${on ? "✓" : ""}</button>
         <div class="grow"><div class="title strong">${esc(b.title)}</div>
           <div class="detail"><span class="pill">${times[i]}</span>${cur ? ' <span class="pill blue">Up next</span>' : ""}</div>
           ${b.text ? `<button class="linkbtn" data-a="blockInfo" data-id="${b.id}">${open ? "Hide details" : "Details"}</button>${open ? `<div class="detail">${esc(b.text)}</div>` : ""}` : ""}</div>
@@ -1412,6 +1412,7 @@ function toggleBlock(id) {
   const wasComplete = !!lg.complete;
   const before = xpTotal();
   lg.done[id] = !lg.done[id];
+  ui.fresh = lg.done[id] ? id : null;
   if (!lg.done[id]) delete lg.done[id];
   lg.complete = day.blocks.length > 0 && day.blocks.every((b) => lg.done[b.id]);
   const gain = xpTotal() - before;
@@ -1438,7 +1439,7 @@ const ACTIONS = {
   openDay: (d) => { ui.day = +d.i; ui.tab = "today"; window.scrollTo(0, 0); },
   toggle: (d) => toggleBlock(d.id),
   wNext: () => { const n = ui.welcome.name.trim(); if (n) S.profile.name = n; if (ui.welcome.why.trim()) S.profile.why = ui.welcome.why.trim(); ui.welcome.step = 2; },
-  wCreate: async () => { try { ui.welcome.code = await Sync.create(); render(); } catch (e) { toast("Could not reach the sync service."); } },
+  wCreate: async () => { try { ui.welcome.code = await Sync.create(); render(); } catch (e) { toast(e.message || "Could not reach the sync service."); } },
   wJoin: () => ACTIONS.syncJoin(),
   wFinish: () => finishWelcome(),
   shareReport: async () => {
@@ -1587,7 +1588,7 @@ const ACTIONS = {
   export: () => { download(`training-backup-${dateKey(new Date())}.json`, JSON.stringify(S, null, 2)); toast("Backup saved to downloads."); },
   syncCreate: async () => {
     toast("Creating your family code…");
-    try { await Sync.create(); render(); toast("Sync is on. Join from your other devices with this code."); } catch (e) { toast("Could not reach the sync service."); }
+    try { await Sync.create(); render(); toast("Sync is on. Join from your other devices with this code."); } catch (e) { toast(e.message || "Could not reach the sync service."); }
   },
   syncJoin: () => openForm({
     title: "Join family",
@@ -1664,4 +1665,18 @@ render();
 scheduleReminder();
 Sync.start();
 setTimeout(() => { const s = document.getElementById("splash"); if (s) { s.classList.add("gone"); setTimeout(() => s.remove(), 450); } }, 700);
-if ("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js").catch(() => {});
+if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+  const hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.register("sw.js").then((reg) => {
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") reg.update().catch(() => {}); });
+  }).catch(() => {});
+  // A new service worker takes over after an update. Offer a reload so this copy of the app catches up.
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!hadController || document.getElementById("update-bar")) return;
+    const bar = document.createElement("div");
+    bar.id = "update-bar"; bar.setAttribute("role", "status");
+    bar.innerHTML = '<span>A new version is ready.</span><button type="button">Update now</button>';
+    bar.querySelector("button").onclick = () => location.reload();
+    document.body.appendChild(bar);
+  });
+}

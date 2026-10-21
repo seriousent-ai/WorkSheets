@@ -11,6 +11,7 @@ const Sync = {
   seen: false,
   status: "off",
   lastOk: 0,
+  err: "",
   timer: null,
 
   get ready() {
@@ -50,10 +51,20 @@ const Sync = {
     try { localStorage.setItem("tristan-sync", JSON.stringify({ code: this.code, since: this.since, last: this.last })); } catch (e) {}
   },
 
+  explain(e) {
+    const m = /\b(\d{3})\b/.exec((e && e.message) || "");
+    const code = m ? Number(m[1]) : 0;
+    if (code === 403) return "The sync service refused access. The Firestore rules may not be published yet.";
+    if (code === 400) return "The sync settings look wrong. Check the Firebase key and project.";
+    if (code === 404) return "The sync database was not found. Check that Firestore is created in the Firebase project.";
+    if (code === 429) return "Sync is busy right now. It will retry in a minute.";
+    if (code >= 500) return "The sync service had a problem. It will retry.";
+    return navigator.onLine === false ? "No connection. Changes will upload when you are back online." : "Could not reach the sync service. Check your connection.";
+  },
   statusText() {
     if (!this.ready) return "Sync is not set up in this build.";
     if (!this.code) return "Not syncing. This device keeps its own copy.";
-    const t = { ok: "Synced", syncing: "Syncing…", offline: "Offline. Changes will upload when you reconnect.", error: "Could not reach the sync service. Will retry." }[this.status] || "Waiting";
+    const t = { ok: "Synced", syncing: "Syncing…", offline: "Offline. Changes will upload when you reconnect.", error: this.err ? this.err + " Will retry." : "Could not reach the sync service. Will retry." }[this.status] || "Waiting";
     return this.status === "ok" && this.lastOk ? `Synced at ${new Date(this.lastOk).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}` : t;
   },
   setStatus(s) {
@@ -128,8 +139,11 @@ const Sync = {
         if (this.last[id] !== h) jobs.push({ id, json, h, done: () => { v._ts = ts; } });
       }
     };
-    scan(S.logs, "log-");
-    scan(S.weekly, "wk-");
+    // A device in Family view only reads progress. It never writes logs back.
+    if (!(typeof Prefs !== "undefined" && Prefs.parent)) {
+      scan(S.logs, "log-");
+      scan(S.weekly, "wk-");
+    }
     for (const j of jobs) {
       await this.put(j.id, j.json, ts);
       this.last[j.id] = j.h;
@@ -148,9 +162,11 @@ const Sync = {
       const changed = await this.pull();
       await this.pushNow();
       this.lastOk = Date.now();
+      this.err = "";
       this.setStatus("ok");
       if (changed) { saveLocal(); if (!ui.form) render(); }
     } catch (e) {
+      this.err = this.explain(e);
       this.setStatus(navigator.onLine ? "error" : "offline");
     } finally {
       this.busy = false;
@@ -164,8 +180,14 @@ const Sync = {
   },
 
   async create() {
+    const prev = { code: this.code, since: this.since, last: this.last };
     this.code = this.newCode(); this.since = 0; this.last = {}; this.seen = false; this.save();
     await this.sync();
+    if (this.status === "error" || this.status === "offline") {
+      const msg = this.err || this.explain();
+      Object.assign(this, prev); this.save(); this.setStatus(this.code ? "ok" : "off");
+      throw new Error(msg);
+    }
     return this.code;
   },
   async join(input) {
@@ -181,7 +203,7 @@ const Sync = {
       await this.sync();
     } catch (e) {
       Object.assign(this, prev);
-      throw e;
+      throw /^(put|pull) /.test(e.message) || e instanceof TypeError ? new Error(this.explain(e)) : e;
     }
   },
   off() { this.code = null; this.since = 0; this.last = {}; this.save(); this.setStatus("off"); },
