@@ -3,6 +3,7 @@
 ## Phase 9
 - Video library: 229 suggested videos on offense, defense, teamwork, point guard play and warm-up. Each is tagged Basics, Intermediate or Advanced; only Advanced shows by default (a level switch brings the rest back).
 - "Watch non-stop" plays a whole topic as one YouTube playlist, with optional shuffle. Paste a YouTube video or playlist link to add it. Add to my videos, or hide, any suggestion.
+- Eight more advanced workouts and drills added (237 videos in all).
 - Titles and links come from web searches and were not all watched; a parent should check them.
 
 ## Phase 8
