@@ -36,9 +36,12 @@ const Sync = {
     return h + ":" + s.length;
   },
   strip(o) { const c = { ...o }; delete c._ts; return JSON.stringify(c); },
-  planJson() {
-    const { days, videos, links, notes, rewards, profile, note, games, events, monthly, badges } = S;
-    return JSON.stringify({ days, videos, links, notes, rewards, profile, note, games, events, monthly, badges });
+  /* The plan is synced in separate pieces so an edit to a video on one phone cannot overwrite an edit to a note on another. */
+  PARTS: { days: ["days"], videos: ["videos"], links: ["links"], notes: ["notes"], rewards: ["rewards"], profile: ["profile"], misc: ["note", "games", "events", "monthly", "badges"] },
+  planParts() {
+    const out = {};
+    for (const p in this.PARTS) { const o = {}; this.PARTS[p].forEach((k) => (o[k] = S[k])); out[p] = JSON.stringify(o); }
+    return out;
   },
 
   load() {
@@ -106,8 +109,19 @@ const Sync = {
   apply(id, json, ts) {
     let o;
     try { o = JSON.parse(json); } catch (e) { return false; }
+    const pm = id.match(/^plan-(.+)$/);
+    if (pm && this.PARTS[pm[1]]) {
+      this.last[id] = this.hash(json);
+      S.partTs ||= {};
+      if (ts <= (S.partTs[pm[1]] || 0)) return false;
+      this.PARTS[pm[1]].forEach((k) => { if (o[k] !== undefined) S[k] = o[k]; });
+      S.partTs[pm[1]] = ts;
+      return true;
+    }
     if (id === "plan") {
+      // Older single-record plan. Only used when no separate pieces exist yet.
       this.last.plan = this.hash(json);
+      if (S.partTs && Object.keys(S.partTs).length) return false;
       if (ts <= (S.planTs || 0)) return false;
       ["days", "videos", "links", "notes", "rewards", "profile", "note", "games", "events", "monthly", "badges"].forEach((k) => { if (o[k] !== undefined) S[k] = o[k]; });
       S.planTs = ts;
@@ -126,9 +140,11 @@ const Sync = {
   async pushNow() {
     const ts = Date.now();
     const jobs = [];
-    const plan = this.planJson();
-    const ph = this.hash(plan);
-    if (this.last.plan !== ph) jobs.push({ id: "plan", json: plan, h: ph, done: () => { S.planTs = ts; } });
+    const parts = this.planParts();
+    for (const p in parts) {
+      const h = this.hash(parts[p]), id = "plan-" + p;
+      if (this.last[id] !== h) jobs.push({ id, json: parts[p], h, done: () => { (S.partTs ||= {})[p] = ts; } });
+    }
     const scan = (bag, prefix) => {
       for (const k in bag) {
         const v = bag[k];

@@ -426,7 +426,7 @@ function cardData() {
 function cardHtml() {
   const c = cardData();
   const logo = S.profile.logo || "icons/team-logo.png";
-  return `<div class="pcard ${c.tier}"><div class="pc-top"><img src="${esc(logo)}" alt="" onerror="this.remove()"><div class="pc-ovr"><b>${c.ovr}</b><span>OVR</span></div></div>
+  return `<div class="pcard ${c.tier}"><div class="pc-top"><img src="${esc(logo)}" alt="" onerror="this.remove()">${photoUrl() ? `<img class="pc-photo" src="${photoUrl()}" alt="">` : ""}<div class="pc-ovr"><b>${c.ovr}</b><span>OVR</span></div></div>
     <div class="pc-name">${esc(c.name)}</div><div class="pc-sub">PG · ${esc(S.profile.team)} ${esc(S.profile.league)}${c.num ? " · " + esc(c.num) : ""}</div>
     <div class="pc-rate">${SKILLS.map(([k, name]) => `<div class="pc-row"><span>${name}</span><div class="pc-bar"><i style="width:${Math.round(((c.r[k] - 40) / 60) * 100)}%"></i></div><b>${c.r[k]}</b></div>`).join("")}</div>
     <div class="pc-foot"><span>${badge(c.lv.cur[2], "xs")} ${esc(c.lv.cur[1])}</span><span>${c.total} sessions</span><span>${c.xp} XP</span></div></div>`;
@@ -445,6 +445,7 @@ async function cardImage() {
   const inner = g.createLinearGradient(0, 60, 0, H); inner.addColorStop(0, "#16264a"); inner.addColorStop(1, "#0a1020");
   g.fillStyle = inner; rr(80, 80, W - 160, H - 160, 44); g.fill();
   try { const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = S.profile.logo || "icons/team-logo.png"; }); g.drawImage(img, 140, 140, 200, 200); } catch (e) {}
+  if (photoUrl()) { try { const ph = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = photoUrl(); }); g.save(); g.beginPath(); g.arc(490, 240, 100, 0, Math.PI * 2); g.clip(); g.drawImage(ph, 390, 140, 200, 200); g.restore(); g.strokeStyle = tier[0]; g.lineWidth = 6; g.beginPath(); g.arc(490, 240, 100, 0, Math.PI * 2); g.stroke(); } catch (e) {} }
   const t = (s, x, y, size, color, weight = 700, align = "left") => { g.font = `${weight} ${size}px -apple-system, "SF Pro Display", Helvetica, Arial, sans-serif`; g.fillStyle = color; g.textAlign = align; g.fillText(s, x, y); };
   t(String(c.ovr), W - 140, 290, 190, tier[0], 800, "right"); t("OVR", W - 140, 345, 44, "rgba(255,255,255,.75)", 600, "right");
   const nm = c.name; t(nm, 140, 470, nm.length > 18 ? 66 : 84, "#ffffff", 800);
@@ -545,6 +546,7 @@ function viewToday() {
   ${brand()}
   <h1 class="greet">${greet}, ${esc(Prefs.parent ? firstName(Prefs.parent) : firstName(S.profile.name))}</h1>
   <p class="sub tight">${Prefs.parent ? esc("Family view. You are following " + firstName(S.profile.name) + "'s training.") : esc(msg)}</p>
+  ${firstWeekCard()}
   ${noteCard()}
   ${eventBanner()}
   <div class="seg">${seg}</div>
@@ -722,7 +724,7 @@ function trendsHtml() {
   const bars = wk.map((x, i) => { const h = Math.round((x.xp / top) * H); const xx = i * (bw + gap) + 6; return `<g><rect class="bar ${x.now ? "now" : ""}" x="${xx}" y="${14 + H - h}" width="${bw}" height="${Math.max(h, x.xp ? 2 : 0)}" rx="5"/><text class="bv" x="${xx + bw / 2}" y="${10 + H - h}" text-anchor="middle">${x.xp || ""}</text><text class="bl" x="${xx + bw / 2}" y="108" text-anchor="middle">${x.mon.getMonth() + 1}/${x.mon.getDate()}</text></g>`; }).join("");
   return `<h2 class="section">Trends</h2>
   <div class="group">${rows || '<div class="empty">Record a Saturday skill check to see your trends here.</div>'}</div>
-  <div class="group chartcard"><div class="title strong">XP each week</div><svg class="xpchart" viewBox="0 0 320 114" role="img" aria-label="XP earned in each of the last 8 weeks">${bars}</svg></div>`;
+  ${wk.some((x) => x.xp) ? `<div class="group chartcard"><div class="title strong">XP each week</div><svg class="xpchart" viewBox="0 0 320 114" role="img" aria-label="XP earned in each of the last 8 weeks">${bars}</svg></div>` : ""}`;
 }
 function reportData() {
   const mon = addDays(mondayOf(new Date()), ui.weekOffset * 7);
@@ -878,6 +880,7 @@ function viewGuide() {
     <div class="row tap" data-a="share"><div class="grow">Send backup (AirDrop, Messages)</div><span class="chev">›</span></div>
     <div class="row tap" data-a="export"><div class="grow">Export backup</div><span class="chev">›</span></div>
     <div class="row tap" data-a="import"><div class="grow">Import backup</div><span class="chev">›</span></div>
+    <div class="row tap" data-a="restoreOpen"><div class="grow">Restore an earlier version of the plan</div><span class="chev">›</span></div>
     <div class="row tap" data-a="reset"><div class="grow" style="color:var(--red-text)">Reset to original plan</div></div></div>
   <p class="small">Everything is saved on this device. Uploaded video clips stay on this device and are not part of the backup file. Each device keeps its own copy. To move progress or changes between devices, use Send backup on one and Import backup on the other. Install: in Safari tap Share, then Add to Home Screen.</p>`;
 }
@@ -1176,6 +1179,7 @@ function checkNewDay() {
   ui.day = todayIdx();
   ui.weekOffset = 0;
   if (settleMonthly()) persist();
+  takeSnapshot();
   if (!ui.form && !ui.guided) render();
 }
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { checkNewDay(); gTick(); scheduleReminder(); } });
@@ -1347,13 +1351,14 @@ function formProfile() {
   const p = S.profile;
   openForm({
     title: "Profile",
-    fields: [{ k: "name", label: "Name", value: p.name }, { k: "team", label: "Team", value: p.team }, { k: "league", label: "League / age group", value: p.league }, { k: "number", label: "Jersey number", value: p.number || "" }, { k: "logo", label: "Team logo (choose an image)", type: "file", accept: "image/*" }, { k: "subtitle", label: "Team and level", value: p.subtitle }, { k: "priority", label: "Priority", type: "textarea", value: p.priority }, { k: "why", label: "My Why", type: "textarea", value: p.why, ph: "Why I train" }],
+    fields: [{ k: "name", label: "Name", value: p.name }, { k: "team", label: "Team", value: p.team }, { k: "league", label: "League / age group", value: p.league }, { k: "number", label: "Jersey number", value: p.number || "" }, { k: "logo", label: "Team logo (choose an image)", type: "file", accept: "image/*" }, { k: "photo", label: "Photo for the player card (stays on this phone)", type: "file", accept: "image/*" }, { k: "subtitle", label: "Team and level", value: p.subtitle }, { k: "priority", label: "Priority", type: "textarea", value: p.priority }, { k: "why", label: "My Why", type: "textarea", value: p.why, ph: "Why I train" }],
     required: ["name"],
-    extra: p.logo ? [{ label: "Remove logo", fn: () => { delete p.logo; } }] : [],
+    extra: [...(p.logo ? [{ label: "Remove logo", fn: () => { delete p.logo; } }] : []), ...(photoUrl() ? [{ label: "Remove card photo", fn: () => { try { localStorage.removeItem(PHOTO_KEY); } catch (e) {} } }] : [])],
     async save(f) {
-      const file = f.logo; delete f.logo;
+      const file = f.logo, photo = f.photo; delete f.logo; delete f.photo;
       Object.assign(p, f);
       if (file) p.logo = await shrinkImage(file);
+      if (photo) { const u = await shrinkPhoto(photo); try { if (u) localStorage.setItem(PHOTO_KEY, u); } catch (e) { toast("Could not save the photo."); } }
     },
   });
 }
@@ -1683,6 +1688,7 @@ if (coachParam) {
 } else {
   if (!S.profile.onboarded && Object.keys(S.logs).length === 0 && !Sync.code) ui.welcome = { step: 1, name: S.profile.name, why: S.profile.why };
   settleMonthly();
+  takeSnapshot();
   if (Prefs.parent) ui.overview = true;
   render();
   scheduleReminder();
