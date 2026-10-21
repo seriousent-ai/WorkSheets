@@ -200,7 +200,7 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
     const lib = await p.evaluate(() => ({ n: SUGGESTED_VIDEOS.length, uniq: new Set(SUGGESTED_VIDEOS.map((v) => v.id)).size, urls: new Set(SUGGESTED_VIDEOS.map((v) => v.url)).size, lv: [1, 2, 3].map((l) => SUGGESTED_VIDEOS.filter((v) => v.level === l).length), cats: SUGGESTED_CATS.map((c) => SUGGESTED_VIDEOS.filter((v) => v.cat === c[0]).length) }));
     ok(lib.n >= 200 && lib.uniq === lib.n && lib.urls === lib.n, `library is large with unique ids and links (${lib.n})`);
     ok(lib.lv.every((n) => n >= 20) && lib.cats.every((n) => n >= 10), `every level and topic has videos (${lib.lv.join("/")} ; ${lib.cats.join("/")})`);
-    ok(await p.evaluate(() => sugVisible().every((v) => v.level >= 2)), "basics are hidden by default");
+    ok(await p.evaluate(() => sugVisible().length > 20 && sugVisible().every((v) => v.level === 3)), "only advanced videos show by default");
     await p.click("[data-a=setLevel][data-n='1']");
     ok(await p.evaluate(() => sugVisible().some((v) => v.level === 1)), "the level switch brings basics back");
     await p.click("[data-a=setLevel][data-n='3']");
