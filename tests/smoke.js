@@ -13,6 +13,8 @@ const phone = { ...devices["iPhone 14 Pro"], viewport: { width: 440, height: 956
 
 async function boot(browser, url, scheme = "light") {
   const ctx = await browser.newContext({ ...phone, colorScheme: scheme });
+  // The tests never reach the real YouTube; a blank page stands in for the player.
+  await ctx.route(/^https:\/\/(www\.)?youtube\.com\//, (r) => r.fulfill({ status: 200, contentType: "text/html", body: "<!doctype html><title>player</title>" }));
   const page = await ctx.newPage();
   page.errors = [];
   page.on("pageerror", (e) => page.errors.push(e.message));
