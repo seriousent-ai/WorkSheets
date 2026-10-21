@@ -144,7 +144,21 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
       await p.mouse.move(box.x + 20, box.y + 20); await p.mouse.down(); await p.mouse.move(box.x + 80, box.y + 40, { steps: 5 }); await p.mouse.up();
       ok(await p.evaluate(() => { const c = document.getElementById("cmp-c-a"); return c.getContext("2d").getImageData(0, 0, c.width, c.height).data.some((x, i) => i % 4 === 3 && x > 0); }), "drawing marks the paused frame");
     }
+    // a YouTube link can be compared too; the buttons talk to the embedded player
     await p.click("[data-a=cmpClose]");
+    await p.evaluate(() => { S.videos.push({ id: "yt1", code: "Y1", title: "Coach video", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", note: "" }); });
+    await p.evaluate(() => { window.__yt = []; const orig = Window.prototype.postMessage; });
+    await p.click("[data-a=cmpOpen]");
+    await p.selectOption("#cmp-b", "yt1");
+    await p.waitForSelector("iframe.cmp-yt");
+    ok(await p.evaluate(() => document.querySelector("iframe.cmp-yt").src.includes("enablejsapi=1")), "a YouTube clip loads with its player controls switched on");
+    await p.evaluate(() => { const f = document.querySelector("iframe.cmp-yt"); window.__sent = []; f.contentWindow.postMessage = (m) => window.__sent.push(m); });
+    await p.click("[data-a=cmpRate][data-r='0.5']");
+    await p.click("[data-a=cmpPlay]");
+    const sent = await p.evaluate(() => window.__sent.map((m) => JSON.parse(m).func));
+    ok(sent.includes("setPlaybackRate") && sent.includes("playVideo"), "slow motion and play reach the YouTube player (" + sent.join(",") + ")");
+    await p.click("[data-a=cmpClose]");
+    await p.evaluate(() => { S.videos = S.videos.filter((v) => v.id !== "yt1"); });
     ok((await p.locator(".cmp").count()) === 0, "compare screen closes");
 
     console.log("Clip storage");

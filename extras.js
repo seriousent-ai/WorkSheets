@@ -230,7 +230,10 @@ async function recapImage(d) {
 }
 
 /* ---------- clips and compare ---------- */
-const playable = () => S.videos.filter((v) => v.fileId || (v.url && /\.(mp4|webm|mov|m4v)(\?|$)/i.test(v.url)));
+const ytIdOf = (u) => { const m = (u || "").match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/); return m ? m[1] : null; };
+const isFileClip = (v) => !!(v.fileId || (v.url && /\.(mp4|webm|mov|m4v)(\?|$)/i.test(v.url)));
+const playable = () => S.videos.filter((v) => isFileClip(v) || ytIdOf(v.url));
+const cmpYT = { a: { t: 0, d: 0 }, b: { t: 0, d: 0 } };
 function clipsHtml() {
   return `<div class="clips"><label class="feature" for="clip-in"><b>${badge("clip", "xs")} Film a drill</b><span>Record or pick a clip of yourself</span></label><input id="clip-in" type="file" accept="video/*" capture="environment" hidden>
     <button class="feature" data-a="cmpOpen"><b>${badge("clip", "xs")} Compare clips</b><span>Two clips side by side, slow motion, draw</span></button></div>`;
@@ -245,32 +248,71 @@ function renderCompare() {
   const key = [c.a, c.b, list.length].join("|");
   if (key === cmpKey) return;
   cmpKey = key;
-  const opt = (sel) => list.map((v) => `<option value="${v.id}" ${v.id === sel ? "selected" : ""}>${esc(v.code ? v.code + " " : "")}${esc(v.title)}</option>`).join("");
-  const panel = (side, sel) => `<div class="cmp-panel"><select id="cmp-${side}" data-cmp-sel="${side}" aria-label="Clip ${side.toUpperCase()}">${opt(sel)}</select><div class="cmp-stage"><video id="cmp-v-${side}" playsinline muted></video><canvas id="cmp-c-${side}"></canvas></div></div>`;
+  cmpYT.a = { t: 0, d: 0 }; cmpYT.b = { t: 0, d: 0 };
+  c.playing = false;
+  const opt = (sel) => list.map((v) => `<option value="${v.id}" ${v.id === sel ? "selected" : ""}>${esc(v.code ? v.code + " " : "")}${esc(v.title)}${isFileClip(v) ? "" : " (YouTube)"}</option>`).join("");
+  const media = (side, sel) => {
+    const v = S.videos.find((x) => x.id === sel);
+    if (v && !isFileClip(v) && ytIdOf(v.url)) return `<iframe id="cmp-v-${side}" class="cmp-yt" title="Clip ${side.toUpperCase()}" src="https://www.youtube.com/embed/${ytIdOf(v.url)}?enablejsapi=1&playsinline=1&rel=0&origin=${encodeURIComponent(location.origin)}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
+    return `<video id="cmp-v-${side}" playsinline muted></video>`;
+  };
+  const panel = (side, sel) => `<div class="cmp-panel"><select id="cmp-${side}" data-cmp-sel="${side}" aria-label="Clip ${side.toUpperCase()}">${opt(sel)}</select><div class="cmp-stage">${media(side, sel)}<canvas id="cmp-c-${side}"></canvas></div></div>`;
   el.innerHTML = `<div class="cmp" role="dialog" aria-label="Compare clips"><header class="ovr-top"><button data-a="cmpClose">Done</button><b>Compare clips</b><button data-a="cmpClear">Clear drawing</button></header>
-    ${list.length < 1 ? `<p class="small">Add a clip first. Tap Film a drill, or use Add video and choose a clip from this device. Links to YouTube or other sites cannot be compared side by side.</p>` : `${panel("a", c.a)}${panel("b", c.b)}
+    ${list.length < 1 ? `<p class="small">Add a clip first. Tap Film a drill, or use Add video with a YouTube link or a clip from this device. Other websites cannot be compared side by side.</p>` : `<div class="cmp-grid">${panel("a", c.a)}${panel("b", c.b)}</div>
     <div class="cmp-bar"><button data-a="cmpPlay" id="cmp-play">Play both</button><button data-a="cmpStep" data-d="-1" aria-label="Back one frame">‹ Frame</button><button data-a="cmpStep" data-d="1" aria-label="Forward one frame">Frame ›</button><button data-a="cmpSync">Match B to A</button></div>
     <div class="cmp-bar"><span>Speed</span>${[0.25, 0.5, 1].map((r) => `<button data-a="cmpRate" data-r="${r}" class="${c.rate === r ? "on" : ""}">${r === 1 ? "Normal" : r + "x"}</button>`).join("")}<button data-a="cmpDraw" class="${c.draw ? "on" : ""}">Draw</button></div>
     <input id="cmp-seek" type="range" min="0" max="1000" value="0" aria-label="Scrub both clips">
-    <p class="small">Frame steps assume 30 frames a second. Pause, turn on Draw, and trace a line with your finger to check a stance or an angle.</p>`}</div>`;
-  if (list.length) { ["a", "b"].forEach((s) => cmpLoad(s)); cmpWire(); }
+    <p class="small">Frame steps assume 30 frames a second. Pause, turn on Draw, and trace a line with your finger to check a stance or an angle. YouTube clips follow the buttons above and also have their own controls.</p>`}</div>`;
+  if (list.length) { ["a", "b"].forEach((s) => cmpLoad(s)); cmpWire(); requestAnimationFrame(sizeCanvases); }
 }
+const cmpPlayer = (s) => {
+  const el = document.getElementById("cmp-v-" + s);
+  return el ? { s, el, yt: el.tagName === "IFRAME" } : null;
+};
+const cmpPlayers = () => ["a", "b"].map(cmpPlayer).filter(Boolean);
+const ytCmd = (p, func, args = []) => { try { p.el.contentWindow.postMessage(JSON.stringify({ event: "command", func, args }), "https://www.youtube.com"); } catch (e) {} };
+const pTime = (p) => (p.yt ? cmpYT[p.s].t : p.el.currentTime || 0);
+const pDur = (p) => (p.yt ? cmpYT[p.s].d : p.el.duration);
+function pSeek(p, t) {
+  t = Math.max(0, t);
+  if (p.yt) { cmpYT[p.s].t = t; ytCmd(p, "seekTo", [t, true]); } else p.el.currentTime = Math.min(t, p.el.duration || t);
+}
+const pPlay = (p) => (p.yt ? ytCmd(p, "playVideo") : p.el.play().catch(() => {}));
+const pPause = (p) => (p.yt ? ytCmd(p, "pauseVideo") : p.el.pause());
+const pRate = (p, r) => (p.yt ? ytCmd(p, "setPlaybackRate", [r]) : (p.el.playbackRate = r));
+function sizeCanvases() { document.querySelectorAll(".cmp-stage canvas").forEach((cv) => { const st = cv.parentElement; if (cv.width !== st.clientWidth || cv.height !== st.clientHeight) { cv.width = st.clientWidth; cv.height = st.clientHeight; } }); }
+window.addEventListener("resize", () => { if (ui.compare) sizeCanvases(); });
+window.addEventListener("message", (e) => {
+  if (e.origin !== "https://www.youtube.com" || !ui.compare) return;
+  let d; try { d = JSON.parse(e.data); } catch (err) { return; }
+  const info = d && d.info;
+  if (!info) return;
+  cmpPlayers().forEach((p) => {
+    if (!p.yt || p.el.contentWindow !== e.source) return;
+    if (typeof info.currentTime === "number") cmpYT[p.s].t = info.currentTime;
+    if (info.duration) cmpYT[p.s].d = info.duration;
+  });
+});
 async function cmpLoad(side) {
   const v = S.videos.find((x) => x.id === ui.compare[side]);
-  const el = document.getElementById("cmp-v-" + side);
-  if (!v || !el) return;
+  const p = cmpPlayer(side);
+  if (!v || !p) return;
+  if (p.yt) { p.el.onload = () => { try { p.el.contentWindow.postMessage(JSON.stringify({ event: "listening", id: side, channel: "widget" }), "https://www.youtube.com"); } catch (e) {} }; return; }
   try {
-    if (v.fileId) { const b = await idb.get(v.fileId); if (b) el.src = URL.createObjectURL(b); }
-    else el.src = v.url;
+    if (v.fileId) { const b = await idb.get(v.fileId); if (b) p.el.src = URL.createObjectURL(b); }
+    else p.el.src = v.url;
   } catch (e) {}
-  el.playbackRate = ui.compare.rate;
-  el.onloadedmetadata = () => { const cv = document.getElementById("cmp-c-" + side); if (cv) { cv.width = el.clientWidth; cv.height = el.clientHeight; } };
+  p.el.playbackRate = ui.compare.rate;
+  p.el.onloadedmetadata = () => sizeCanvases();
 }
 function cmpWire() {
-  const vids = () => ["a", "b"].map((s) => document.getElementById("cmp-v-" + s)).filter(Boolean);
   document.querySelectorAll("[data-cmp-sel]").forEach((s) => (s.onchange = () => { ui.compare[s.dataset.cmpSel] = s.value; cmpKey = ""; renderCompare(); }));
   const seek = document.getElementById("cmp-seek");
-  if (seek) seek.oninput = () => { const a = document.getElementById("cmp-v-a"); if (!a || !a.duration) return; const t = (seek.value / 1000) * a.duration; vids().forEach((v) => { v.currentTime = Math.min(t, v.duration || t); }); };
+  if (seek) seek.oninput = () => {
+    const [a] = cmpPlayers(); if (!a || !pDur(a)) return;
+    const t = (seek.value / 1000) * pDur(a);
+    cmpPlayers().forEach((p) => pSeek(p, Math.min(t, pDur(p) || t)));
+  };
   ["a", "b"].forEach((s) => {
     const cv = document.getElementById("cmp-c-" + s);
     if (!cv) return;
@@ -281,7 +323,6 @@ function cmpWire() {
     cv.onpointerup = () => { down = false; };
   });
 }
-const cmpVids = () => ["a", "b"].map((s) => document.getElementById("cmp-v-" + s)).filter(Boolean);
 document.addEventListener("change", async (e) => {
   if (!e.target || e.target.id !== "clip-in") return;
   const f = e.target.files && e.target.files[0];
@@ -380,17 +421,6 @@ const EXTRA_ACTIONS = {
     } catch (e) { if (e && e.name === "AbortError") return; }
     try { await navigator.clipboard.writeText(text); toast("Recap copied. Paste it into a message."); } catch (e) { toast("Could not share the recap."); }
   },
-  cmpOpen: () => { const l = playable(); ui.compare = { a: (l[0] || {}).id, b: (l[1] || l[0] || {}).id, rate: 1, draw: false }; cmpKey = ""; },
-  cmpClose: () => { cmpVids().forEach((v) => v.pause()); ui.compare = null; },
-  cmpPlay: () => {
-    const v = cmpVids(); if (!v.length) return;
-    const btn = document.getElementById("cmp-play");
-    if (v[0].paused) { v.forEach((x) => { x.playbackRate = ui.compare.rate; x.play().catch(() => {}); }); if (btn) btn.textContent = "Pause both"; }
-    else { v.forEach((x) => x.pause()); if (btn) btn.textContent = "Play both"; }
-  },
-  cmpStep: (d) => { const btn = document.getElementById("cmp-play"); cmpVids().forEach((v) => { v.pause(); v.currentTime = Math.max(0, v.currentTime + Number(d.d) / 30); }); if (btn) btn.textContent = "Play both"; },
-  cmpSync: () => { const [a, b] = cmpVids(); if (a && b) b.currentTime = a.currentTime; },
-  cmpRate: (d) => { ui.compare.rate = Number(d.r); cmpVids().forEach((v) => (v.playbackRate = ui.compare.rate)); document.querySelectorAll("[data-a=cmpRate]").forEach((b) => b.classList.toggle("on", b.dataset.r === d.r)); },
   cmpDraw: () => { ui.compare.draw = !ui.compare.draw; document.querySelectorAll("[data-a=cmpDraw]").forEach((b) => b.classList.toggle("on", ui.compare.draw)); document.querySelectorAll(".cmp-stage canvas").forEach((c) => c.classList.toggle("on", ui.compare.draw)); },
   cmpClear: () => document.querySelectorAll(".cmp-stage canvas").forEach((c) => c.getContext("2d").clearRect(0, 0, c.width, c.height)),
   coachCreate: async () => {
@@ -729,4 +759,22 @@ Object.assign(EXTRA_ACTIONS, {
     const svg = qr.createSvgTag({ cellSize: 6, margin: 3, scalable: true, alt: { text: "QR code for the family code", id: "qr-alt" } });
     openInfo("Family code QR", `<div class="qrbox">${svg}</div><p class="small">On the other phone, open Guide, choose Join with a family code, then Scan the QR code instead. Only show this to your own family. Anyone who scans it can read and change the family's data.</p>`);
   },
+});
+
+Object.assign(EXTRA_ACTIONS, {
+  cmpOpen: () => { const l = playable(); ui.compare = { a: (l[0] || {}).id, b: (l[1] || l[0] || {}).id, rate: 1, draw: false, playing: false }; cmpKey = ""; },
+  cmpClose: () => { cmpPlayers().forEach(pPause); ui.compare = null; },
+  cmpPlay: () => {
+    const ps = cmpPlayers(); if (!ps.length) return;
+    ui.compare.playing = !ui.compare.playing;
+    ps.forEach((p) => { if (ui.compare.playing) { pRate(p, ui.compare.rate); pPlay(p); } else pPause(p); });
+    const btn = document.getElementById("cmp-play"); if (btn) btn.textContent = ui.compare.playing ? "Pause both" : "Play both";
+  },
+  cmpStep: (d) => {
+    ui.compare.playing = false;
+    const btn = document.getElementById("cmp-play"); if (btn) btn.textContent = "Play both";
+    cmpPlayers().forEach((p) => { pPause(p); pSeek(p, pTime(p) + Number(d.d) / 30); });
+  },
+  cmpSync: () => { const [a, b] = cmpPlayers(); if (a && b) pSeek(b, pTime(a)); },
+  cmpRate: (d) => { ui.compare.rate = Number(d.r); cmpPlayers().forEach((p) => pRate(p, ui.compare.rate)); document.querySelectorAll("[data-a=cmpRate]").forEach((b) => b.classList.toggle("on", b.dataset.r === d.r)); },
 });
