@@ -41,8 +41,10 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
     await p.click("button[data-a=toggle]");
     ok((await p.evaluate(() => Object.values(S.logs).some((l) => Object.keys(l.done).length))), "checking a block saves it");
 
-    ok(await p.evaluate(() => { const had = !!document.querySelector(".firstwk"); return had; }) === false, "first-session guide is gone once a block is done");
-    ok(await p.evaluate(() => completeDates().length === 0), "no finished session yet");
+    ok(await p.locator(".firstwk").count() === 1, "first-session guide stays until a whole session is finished");
+    await p.evaluate(() => { const k = dateKey(new Date()); logOf(k).complete = true; render(); });
+    ok(await p.locator(".firstwk").count() === 0, "first-session guide goes away after the first finished session");
+    await p.evaluate(() => { const k = dateKey(new Date()); logOf(k).complete = false; render(); });
 
     console.log("Game log");
     await tab(p, "log");
