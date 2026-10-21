@@ -552,7 +552,10 @@ function weekNeeded(monKey) {
 /* ---------- Today: the "More" fold remembers if it is open ---------- */
 const moreIsOpen = () => (window.innerWidth >= 900 ? true : !!Prefs.moreOpen);
 document.addEventListener("toggle", (e) => {
-  if (e.target && e.target.classList && e.target.classList.contains("fold")) { Prefs.moreOpen = e.target.open; Prefs.save(); }
+  const t = e.target;
+  if (!t || !t.classList || !t.classList.contains("fold")) return;
+  if (t.dataset.lib) { if (!!Prefs.libOpen[t.dataset.lib] !== t.open) { Prefs.libOpen[t.dataset.lib] = t.open; Prefs.save(); render(); } return; }
+  Prefs.moreOpen = t.open; Prefs.save();
 }, true);
 
 /* ---------- errors, version and diagnostics ---------- */
@@ -930,3 +933,85 @@ function checkTz() {
     }
   }, { passive: true });
 }
+
+/* ---------- video library: a big suggested list, non-stop play, quick add from YouTube ---------- */
+const sugList = () => (typeof SUGGESTED_VIDEOS !== "undefined" ? SUGGESTED_VIDEOS : []);
+const inLibrary = (v) => S.videos.some((x) => x.url === v.url || (v.yt && x.url && ytIdOf(x.url) === v.yt));
+const LIB_LEVELS = [[1, "All levels"], [2, "Intermediate and up"], [3, "Advanced only"]];
+const LEVEL_NAME = { 1: "Basics", 2: "Intermediate", 3: "Advanced" };
+const sugVisible = () => sugList().filter((v) => !(S.sugHidden || []).includes(v.id) && (v.level || 2) >= (Prefs.minLevel || 2));
+const sugYouTube = (cat) => sugVisible().filter((v) => v.yt && (!cat || v.cat === cat));
+function watchSection() {
+  const chips = SUGGESTED_CATS.map(([k, label]) => `<button class="chip" data-a="watchAll" data-c="${k}">${esc(label)} <small>${sugYouTube(k).length}</small></button>`).join("");
+  return `<h2 class="section">Watch non-stop</h2><div class="group"><div class="row"><div class="grow"><div class="title strong">Play a whole topic back to back</div><div class="detail">Tap a topic. The videos play one after another.</div>
+    <div class="chips wrapchips" role="group" aria-label="Topics">${chips}</div></div></div>
+    <div class="row"><div class="grow"><div class="title strong">Level</div><div class="detail">Basics are hidden by default.</div>
+    <div class="chips wrapchips" role="group" aria-label="Level">${LIB_LEVELS.map(([n, l]) => `<button class="chip ${(Prefs.minLevel || 2) === n ? "on" : ""}" aria-pressed="${(Prefs.minLevel || 2) === n}" data-a="setLevel" data-n="${n}">${l}</button>`).join("")}</div></div></div>
+    <div class="row"><div class="grow"><div class="title strong">Shuffle</div><div class="detail">Mix up the order each time.</div></div><button class="switch ${Prefs.shuffle ? "on" : ""}" role="switch" aria-checked="${Prefs.shuffle}" aria-label="Shuffle" data-a="shuffleToggle"><i></i></button></div>
+    <div class="row tap" data-a="ytPaste"><div class="grow"><div class="title strong">Paste a YouTube link</div><div class="detail">Copy a video or playlist link in YouTube, then tap here to add it.</div></div><span class="chev">›</span></div></div>`;
+}
+function librarySection() {
+  const hidden = (S.sugHidden || []).length;
+  const cats = SUGGESTED_CATS.map(([k, label]) => {
+    const items = sugVisible().filter((v) => v.cat === k);
+    const open = !!Prefs.libOpen[k];
+    let body = "";
+    if (open) {
+      const groups = [...new Set(items.map((v) => v.group))];
+      body = groups.map((g) => `<h3 class="libgroup">${esc(g)}</h3><div class="group">${items.filter((v) => v.group === g).map((v) => {
+        const added = inLibrary(v);
+        const play = v.yt || v.list ? `<button class="pill blue" data-a="sugPlay" data-id="${v.id}">Play</button>` : `<a class="pill blue" href="${esc(v.url)}" target="_blank" rel="noopener">Open ↗</a>`;
+        return `<div class="row"><div class="grow"><div class="title strong">${esc(v.title)}</div><div class="detail">${esc(LEVEL_NAME[v.level || 2])} · ${esc(v.src)}${v.note ? " · " + esc(v.note) : ""}</div><div class="pills">${play}${added ? '<span class="pill green">In your videos</span>' : `<button class="pill" data-a="sugAdd" data-id="${v.id}">Add to my videos</button>`}<button class="pill" data-a="sugHide" data-id="${v.id}">Hide</button></div></div></div>`;
+      }).join("")}</div>`).join("");
+    }
+    return `<details class="fold" data-lib="${k}" ${open ? "open" : ""}><summary>${esc(label)} <small>${items.length} videos</small></summary>${body}</details>`;
+  }).join("");
+  return `<h2 class="section">Video library</h2><p class="sub" style="margin:0 4px 8px">Picked by topic for a guard who is past intermediate and heading toward advanced. Add the ones you want to your own list, or hide the ones that do not fit.</p>${cats}
+    ${hidden ? `<button class="btn gray" data-a="sugUnhide">Show ${hidden} hidden video${hidden === 1 ? "" : "s"} again</button>` : ""}`;
+}
+function playerSheet(title, src, listHtml) {
+  openInfo(title, `<div class="ytwrap"><iframe src="${esc(src)}" title="${esc(title)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>${listHtml || ""}`);
+}
+function shuffled(a) { const b = a.slice(); for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; }
+const ytTitleFallback = (list) => (list ? "YouTube playlist" : "YouTube video");
+Object.assign(EXTRA_ACTIONS, {
+  setLevel: (d) => { Prefs.minLevel = +d.n; Prefs.save(); },
+  shuffleToggle: () => { Prefs.shuffle = !Prefs.shuffle; Prefs.save(); },
+  watchAll: (d) => {
+    let items = sugYouTube(d.c);
+    if (!items.length) { toast("No videos in that topic."); return; }
+    if (Prefs.shuffle) items = shuffled(items);
+    items = items.slice(0, 60);
+    const ids = items.map((v) => v.yt);
+    const label = (SUGGESTED_CATS.find((c) => c[0] === d.c) || [0, "Videos"])[1];
+    const src = `https://www.youtube.com/embed/${ids[0]}?playlist=${ids.slice(1).join(",")}&playsinline=1&rel=0&autoplay=1`;
+    playerSheet(label + ", non-stop", src, `<p class="small">Playing ${items.length} videos one after another. Use the player's next button to skip.</p><ol class="playlist">${items.map((v) => `<li>${esc(v.title)}</li>`).join("")}</ol>`);
+  },
+  sugPlay: (d) => {
+    const v = sugList().find((x) => x.id === d.id);
+    if (!v) return;
+    const src = v.list ? `https://www.youtube.com/embed/videoseries?list=${v.list}&playsinline=1&rel=0&autoplay=1` : `https://www.youtube.com/embed/${v.yt}?playsinline=1&rel=0&autoplay=1`;
+    playerSheet(v.title, src, `<p class="small"><a href="${esc(v.url)}" target="_blank" rel="noopener">Open on YouTube ↗</a> if it does not play here.</p>`);
+  },
+  sugAdd: (d) => {
+    const v = sugList().find((x) => x.id === d.id);
+    if (!v || inLibrary(v)) return;
+    S.videos.push({ id: uid("v"), code: v.code, title: v.title, url: v.url, note: v.src + (v.note ? ". " + v.note : "") });
+    toast("Added to your videos.");
+  },
+  sugHide: (d) => { S.sugHidden ||= []; if (!S.sugHidden.includes(d.id)) S.sugHidden.push(d.id); },
+  sugUnhide: () => { S.sugHidden = []; },
+  ytPaste: async () => {
+    let t = "";
+    try { t = (await navigator.clipboard.readText()).trim(); } catch (e) { toast("Copy a YouTube link first, then tap again. If asked, allow Paste."); return; }
+    const id = ytIdOf(t), list = (t.match(/youtube\.com\/playlist\?(?:.*&)?list=([\w-]+)/) || [])[1];
+    if (!id && !list) { toast("That is not a YouTube link."); return; }
+    const url = id ? "https://www.youtube.com/watch?v=" + id : "https://www.youtube.com/playlist?list=" + list;
+    if (S.videos.some((x) => x.url === url || (id && ytIdOf(x.url || "") === id))) { toast("That video is already in your list."); return; }
+    let title = ytTitleFallback(list);
+    try { const r = await fetch("https://www.youtube.com/oembed?format=json&url=" + encodeURIComponent(url)); if (r.ok) { const j = await r.json(); if (j && j.title) title = j.title; } } catch (e) {}
+    S.videos.push({ id: uid("v"), code: "Y" + (S.videos.filter((x) => /^Y\d+$/.test(x.code || "")).length + 1), title, url, note: "Added from YouTube" });
+    persist(); render();
+    toast("Added: " + title);
+  },
+});

@@ -628,3 +628,12 @@ details.fold[open] > summary { margin-bottom: 8px; }
 .s-row.gold { animation: flipin .7s ease-out both; transform-origin: top; }
 @media (prefers-reduced-motion: reduce) { .s-row.gold { animation: none; } }
 #splash span { display: block; margin-top: 6px; font-size: 15px; opacity: .75; }
+
+.wrapchips { flex-wrap: wrap; margin-top: 8px; }
+.wrapchips .chip small { opacity: .7; font-weight: 400; margin-left: 4px; }
+details.fold > summary small { color: var(--label2); font-weight: 400; margin-left: 4px; }
+.libgroup { margin: 14px 4px 6px; font-size: var(--fs-sm); text-transform: uppercase; letter-spacing: .4px; color: var(--label2); font-weight: 600; }
+details.fold > summary { margin-top: 8px; }
+.ytwrap { position: relative; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; background: #000; margin: 8px 0; }
+.ytwrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.playlist { margin: 6px 0 0; padding-left: 22px; font-size: var(--fs-sm); color: var(--label2); display: flex; flex-direction: column; gap: 4px; }
