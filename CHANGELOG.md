@@ -1,6 +1,9 @@
 # Changes
 
 ## Phase 9
+- Skill ladder (Log tab): five rungs for each of the five skills, each with a test such as "pull-up off one dribble from the elbow: 6 of 10". Tapping Passed it gives 30 XP and shows the next test. Synced between phones.
+- Game stats: record, steals per game, and the last five games against the season, next to the assist to turnover number.
+- Shot chart: a glow behind each spot, how each spot compares with the four weeks before, and a line naming the most improved and weakest spot.
 - Video library: 229 suggested videos on offense, defense, teamwork, point guard play and warm-up. Each is tagged Basics, Intermediate or Advanced; only Advanced shows by default (a level switch brings the rest back).
 - "Watch non-stop" plays a whole topic as one YouTube playlist, with optional shuffle. Paste a YouTube video or playlist link to add it. Add to my videos, or hide, any suggestion.
 - Eight more advanced workouts and drills added (237 videos in all).

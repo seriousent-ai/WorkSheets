@@ -18,7 +18,7 @@ function load() {
   try { s = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
   if (!s || !Array.isArray(s.days)) s = JSON.parse(JSON.stringify(DEFAULT_DATA));
   s.logs ||= {}; s.weekly ||= {}; s.videos ||= []; s.links ||= []; s.notes ||= [];
-  s.games ||= []; s.events ||= []; s.badges ||= []; s.monthly ||= null; s.goal ||= null; s.sugHidden ||= [];
+  s.games ||= []; s.events ||= []; s.badges ||= []; s.monthly ||= null; s.goal ||= null; s.sugHidden ||= []; s.ladder ||= {};
   if (s.profile && /\| Intermediate \|/.test(s.profile.subtitle || "")) s.profile.subtitle = s.profile.subtitle.replace("| Intermediate |", "| Advanced |");
   s.rewards ||= JSON.parse(JSON.stringify(DEFAULT_DATA.rewards));
   s.planTs ||= 0;
@@ -139,7 +139,7 @@ function xpTotal() {
     if (w.improved || w.adjust) x += 15;
     if (w.challenge && w.challenge.done) x += 25;
   }
-  return x + gamesXp() + monthlyXp();
+  return x + gamesXp() + monthlyXp() + ladderXp();
 }
 const SKILLS = [["handle", "Ball handling", "ball", /handl/], ["pass", "Passing and reads", "pass", /pass/], ["shoot", "Shooting", "hoop", /shoot/], ["finish", "Finishing and defense", "bolt", /finish|defen/], ["iq", "Court IQ", "eye", /film|discuss|review|check-in|decision/]];
 const SK_LV = [0, 30, 80, 150, 250, 400, 600];
@@ -390,7 +390,8 @@ function shotAgg(range) {
   const out = {};
   const cutoff = Date.now() - 28 * 864e5;
   for (const k in S.logs) {
-    if (range !== "all" && parseKey(k).getTime() < cutoff) continue;
+    const t = parseKey(k).getTime();
+    if (range === "prev" ? (t >= cutoff || t < cutoff - 28 * 864e5) : (range !== "all" && t < cutoff)) continue;
     const sh = S.logs[k].shots;
     if (!sh) continue;
     for (const s in sh) { const o = (out[s] ||= { m: 0, x: 0 }); o.m += sh[s].m; o.x += sh[s].x; }
@@ -403,17 +404,21 @@ function shotChartHtml() {
   let M = 0, X = 0;
   Object.values(agg).forEach((o) => { M += o.m; X += o.x; });
   const sel = ui.chartSpot;
+  const prev = shotAgg("prev");
+  const delta = (id) => { const o = agg[id] || { m: 0, x: 0 }, q = prev[id] || { m: 0, x: 0 }, a1 = o.m + o.x, a0 = q.m + q.x; return a1 >= 5 && a0 >= 5 ? Math.round((o.m / a1 - q.m / a0) * 100) : null; };
   const spots = SPOTS.map(([id, name]) => {
     const o = agg[id] || { m: 0, x: 0 }, att = o.m + o.x, pct = att ? o.m / att : null;
     const cls = pct === null ? "none" : pct >= 0.5 ? "hi" : pct >= 0.35 ? "mid" : "lo";
     const [x, y] = SPOT_XY[id];
-    return `<g class="spot ${cls} ${sel === id ? "sel" : ""}" data-a="chartSpot" data-s="${id}" role="button" tabindex="0" aria-label="${name}: ${att ? o.m + " of " + att : "no shots yet"}"><circle cx="${x}" cy="${y}" r="25"/><text x="${x}" y="${y + 2}" text-anchor="middle" class="sp1">${pct === null ? "–" : Math.round(pct * 100) + "%"}</text><text x="${x}" y="${y + 15}" text-anchor="middle" class="sp2">${att ? o.m + "/" + att : ""}</text></g>`;
+    return `<g class="spot ${cls} ${sel === id ? "sel" : ""}" data-a="chartSpot" data-s="${id}" role="button" tabindex="0" aria-label="${name}: ${att ? o.m + " of " + att : "no shots yet"}"><circle class="glow" cx="${x}" cy="${y}" r="${att ? 34 + Math.min(att, 40) / 4 : 25}"/><circle cx="${x}" cy="${y}" r="25"/><text x="${x}" y="${y + 2}" text-anchor="middle" class="sp1">${pct === null ? "–" : Math.round(pct * 100) + "%"}</text><text x="${x}" y="${y + 15}" text-anchor="middle" class="sp2">${att ? o.m + "/" + att : ""}</text></g>`;
   }).join("");
-  const det = sel ? (() => { const o = agg[sel] || { m: 0, x: 0 }, att = o.m + o.x; return `<p class="chart-note"><b>${SPOTS.find((s) => s[0] === sel)[1]}</b>: ${att ? `${o.m} of ${att} made (${Math.round((o.m / att) * 100)}%)` : "no shots tracked yet"}</p>`; })() : "";
+  const det = sel ? (() => { const o = agg[sel] || { m: 0, x: 0 }, att = o.m + o.x; return `<p class="chart-note"><b>${SPOTS.find((s) => s[0] === sel)[1]}</b>: ${att ? `${o.m} of ${att} made (${Math.round((o.m / att) * 100)}%)${range === "4w" && delta(sel) !== null ? `, ${delta(sel) > 0 ? "up " : delta(sel) < 0 ? "down " : "same as "}${delta(sel) === 0 ? "the 4 weeks before" : Math.abs(delta(sel)) + " points from the 4 weeks before"}` : ""}` : "no shots tracked yet"}</p>`; })() : "";
+  const moves = range === "4w" ? SPOTS.map(([id, name]) => [name, delta(id)]).filter((x) => x[1] !== null).sort((p, q) => q[1] - p[1]) : [];
+  const trend = moves.length ? `<p class="chart-note">${moves[0][1] > 0 ? `<span class="up">Most improved: ${moves[0][0]} (+${moves[0][1]} points).</span> ` : ""}${moves[moves.length - 1][1] < 0 ? `<span class="down">Needs work: ${moves[moves.length - 1][0]} (${moves[moves.length - 1][1]} points).</span>` : ""}</p>` : "";
   return `<h2 class="section">Shot chart</h2><div class="group chartcard">
     <div class="seg" style="margin:0 0 8px"><button class="${range === "4w" ? "on" : ""}" data-a="chartRange" data-r="4w">Last 4 weeks</button><button class="${range === "all" ? "on" : ""}" data-a="chartRange" data-r="all">All time</button></div>
-    <svg class="court" viewBox="0 0 300 250" role="group" aria-label="Shooting spots"><rect x="112" y="150" width="76" height="86" class="ln"/><path d="M120 150a30 30 0 0160 0" class="ln"/><path d="M34 236V170A128 128 0 00266 170V236" class="ln"/><rect x="132" y="233" width="36" height="3" class="bb"/><circle cx="150" cy="223" r="6" class="ln"/><path d="M10 236H290" class="ln"/>${spots}</svg>
-    <p class="chart-note">${M + X ? `${M} of ${M + X} shots made (${Math.round((M / (M + X)) * 100)}%). Track shots in the guided Shoot block.` : "Track shots in the guided Shoot block and this chart fills in."}</p>${det}</div>`;
+    <svg class="court" viewBox="-10 0 320 250" role="group" aria-label="Shooting spots"><rect x="112" y="150" width="76" height="86" class="ln"/><path d="M120 150a30 30 0 0160 0" class="ln"/><path d="M34 236V170A128 128 0 00266 170V236" class="ln"/><rect x="132" y="233" width="36" height="3" class="bb"/><circle cx="150" cy="223" r="6" class="ln"/><path d="M10 236H290" class="ln"/>${spots}</svg>
+    <p class="chart-note">${M + X ? `${M} of ${M + X} shots made (${Math.round((M / (M + X)) * 100)}%). Track shots in the guided Shoot block.` : "Track shots in the guided Shoot block and this chart fills in."}</p>${trend}${det}</div>`;
 }
 
 /* ---------- player card ---------- */
@@ -845,6 +850,7 @@ function viewLog() {
   <button class="btn gray" data-a="shareReport">Share weekly report</button>
   </div><div>
   ${trendsHtml()}
+  ${ladderHtml()}
   ${shotChartHtml()}
   ${gamesHtml()}
   ${playbookHtml()}

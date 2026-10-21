@@ -365,3 +365,12 @@ const SUGGESTED_VIDEOS = [
   {"id": "s-w13", "cat": "warmup", "group": "Advanced footwork", "code": "W13", "level": 2, "title": "The Basketball Footwork Every Player Needs to Master", "yt": "etk7bUa-0s8", "url": "https://www.youtube.com/watch?v=etk7bUa-0s8", "src": "YouTube"},
   {"id": "s-p22", "cat": "pg", "group": "Advanced decisions", "code": "P22", "level": 3, "title": "Basketball IQ Test #1: Making Quick Decisions", "yt": "j16FCb3BbDs", "url": "https://www.youtube.com/watch?v=j16FCb3BbDs", "src": "YouTube", "note": "Pause and decide before the answer."},
 ];
+
+/* Skill ladder: five rungs per skill. A rung is passed when Tristan (or a parent watching) says the test was met. */
+const LADDER = {
+  handle: ["Two-ball stationary dribble for 30 seconds with no lost ball", "Cone course with both hands in under 12 seconds, no lost ball", "Change of pace into a crossover against a live defender: get past 5 of 5 times", "Weak-hand-only dribble up the floor against pressure: no turnovers in 3 trips", "Escape a trap with a pivot or a split against two defenders: 4 of 5 reps"],
+  pass: ["20 chest and bounce passes on target in one minute with a partner (18 or more)", "Left-hand pocket passes: 8 of 10 on target", "Pass off the dribble on the move: 8 of 10 hit the target hand", "Ball-screen read, 3 on 2: the right pass 4 of 5 times", "Skip pass across the floor: 8 of 10 on target and in rhythm"],
+  shoot: ["Form shooting from 5 feet: 8 of 10", "Free throws: 8 of 10 in two different weeks", "Catch and shoot: 7 of 10 from his best spot", "Pull-up off one dribble from the elbow: 6 of 10", "Off the dribble at game speed from three spots: 5 of 10 from each"],
+  finish: ["Layups with both hands: 8 of 10 on each side", "Euro-step or reverse layup against a pad or defender: 6 of 10", "Finish through contact against a pad: 6 of 10", "Floater over a defender or a chair: 5 of 10", "Contain a dribbler for 10 seconds without a foul, 3 times in a row"],
+  iq: ["Name the defense (man, zone or press) at the start of 3 possessions in a game", "Watch a clip and write down 3 reads before the play ends", "Explain drop, hedge and switch on a ball screen, and your best attack against each", "Hold an assist to turnover ratio of 2.5 or better over a game", "Lead a timeout: tell the team one adjustment and why"]
+};
