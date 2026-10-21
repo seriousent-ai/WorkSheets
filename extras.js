@@ -21,7 +21,7 @@ function gamesHtml() {
   const st = gameStats();
   const rows = [...st.g].reverse().slice(0, 8).map((x) => {
     const bits = [x.pts !== undefined && x.pts + " pts", x.ast !== undefined && x.ast + " ast", x.tov !== undefined && x.tov + " TO", x.stl !== undefined && x.stl + " stl"].filter(Boolean).join(" · ");
-    return `<div class="row tap" data-a="editGame" data-id="${x.id}"><div class="grow"><div class="title strong">${x.opp ? "vs " + esc(x.opp) : "Game"} <span class="detail" style="display:inline">${fmtShort(parseKey(x.date))}</span>${x.result ? ` <span class="pill ${x.result === "W" ? "green" : ""}">${x.result === "W" ? "Win" : "Loss"}</span>` : ""}</div><div class="detail">${esc(bits) || "Tap to add stats"}${x.good ? " · " + esc(x.good) : ""}</div></div><span class="chev">›</span></div>`;
+    return `<div class="row tap" data-a="editGame" data-id="${x.id}">${badge("hoop")}<div class="grow"><div class="title strong">${x.opp ? "vs " + esc(x.opp) : "Game"} <span class="detail" style="display:inline">${fmtShort(parseKey(x.date))}</span>${x.result ? ` <span class="pill ${x.result === "W" ? "green" : ""}">${x.result === "W" ? "Win" : "Loss"}</span>` : ""}</div><div class="detail">${esc(bits) || "Tap to add stats"}${x.good ? " · " + esc(x.good) : ""}</div></div><span class="chev">›</span></div>`;
   }).join("");
   const top = st.n
     ? `<div class="row"><div class="grow"><div class="title strong">Assist to turnover</div><div class="detail">Higher is better. ${st.n} game${st.n > 1 ? "s" : ""} logged.</div></div>${st.ratios.length > 1 ? spark(st.ratios.slice(-8), Math.max(4, ...st.ratios), true) : ""}<div class="tval">${st.ratio.toFixed(1)}</div></div>
@@ -68,7 +68,7 @@ function eventMinutes(ds) {
 function scheduleHtml() {
   const list = upcomingEvents(8);
   return `<h2 class="section">Team schedule <button data-a="addEvent">Add</button></h2>
-  <div class="group">${list.map((e) => `<div class="row tap" data-a="editEvent" data-id="${e.id}"><div class="grow"><div class="title strong">${esc(e.title || (EVENT_TYPES.find((t) => t[0] === e.type) || [0, "Event"])[1])} <span class="pill ${e.type === "game" ? "blue" : ""}">${e.type === "game" ? "Game" : e.type === "practice" ? "Practice" : "Event"}</span></div><div class="detail">${whenText(e.date)}${e.time ? " · " + clockText(e.time) : ""}${e.place ? " · " + esc(e.place) : ""}</div></div><span class="chev">›</span></div>`).join("") || '<div class="empty">Add Rens practices and games. Today will show what is coming, and the day before a game gets a light session.</div>'}</div>
+  <div class="group">${list.map((e) => `<div class="row tap" data-a="editEvent" data-id="${e.id}">${badge("calendar")}<div class="grow"><div class="title strong">${esc(e.title || (EVENT_TYPES.find((t) => t[0] === e.type) || [0, "Event"])[1])} <span class="pill ${e.type === "game" ? "blue" : ""}">${e.type === "game" ? "Game" : e.type === "practice" ? "Practice" : "Event"}</span></div><div class="detail">${whenText(e.date)}${e.time ? " · " + clockText(e.time) : ""}${e.place ? " · " + esc(e.place) : ""}</div></div><span class="chev">›</span></div>`).join("") || '<div class="empty">Add Rens practices and games. Today will show what is coming, and the day before a game gets a light session.</div>'}</div>
   <p class="small">Scheduled events count toward the weekly 10-hour limit until you log the real minutes for that day.</p>`;
 }
 function eventBanner() {
@@ -80,7 +80,7 @@ function eventBanner() {
   if (nx.type === "game" && d === 1) tip = "Game tomorrow. Keep today light: handle and shooting only, about 35 minutes, and get to bed early.";
   else if (nx.type === "game" && d === 0) tip = "Game day. Warm up, drink water, and trust your training.";
   else if (nx.type === "practice" && d === 0) tip = "Team practice replaces today's individual session.";
-  return `<div class="evt ${nx.type}"><b>${esc(name)}</b><span>${whenText(nx.date)}${nx.time ? " at " + clockText(nx.time) : ""}${nx.place ? " · " + esc(nx.place) : ""}</span>${tip ? `<p>${esc(tip)}</p>` : ""}</div>`;
+  return `<div class="evt ${nx.type}"><b>${badge("calendar", "xs")} ${esc(name)}</b><span>${whenText(nx.date)}${nx.time ? " at " + clockText(nx.time) : ""}${nx.place ? " · " + esc(nx.place) : ""}</span>${tip ? `<p>${esc(tip)}</p>` : ""}</div>`;
 }
 function formEvent(id) {
   const e = (S.events || []).find((x) => x.id === id) || {};
@@ -111,7 +111,7 @@ function recoveryInfo() {
   const days = [];
   for (let i = 0; i < 3; i++) {
     const l = S.logs[dateKey(addDays(new Date(), -i))];
-    if (l && (l.sleep || l.body || l.energy)) days.push(l);
+    if (l && (l.sleep || l.body || l.energy || l.off)) days.push(l);
   }
   if (!days.length) return null;
   const scores = days.map((l) => {
@@ -119,6 +119,7 @@ function recoveryInfo() {
     if (l.sleep) { got += (Math.min(l.sleep, 10) / 10) * 50; max += 50; }
     if (l.body) { got += { 1: 30, 2: 20, 3: 5 }[l.body]; max += 30; }
     if (l.energy) { got += (l.energy / 5) * 20; max += 20; }
+    if (l.off) { got += l.off === "rest" ? 20 : 4; max += 20; }
     return (got / max) * 100;
   });
   const score = Math.round(scores.reduce((p, s, i) => p + s * (i === 0 ? 2 : 1), 0) / (scores.length + 1));
@@ -134,7 +135,7 @@ function recoveryInfo() {
 function recoveryCard() {
   const r = recoveryInfo();
   if (!r) return "";
-  return `<div class="recov"><div class="hrs-top"><b>Recovery</b><span>${r.score} · ${r.label}</span></div><div class="progress"><i style="width:${r.score}%"></i></div>${r.nudge ? `<p>${esc(r.nudge)}</p>` : ""}</div>`;
+  return `<div class="recov"><div class="hrs-top"><b>${badge("moon", "xs")} Recovery</b><span>${r.score} · ${r.label}</span></div><div class="progress"><i style="width:${r.score}%"></i></div>${r.nudge ? `<p>${esc(r.nudge)}</p>` : ""}</div>`;
 }
 
 /* ---------- monthly challenge ---------- */
@@ -158,12 +159,12 @@ function monthlyCard() {
   if (!m) {
     return `<h2 class="section">Monthly challenge</h2><div class="group">
       ${last ? `<div class="row">${badge(last.earned ? "trophy" : "flag", last.earned ? "" : "off")}<div class="grow"><div class="title strong">${esc(last.title)}</div><div class="detail">${last.earned ? "Badge earned. " : "Finished. "}${last.done} of ${last.days} days${last.earned ? ", +100 XP" : ""}</div></div></div>` : ""}
-      <div class="row tap" data-a="monthlyStart"><div class="grow"><div class="title strong">Start a monthly challenge</div><div class="detail">Pick one habit and do it a little every day. Earn a badge for finishing 80 percent of the days.</div></div><span class="chev">›</span></div></div>`;
+      <div class="row tap" data-a="monthlyStart">${badge("flag")}<div class="grow"><div class="title strong">Start a monthly challenge</div><div class="detail">Pick one habit and do it a little every day. Earn a badge for finishing 80 percent of the days.</div></div><span class="chev">›</span></div></div>`;
   }
   const el = monthlyElapsed(m), today = dateKey(new Date());
   const doneToday = !!m.done[today];
   const dots = Array.from({ length: m.days }, (_, i) => { const k = dateKey(addDays(parseKey(m.start), i)); return `<i class="${m.done[k] ? "on" : ""} ${i === el ? "now" : ""}" title="${fmtShort(parseKey(k))}"></i>`; }).join("");
-  return `<h2 class="section">Monthly challenge</h2><div class="group"><div class="row mchal"><div class="grow"><div class="title strong">${esc(m.title)}</div><div class="detail">Day ${Math.min(m.days, el + 1)} of ${m.days} · ${monthlyDays(m)} done</div><div class="mdots" aria-hidden="true">${dots}</div></div>
+  return `<h2 class="section">Monthly challenge</h2><div class="group"><div class="row mchal">${badge("flag")}<div class="grow"><div class="title strong">${esc(m.title)}</div><div class="detail">Day ${Math.min(m.days, el + 1)} of ${m.days} · ${monthlyDays(m)} done</div><div class="mdots" aria-hidden="true">${dots}</div></div>
     <button class="chip ${doneToday ? "on" : ""}" data-a="monthlyDone" aria-pressed="${doneToday}">${doneToday ? "Done today" : "Mark today"}</button></div>
     <div class="row tap" data-a="monthlyStop"><div class="grow" style="color:var(--red-text)">End this challenge</div></div></div>`;
 }
@@ -231,8 +232,8 @@ async function recapImage(d) {
 /* ---------- clips and compare ---------- */
 const playable = () => S.videos.filter((v) => v.fileId || (v.url && /\.(mp4|webm|mov|m4v)(\?|$)/i.test(v.url)));
 function clipsHtml() {
-  return `<div class="clips"><label class="feature" for="clip-in"><b>Film a drill</b><span>Record or pick a clip of yourself</span></label><input id="clip-in" type="file" accept="video/*" capture="environment" hidden>
-    <button class="feature" data-a="cmpOpen"><b>Compare clips</b><span>Two clips side by side, slow motion, draw</span></button></div>`;
+  return `<div class="clips"><label class="feature" for="clip-in"><b>${badge("clip", "xs")} Film a drill</b><span>Record or pick a clip of yourself</span></label><input id="clip-in" type="file" accept="video/*" capture="environment" hidden>
+    <button class="feature" data-a="cmpOpen"><b>${badge("clip", "xs")} Compare clips</b><span>Two clips side by side, slow motion, draw</span></button></div>`;
 }
 let cmpKey = "";
 function renderCompare() {
@@ -413,10 +414,10 @@ const EXTRA_ACTIONS = {
 function coachGroup() {
   const code = S.profile.coachCode;
   return `<h2 class="section">Coach view</h2><div class="group">${code ? `
-    <div class="row"><div class="grow"><div class="title strong">Sharing a read-only summary</div><div class="detail">Anyone with the link sees ${esc(firstName(S.profile.name))}'s first name, sessions, skill ratings, recent games and this week's priority. No sleep, body or notes.</div></div></div>
+    <div class="row">${badge("eye")}<div class="grow"><div class="title strong">Sharing a read-only summary</div><div class="detail">Anyone with the link sees ${esc(firstName(S.profile.name))}'s first name, sessions, skill ratings, recent games and this week's priority. No sleep, body or notes.</div></div></div>
     <div class="row tap" data-a="coachShare"><div class="grow">Share coach link</div><span class="chev">›</span></div>
     <div class="row tap" data-a="coachStop"><div class="grow" style="color:var(--red-text)">Stop sharing</div></div>` : `
-    <div class="row tap" data-a="coachCreate"><div class="grow"><div class="title strong">Create a view-only coach link</div><div class="detail">For a Rens coach or trainer. Shows a summary only and cannot change anything. You can turn it off at any time. Needs family sync.</div></div><span class="chev">›</span></div>`}</div>`;
+    <div class="row tap" data-a="coachCreate">${badge("eye")}<div class="grow"><div class="title strong">Create a view-only coach link</div><div class="detail">For a Rens coach or trainer. Shows a summary only and cannot change anything. You can turn it off at any time. Needs family sync.</div></div><span class="chev">›</span></div>`}</div>`;
 }
 
 /* ---------- first session guide ---------- */
@@ -509,3 +510,133 @@ function textSizeGroup() {
     <div class="chips" role="group" aria-label="Text size">${TEXT_SIZES.map(([v, l]) => `<button class="chip ${Prefs.textSize === v ? "on" : ""}" data-a="textSize" data-v="${v}" aria-pressed="${Prefs.textSize === v}">${l}</button>`).join("")}</div></div></div>`;
 }
 EXTRA_ACTIONS.textSize = (d) => { Prefs.textSize = d.v; Prefs.save(); applyTextSize(); };
+
+/* ---------- rest and sick days ---------- */
+function weekNeeded(monKey) {
+  const mon = parseKey(monKey);
+  let off = 0;
+  for (let i = 0; i < 7; i++) { const l = S.logs[dateKey(addDays(mon, i))]; if (l && l.off) off++; }
+  return Math.max(1, 4 - Math.min(3, off));
+}
+
+/* ---------- Today: the "More" fold remembers if it is open ---------- */
+const moreIsOpen = () => (window.innerWidth >= 900 ? true : !!Prefs.moreOpen);
+document.addEventListener("toggle", (e) => {
+  if (e.target && e.target.classList && e.target.classList.contains("more")) { Prefs.moreOpen = e.target.open; Prefs.save(); }
+}, true);
+
+/* ---------- errors, version and diagnostics ---------- */
+const ERR_KEY = "tristan-errors";
+function logError(msg) {
+  try { const l = JSON.parse(localStorage.getItem(ERR_KEY) || "[]"); l.push({ t: Date.now(), m: String(msg).slice(0, 300) }); localStorage.setItem(ERR_KEY, JSON.stringify(l.slice(-20))); } catch (e) {}
+}
+window.addEventListener("error", (e) => logError((e.message || "error") + " @" + String(e.filename || "").split("/").pop() + ":" + (e.lineno || 0)));
+window.addEventListener("unhandledrejection", (e) => logError("promise: " + ((e.reason && e.reason.message) || e.reason)));
+let BUILD = "";
+async function loadBuild() {
+  try { const keys = await caches.keys(); const k = keys.find((x) => x.startsWith("training-plan-")); BUILD = k ? k.replace("training-plan-", "") : "not installed"; } catch (e) { BUILD = "unknown"; }
+  const el = document.getElementById("build-id");
+  if (el) el.textContent = BUILD;
+}
+function diagText() {
+  let errs = [];
+  try { errs = JSON.parse(localStorage.getItem(ERR_KEY) || "[]"); } catch (e) {}
+  const standalone = (navigator.standalone === true) || (window.matchMedia && matchMedia("(display-mode: standalone)").matches);
+  return [
+    "Rens Training diagnostics",
+    "Build: " + (BUILD || "unknown"),
+    "Time: " + new Date().toISOString(),
+    "Phone: " + String(navigator.userAgent).replace(/^Mozilla\/5\.0 /, "").slice(0, 120),
+    `Screen: ${innerWidth}x${innerHeight} at ${window.devicePixelRatio || 1}x, Home Screen app: ${standalone ? "yes" : "no"}`,
+    `Sync: ${Sync.code ? "on" : "off"}, ${Sync.status}${Sync.err ? " (" + Sync.err + ")" : ""}, last ok ${Sync.lastOk ? new Date(Sync.lastOk).toISOString() : "never"}`,
+    `Data: ${S.days.length} days, ${Object.keys(S.logs).length} logs, ${S.videos.length} videos, ${(S.games || []).length} games, ${(S.events || []).length} events`,
+    `Settings: sound ${Prefs.sound}, voice ${Prefs.voice}, vibration ${Prefs.haptic}, text size ${Prefs.textSize}, family view ${Prefs.parent ? "on" : "off"}`,
+    "Errors (" + errs.length + "):",
+    ...errs.map((x) => "  " + new Date(x.t).toISOString() + " " + x.m),
+  ].join("\n");
+}
+const CHECKS = [
+  ["sound", "Sounds", "Plays a swish. You should hear it with the ringer on.", "testSound"],
+  ["voice", "Voice", "Speaks a short sentence.", "testVoice"],
+  ["share", "Share sheet", "Opens the phone's share sheet with a test message.", "testShare"],
+  ["notify", "Reminder notification", "Sends a test reminder. Only works from the Home Screen app, and after you allow notifications.", "testNotify"],
+  ["calendar", "Calendar file", "Builds the training calendar file so you can add it to Calendar.", "calStart"],
+  ["layout", "Layout and text size", "Look at every tab. Try Larger text size. Nothing should be cut off.", ""],
+];
+function aboutGroup() {
+  queueMicrotask(loadBuild);
+  return `<h2 class="section">About this phone</h2><div class="group">
+    <div class="row"><div class="grow"><div class="title strong">Version</div><div class="detail">Build <b id="build-id">${esc(BUILD || "…")}</b></div></div></div>
+    <div class="row tap" data-a="checkUpdate"><div class="grow">Check for an update</div><span class="chev">›</span></div>
+    <div class="row tap" data-a="diagSend"><div class="grow"><div class="title strong">Send diagnostics</div><div class="detail">Shares the version, settings and any errors. No names, progress or codes.</div></div><span class="chev">›</span></div></div>
+  <h2 class="section">Test this phone</h2><div class="group">${CHECKS.map(([k, t, d, a]) => `<div class="row"><div class="grow"><div class="title strong">${t}</div><div class="detail">${d}</div></div>${a ? `<button class="pill blue" data-a="${a}">Try</button>` : ""}<button class="chip ${Prefs.checks[k] ? "on" : ""}" data-a="checkMark" data-k="${k}" aria-pressed="${!!Prefs.checks[k]}">${Prefs.checks[k] ? "Works" : "Not checked"}</button></div>`).join("")}
+    <div class="row"><div class="grow"><div class="detail">iPhones do not vibrate for web apps, so the Vibration setting only works on Android phones.</div></div></div></div>`;
+}
+Object.assign(EXTRA_ACTIONS, {
+  checkMark: (d) => { Prefs.checks[d.k] = !Prefs.checks[d.k]; Prefs.save(); },
+  testSound: () => { Sfx.unlock(); Sfx.swish(); toast("Did you hear a swish?"); },
+  testVoice: () => { if (!("speechSynthesis" in window)) { toast("This phone cannot speak."); return; } const u = new SpeechSynthesisUtterance("Voice cues are working."); speechSynthesis.cancel(); speechSynthesis.speak(u); toast("Did you hear it?"); },
+  testShare: async () => { try { if (navigator.share) { await navigator.share({ text: "Test from Rens Training" }); return; } } catch (e) { if (e && e.name === "AbortError") return; } toast("This browser has no share sheet."); },
+  testNotify: async () => {
+    if (!("Notification" in window)) { toast("Notifications are not available here. Add the app to the Home Screen first."); return; }
+    let p = Notification.permission; if (p === "default") p = await Notification.requestPermission();
+    if (p !== "granted") { toast("Notifications are blocked. Allow them in Settings."); return; }
+    try { const reg = await navigator.serviceWorker.getRegistration(); await reg.showNotification("Rens Training", { body: "This is a test reminder.", icon: "icons/icon-192.png", tag: "rens-test" }); toast("Test sent."); } catch (e) { toast("Could not send a test notification."); }
+  },
+  checkUpdate: async () => {
+    const reg = navigator.serviceWorker && (await navigator.serviceWorker.getRegistration());
+    if (!reg) { toast("Updates work from the installed app."); return; }
+    let changed = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => (changed = true), { once: true });
+    toast("Checking…");
+    try { await reg.update(); } catch (e) { toast("Could not check. Are you online?"); return; }
+    setTimeout(() => { if (!changed) toast("You have the latest version."); }, 2500);
+  },
+  diagSend: async () => {
+    const text = diagText();
+    try { if (navigator.share) { await navigator.share({ title: "Rens Training diagnostics", text }); return; } } catch (e) { if (e && e.name === "AbortError") return; }
+    try { await navigator.clipboard.writeText(text); toast("Copied. Paste it into a message."); } catch (e) { toast("Could not copy."); }
+  },
+});
+
+/* ---------- focus handling for full-screen views ---------- */
+const OVERLAYS = [["#modal .sheet", "[data-a=close]"], ["#extra .cmp", "[data-a=cmpClose]"], ["#overview .ovr", "[data-a=ovrClose]"], ["#card .cardview", "[data-a=cardClose]"], ["#film > *", "[data-a=filmClose]"], ["#summary > *", "[data-a=sumClose]"], ["#guided > *", "[data-a=gClose]"], ["#welcome > *", ""]];
+let focusKey = "", returnSel = "", lastActionSel = "";
+const topOverlay = () => { for (const [sel, close] of OVERLAYS) { const el = document.querySelector(sel); if (el) return { el, close, id: sel }; } return null; };
+document.addEventListener("click", (e) => {
+  const t = e.target && e.target.closest && e.target.closest("[data-a]");
+  if (!t || topOverlay()) return;
+  lastActionSel = `[data-a="${t.dataset.a}"]` + ["id", "date", "i", "t"].filter((k) => t.dataset[k] !== undefined).map((k) => `[data-${k}="${t.dataset[k]}"]`).join("");
+}, true);
+function manageFocus() {
+  const top = topOverlay();
+  const key = top ? top.id : "";
+  if (key !== focusKey) {
+    if (top) {
+      if (!focusKey) returnSel = lastActionSel;
+      top.el.setAttribute("tabindex", "-1");
+      top.el.focus({ preventScroll: true });
+    } else {
+      const r = returnSel && document.querySelector(returnSel);
+      if (r) r.focus({ preventScroll: true });
+      returnSel = "";
+    }
+    focusKey = key;
+  } else if (top && (!document.activeElement || document.activeElement === document.body)) {
+    top.el.setAttribute("tabindex", "-1");
+    top.el.focus({ preventScroll: true });
+  }
+}
+document.addEventListener("keydown", (e) => {
+  const top = topOverlay();
+  if (!top) return;
+  if (e.key === "Escape") { const c = top.close && document.querySelector(top.close); if (c) { e.preventDefault(); c.click(); } return; }
+  if (e.key !== "Tab") return;
+  const f = [...top.el.querySelectorAll('button, [href], input, select, textarea, summary, [tabindex]:not([tabindex="-1"])')].filter((x) => !x.disabled && x.offsetParent !== null);
+  if (!f.length) return;
+  const first = f[0], last = f[f.length - 1];
+  if (e.shiftKey && (document.activeElement === first || document.activeElement === top.el)) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+});
+// Forms open and close without a full render, so watch the form container too.
+{ const m = document.getElementById("modal"); if (m) new MutationObserver(() => manageFocus()).observe(m, { childList: true }); }

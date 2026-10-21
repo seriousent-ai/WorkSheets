@@ -51,6 +51,36 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
     await p.waitForTimeout(1300);
     ok((await p.textContent("[data-ck=hero-xp]")) === String(roll.now), "XP counter lands on the new total");
 
+    console.log("Today fold, rest days, focus and diagnostics");
+    const hClosed = await p.evaluate(() => document.documentElement.scrollHeight);
+    ok(await p.locator("details.more").count() === 1 && await p.evaluate(() => !document.querySelector("details.more").open), "More fold starts closed");
+    await p.click("details.more > summary");
+    await p.waitForFunction(() => Prefs.moreOpen === true);
+    ok(true, "opening More is remembered");
+    ok((await p.evaluate(() => document.documentElement.scrollHeight)) > hClosed, "Today is shorter with More closed (" + hClosed + " px)");
+    await p.click("details.more > summary");
+    await p.click("[data-a=offSet][data-v='rest']");
+    ok(await p.evaluate(() => weekNeeded(weekKeyNow()) === 3 && Object.values(S.logs).some((l) => l.off === "rest")), "a rest day lowers the sessions a streak week needs to 3");
+    await p.click("[data-a=offSet][data-v='rest']");
+    ok(await p.evaluate(() => weekNeeded(weekKeyNow()) === 4), "unmarking restores 4");
+    await tab(p, "log");
+    await p.click("[data-a=addGame]");
+    ok(await p.evaluate(() => !!document.activeElement && document.activeElement.closest("#modal") !== null), "opening a form moves focus into it");
+    await p.keyboard.press("Escape");
+    ok(await p.evaluate(() => document.querySelector("#modal").children.length === 0 && !!document.activeElement && document.activeElement.dataset.a === "addGame"), "Escape closes it and focus returns to the button");
+    await tab(p, "guide");
+    await p.waitForFunction(() => document.getElementById("build-id") && document.getElementById("build-id").textContent.length > 1 && document.getElementById("build-id").textContent !== "…");
+    ok(true, "Guide shows a build id (" + (await p.textContent("#build-id")) + ")");
+    await p.evaluate(() => window.dispatchEvent(new ErrorEvent("error", { message: "test boom", filename: "x.js", lineno: 3 })));
+    const diag = await p.evaluate(() => diagText());
+    ok(diag.includes("Build:") && diag.includes("test boom"), "diagnostics list the build and recent errors");
+    ok(!/Tristan|Alvarez/i.test(diag) && !diag.includes(await p.evaluate(() => Sync.code || "none-none")), "diagnostics hold no names or codes");
+    await p.evaluate(() => localStorage.removeItem("tristan-errors"));
+    await p.click("[data-a=checkMark][data-k=sound]");
+    ok(await p.evaluate(() => Prefs.checks.sound === true), "phone test items can be marked as working");
+    await p.click("[data-a=checkMark][data-k=sound]");
+    await tab(p, "today");
+
     console.log("Text size");
     await tab(p, "guide");
     await p.click("[data-a=textSize][data-v='1.25']");
@@ -80,6 +110,7 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
     console.log("Recovery and monthly challenge");
     await p.click("[data-a=bodySet][data-v='1']");
     ok(await p.locator(".recov").count() > 0, "recovery card shows after a check-in");
+    await p.click("details.more > summary");
     await p.click("[data-a=monthlyStart]");
     await p.selectOption('#f [name="days"]', "14");
     await p.click("[data-a=save]");
@@ -182,6 +213,14 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
     await cpg.reload(); await cpg.waitForSelector(".coachpage h1");
     await cpg.waitForFunction(() => !document.body.textContent.includes("Loading"));
     ok((await cpg.textContent(".coachpage")).includes("not active"), "stopping sharing removes the summary");
+
+    console.log("Small phone");
+    const sm = await browser.newContext({ ...devices["iPhone SE"], serviceWorkers: "block" });
+    const sp = await sm.newPage();
+    await sp.goto(url + "/index.html"); await sp.waitForSelector("#splash", { state: "detached" }); await finishWelcome(sp);
+    await sp.evaluate(() => { const k = dateKey(new Date()); S.games.push({ id: "g", date: k, opp: "A very long opponent team name here", pts: 10, ast: 4, tov: 2 }); S.events.push({ id: "e", type: "game", title: "vs a very long team name", date: dateKey(addDays(new Date(), 1)), time: "16:00", place: "A long gym name and address" }); render(); });
+    for (const v of ["today", "week", "videos", "log", "guide"]) { await tab(sp, v); ok(await sp.evaluate(() => document.documentElement.scrollWidth <= innerWidth), "iPhone SE " + v + " has no sideways scrolling"); }
+    await sm.close();
 
     console.log("Accessibility (light and dark)");
     for (const scheme of ["light", "dark"]) {
