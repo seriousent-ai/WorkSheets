@@ -13,6 +13,7 @@
 - Video library: 229 suggested videos on offense, defense, teamwork, point guard play and warm-up. Each is tagged Basics, Intermediate or Advanced; only Advanced shows by default (a level switch brings the rest back).
 - "Watch non-stop" plays a whole topic as one YouTube playlist, with optional shuffle. Paste a YouTube video or playlist link to add it. Add to my videos, or hide, any suggestion.
 - 67 more advanced entries added over four rounds (296 in all): workouts, pick-and-roll defense, pull-ups and step-backs, floaters, passing, defensive footwork, speed and agility, small-sided games, plus 22 written guides that open in the browser.
+- Video notes no longer repeat the source name. The whole library is written down in `docs/VIDEO-LIBRARY.md`, with the ladder tests and drill versions, and `docs/PROJECT-NOTES.md` has a Phase 9 section.
 - Titles and links come from web searches and were not all watched; a parent should check them.
 
 ## Phase 8

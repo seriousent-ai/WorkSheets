@@ -3,10 +3,10 @@
 An installable web app (PWA) for Tristan's weekly basketball plan with the NY Rens. Works on phones, tablets and computers, offline, with no build step.
 
 ## What is in it
-- **Today**: the session with per-block timers and a guided mode, the morning check-in (body, sleep, rest or sick day), recovery score, game banner, monthly challenge, levels, week streak and cycle notes. Progress and skills sit under a "More" fold.
+- **Today**: the session with per-block timers and a guided mode, the morning check-in (body, sleep, rest or sick day), recovery score, game banner, monthly challenge, levels, week streak and cycle notes. Progress and skills sit under a "More" fold. Drill details have **Make this harder**, and game days show a pre-game checklist.
 - **Week**: Monday to Sunday progress, the team schedule and calendar export.
-- **Videos**: the drill videos, your own links, **Film a drill**, **Compare clips** (side by side, slow motion, draw; works with clips on the phone and YouTube links).
-- **Log**: daily log, Saturday skill check, trends, shot chart, **games** (assist to turnover) and a season goal, playbook, rewards and achievements.
+- **Videos**: the drill videos, your own links, **Watch, then try it**, **Film notes**, **Film a drill**, **Compare clips** (side by side, slow motion, draw; works with clips on the phone and YouTube links), **Watch non-stop**, and a library of 296 suggested videos and guides with a Level switch (Advanced by default). See `docs/VIDEO-LIBRARY.md`.
+- **Log**: daily log, Saturday skill check, trends, **skill ladder**, **leadership goal**, shot chart with a heat glow and weekly comparison, **games** (record, assist to turnover, last five games) and a season goal, playbook, rewards and achievements.
 - **Guide**: profile, family sync (with QR code), Family view, coach link, text size, sounds and voice, plan history and restore, clips on this phone, version and diagnostics, a "Test this phone" list, backups and a coach spreadsheet.
 - Everything can be added, edited and deleted in the app. Data is stored on the device and can be shared between phones with a family code.
 

@@ -149,3 +149,44 @@ Not built: real push notifications (needs a server on a paid Firebase plan), Fir
 - Device-only settings live in `tristan-prefs` (sound, voice, text size, Family view name, the More fold, the phone test list). Other device-only keys: `tristan-photo`, `tristan-snapshots`, `tristan-errors`, `tristan-milestones`, `tristan-tz`.
 - Compare with YouTube uses the player's postMessage commands (play, pause, seek, rate). It could not be tested against live YouTube from the build machine, only against a stand-in.
 - The checks workflow runs the emulator test in Chromium and in the Safari engine (WebKit); the WebKit run does not block a merge yet.
+
+
+## Phase 9 (advanced content, built after the first month)
+
+Tristan is past intermediate and heading toward advanced, so this phase added level-aware content and the Track 7 features from the game plan. Everything is merged and deployed (pull requests 14 to 23).
+
+### Video library
+- `SUGGESTED_VIDEOS` in `data.js`: 296 entries across Offense, Defense, Teamwork, Point guard and Warm-up. Each has `id`, `cat`, `group`, `code`, `level` (1 Basics, 2 Intermediate, 3 Advanced), `title`, `url`, `src`, optional `note`, and either `yt` (a YouTube video id) or `list` (a playlist id). Entries without `yt` or `list` are web pages and open in the browser. The full list is in `docs/VIDEO-LIBRARY.md`.
+- Titles and links came from web searches. None were watched and the build machine could not open YouTube. Expect a few that do not fit or will not embed. Parents can Hide any entry (`S.sugHidden`, synced).
+- Videos tab: **Watch non-stop** (a topic plays as one YouTube playlist, up to 60 videos, optional shuffle), a **Level** switch (default Advanced only, stored as `Prefs.libLevel`), **Paste a YouTube link** (reads the clipboard, adds a video or playlist), and a collapsible library per topic with Play, Add to my videos and Hide.
+- To add entries: append an object to `SUGGESTED_VIDEOS` in `data.js` with a unique `id`, `code` and `url`. Playlist and `embed/videoseries` support is in `embed()` in `app.js`.
+- Plain, natural search phrasing (for example "advanced passing drills for point guards YouTube") found real videos. Long operator-style queries mostly found written articles.
+
+### Track 7 features
+- **Skill ladder** (Log): `LADDER` in `data.js`, five rungs for each of the five skills, each with a test. Passing a rung is +30 XP (`S.ladder`, synced).
+- **Game stats** (Log, Games): record, steals per game, and the last five games against the season for assist to turnover, points and assists.
+- **Shot chart**: a heat glow per spot, each spot against the four weeks before (needs five or more shots in both periods) and a line naming the most improved and weakest spot.
+- **Make this harder** (Today, drill Details): `LEVELUP` in `data.js`, a harder version by block kind and weekday (`S.levelUp`, synced).
+- **Watch, then try it** (Videos): `DECISIONS` in `data.js`, seven advanced videos each paired with a short drill, +15 XP (`S.watchTry`, synced).
+- **Film notes** (Videos): one thing seen, one thing to fix, +5 XP (`S.filmNotes`, synced).
+- **Game day** (Today): a pre-game checklist on days with a scheduled game (`logs[date].pre`), and the game form now has one mistake and one change for next time.
+- **Leadership goal** (Log): a weekly prompt from `LEAD_PROMPTS`, +15 XP when done, stored in the weekly record as `lead`.
+- **This week in plain words**: a short paragraph at the top of the parent progress overview, also added to the shared weekly report.
+- The profile level was changed from Intermediate to Advanced. Existing phones are updated once at load if the subtitle still has the default text.
+
+### Sync and storage changes
+- `plan-misc` now also carries `sugHidden`, `ladder`, `levelUp`, `watchTry` and `filmNotes`.
+- Device-only: `tristan-prefs` gained `libOpen` (open topics), `shuffle` and `libLevel`.
+- `bonusXp()` in `extras.js` adds ladder, watch-then-try and film note XP to `xpTotal()`; leadership XP is added in `xpTotal()` itself.
+
+### Tests
+- `tests/smoke.js` covers the library (counts, unique ids, level filter, non-stop playlist, add, hide, unhide, link paste) and each Track 7 feature. It passes in Chromium and in WebKit in GitHub.
+
+### Process notes
+- Each change went through a pull request that passed both browser checks before being merged with "merge it". The branch `claude/laughing-lamport-8emsog` is reset to main after each squash merge.
+- The Claude artifacts are the game plan (Track 7 is in it), the iPhone and iPad simulator (republished after each merge on request) and the screens gallery (last updated before Phase 9).
+
+### Not done or not verifiable from the build machine
+- Watching the videos, and whether each one embeds in the app.
+- Real-device checks on both phones (see `docs/REAL-DEVICE-CHECKLIST.md`), real Firebase rules testing, push notifications, App Check and dark or tinted Home Screen icons.
+- Ladder tests, harder drill versions and leadership prompts cannot be edited in the app yet. They live in `data.js`.
