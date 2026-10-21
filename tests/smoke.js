@@ -252,7 +252,6 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
         cp.execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-loop", "1", "-i", png, "-vf", "scale=440:440:force_original_aspect_ratio=decrease,pad=640:480:(ow-iw)/2:(oh-ih)/2:white,format=yuv420p", "-t", "4", "-r", "10", y4m]);
       } catch (e) { y4m = null; }
       if (y4m) {
-        await p.click("[data-a=close]");
         const cam = await engine.launch({ ...(process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {}), args: ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream", "--use-file-for-fake-video-capture=" + y4m] });
         const cc3 = await cam.newContext({ ...phone, permissions: ["camera"] });
         const sp3 = await cc3.newPage();
@@ -274,6 +273,7 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
         await cam.close();
       } else console.log("  skip  could not build a fake camera video");
     }
+    await p.click("[data-a=close]");
     const par = await boot(browser, url);
     const q = par.page;
     await finishWelcome(q).catch(() => {});
