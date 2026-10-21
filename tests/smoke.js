@@ -84,6 +84,33 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
     await p.click("[data-a=checkMark][data-k=sound]");
     await tab(p, "today");
 
+    console.log("Cycle notes, milestones, goal, swipe, time zone, coach file");
+    await p.evaluate(() => { ui.openBlocks = {}; });
+    await p.click("[data-a=blockInfo]:nth-of-type(1)", { force: true }).catch(() => {});
+    await p.evaluate(() => { const b = S.days[ui.day].blocks.find((x) => !/warm|cool/i.test(x.title)); ui.openBlocks[b.id] = true; render(); });
+    ok((await p.textContent("body")).includes("Cycle week 1:"), "drill details show this cycle week's note");
+    await p.evaluate(() => { seenMilestones(); const k = dateKey(new Date()); logOf(k).complete = true; render(); });
+    ok(await p.locator("[data-a=milestoneSeen]").count() === 1, "a new milestone card appears");
+    await p.click("[data-a=milestoneSeen]");
+    ok(await p.locator("[data-a=milestoneSeen]").count() === 0, "dismissing it hides the card");
+    await p.evaluate(() => { logOf(dateKey(new Date())).complete = false; render(); });
+    const day1 = await p.evaluate(() => ui.day);
+    await p.evaluate(() => { const el = document.querySelector(".hero"); const mk = (x) => new Touch({ identifier: 1, target: el, clientX: x, clientY: 300 }); el.dispatchEvent(new TouchEvent("touchstart", { touches: [mk(300)], changedTouches: [mk(300)], bubbles: true })); el.dispatchEvent(new TouchEvent("touchend", { touches: [], changedTouches: [mk(120)], bubbles: true })); });
+    ok(await p.evaluate((d) => ui.day === Math.min(6, d + 1), day1), "swiping left moves to the next day");
+    await p.evaluate(() => { ui.day = todayIdx(); render(); });
+    await p.evaluate(() => { localStorage.setItem("tristan-tz", "Mars/Olympus"); checkTz(); });
+    await p.waitForSelector(".toast", { timeout: 4000 });
+    ok((await p.textContent(".toast")).includes("time zone"), "a changed time zone shows a notice");
+    const csv = await p.evaluate(() => buildCsv());
+    ok(csv.includes("Sessions") && csv.includes("Skill ratings") && csv.includes("Games") && !/sleep|energy|sore/i.test(csv), "coach spreadsheet has sessions, ratings and games only");
+    await tab(p, "log");
+    await p.click("[data-a=editGoal]");
+    await p.selectOption('#f [name="metric"]', "ratio");
+    await fill(p, "target", "2.5");
+    await p.click("[data-a=save]");
+    ok((await p.textContent("body")).includes("Goal: Assist to turnover 2.5"), "a season goal shows with its progress");
+    await tab(p, "today");
+
     console.log("Text size");
     await tab(p, "guide");
     await p.click("[data-a=textSize][data-v='1.25']");
@@ -230,6 +257,12 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
         await sp3.waitForSelector(".scanview");
         await sp3.waitForFunction((c) => Sync.code === c, code, { timeout: 20000 });
         ok(true, "scanning the QR code joins the family");
+        await sp3.waitForSelector("#modal .sheet", { timeout: 6000 });
+        ok((await sp3.textContent("#modal .sheet")).includes("Who is using this phone?"), "after joining, the phone asks who is using it");
+        await sp3.selectOption('#f [name="who"]', "family");
+        await sp3.fill('#f [name="name"]', "Mom");
+        await sp3.click("[data-a=save]");
+        ok(await sp3.evaluate(() => Prefs.parent === "Mom"), "choosing a parent turns on Family view with that name");
         await sp3.waitForFunction(() => (S.games || []).length === 1, null, { timeout: 15000 });
         ok(true, "the scanned phone received the family's data");
         await cam.close();
@@ -256,6 +289,8 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
     ok((await q.locator(".ovr").count()) > 0, "Family view opens the progress overview");
     await q.click("[data-a=ovrClose]");
     ok((await q.textContent(".greet")).includes("Jalen"), "greets Jalen");
+    ok((await q.textContent(".psum")).includes("session"), "Family view opens with a sessions-only summary");
+    ok(!/sleep|sore|energy/i.test(await q.textContent(".psum")), "the parent summary has no sleep or body data");
     // edits to different parts of the plan on two phones must both survive
     await p.evaluate(() => { S.links.push({ id: "lx", title: "Phone A link", url: "https://example.com", note: "" }); persist(); });
     await q.evaluate(() => { S.videos.push({ id: "vx", code: "VX", title: "Phone B video", url: "https://example.com/v", note: "" }); persist(); });

@@ -18,7 +18,7 @@ function load() {
   try { s = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
   if (!s || !Array.isArray(s.days)) s = JSON.parse(JSON.stringify(DEFAULT_DATA));
   s.logs ||= {}; s.weekly ||= {}; s.videos ||= []; s.links ||= []; s.notes ||= [];
-  s.games ||= []; s.events ||= []; s.badges ||= []; s.monthly ||= null;
+  s.games ||= []; s.events ||= []; s.badges ||= []; s.monthly ||= null; s.goal ||= null;
   s.rewards ||= JSON.parse(JSON.stringify(DEFAULT_DATA.rewards));
   s.planTs ||= 0;
   s.profile.cycleStart ||= dateKey(mondayOf(new Date()));
@@ -540,7 +540,8 @@ function viewToday() {
   const greet = hr < 12 ? "Good Morning" : hr < 18 ? "Good Afternoon" : "Good Evening";
   const isToday = ui.day === todayIdx();
   const times = blockTimes(day);
-  const msg = MESSAGES[dayOfYear() % MESSAGES.length];
+  const pool = MESSAGES.concat(String(S.profile.lines || "").split("\n").map((x) => x.trim()).filter(Boolean));
+  const msg = pool[dayOfYear() % pool.length];
   const seg = S.days.map((d, i) => `<button class="${i === ui.day ? "on" : ""} ${i === todayIdx() ? "today" : ""}" data-a="day" data-i="${i}">${esc(d.name.slice(0, 3))}</button>`).join("");
   const vids = day.videoIds.map((id) => S.videos.find((v) => v.id === id)).filter(Boolean);
   const mood = [["😫", 1], ["😕", 2], ["😐", 3], ["🙂", 4], ["🔥", 5]];
@@ -551,8 +552,10 @@ function viewToday() {
   <h1 class="greet">${greet}, ${esc(Prefs.parent ? firstName(Prefs.parent) : firstName(S.profile.name))}</h1>
   <p class="sub tight">${Prefs.parent ? esc("Family view. You are following " + firstName(S.profile.name) + "'s training.") : esc(msg)}</p>
   ${syncLine()}
+  ${parentSummary()}
   ${firstWeekCard()}
   ${noteCard()}
+  ${milestoneCard()}
   ${eventBanner()}
   <div class="seg">${seg}</div>
   <div class="cols"><div>
@@ -577,7 +580,7 @@ function viewToday() {
         <button class="check ${on ? "on" : ""}${on && ui.fresh === b.id ? " fresh" : ""}" data-a="toggle" data-id="${b.id}" aria-label="Mark ${esc(b.title)} done">${on ? "✓" : ""}</button>
         <div class="grow"><div class="title strong">${esc(b.title)}</div>
           <div class="detail"><span class="pill">${times[i]}</span>${cur ? ' <span class="pill blue">Up next</span>' : ""}</div>
-          ${b.text ? `<button class="linkbtn" data-a="blockInfo" data-id="${b.id}">${open ? "Hide details" : "Details"}</button>${open ? `<div class="detail">${esc(b.text)}</div>` : ""}` : ""}</div>
+          ${b.text ? `<button class="linkbtn" data-a="blockInfo" data-id="${b.id}">${open ? "Hide details" : "Details"}</button>${open ? `<div class="detail">${esc(b.text)}</div>${cycleNoteHtml(b)}` : ""}` : ""}</div>
         <div class="side">
           <button class="play" data-a="gFrom" data-id="${b.id}" aria-label="Start ${esc(b.title)} timer">▶</button>
           <button class="more" data-a="editBlock" data-id="${b.id}" aria-label="Edit ${esc(b.title)}">•••</button>
@@ -890,6 +893,7 @@ function viewGuide() {
   ${aboutGroup()}
   <h2 class="section">Your data</h2>
   <div class="group">
+    <div class="row tap" data-a="csvExport"><div class="grow"><div class="title strong">Export a summary for a coach</div><div class="detail">A spreadsheet file with sessions, skill ratings and games. No sleep, body or notes.</div></div><span class="chev">›</span></div>
     <div class="row tap" data-a="share"><div class="grow">Send backup (AirDrop, Messages)</div><span class="chev">›</span></div>
     <div class="row tap" data-a="export"><div class="grow">Export backup</div><span class="chev">›</span></div>
     <div class="row tap" data-a="import"><div class="grow">Import backup</div><span class="chev">›</span></div>
@@ -951,6 +955,7 @@ function renderGuided() {
       <h2>${esc(b.title)}</h2>
       <div class="g-ringwrap"><svg class="g-ring" viewBox="0 0 200 200"><circle cx="100" cy="100" r="88" class="rt"/><circle cx="100" cy="100" r="88" class="rf" data-gring stroke-dasharray="${G_C}" stroke-dashoffset="${(G_C * (1 - (g.total - left) / g.total)).toFixed(1)}"/></svg><div class="g-time" data-gtime>${fmtTime(left)}</div></div>
       ${b.text ? `<p class="g-text">${esc(b.text)}</p>` : ""}
+      ${cycleNoteHtml(b, "g-text cyc")}
       ${tallyHtml(b, g, lg)}
     </div>
     <div class="g-actions">
@@ -1123,9 +1128,9 @@ function toast(msg) {
   setTimeout(() => t.remove(), 2400);
 }
 const Prefs = {
-  sound: true, voice: true, haptic: true, remind: false, remindTime: "16:00", calTime: "16:00", calAlarm: "30", parent: "", textSize: "1", moreOpen: false, checks: {},
+  sound: true, voice: true, haptic: true, remind: false, remindTime: "16:00", calTime: "16:00", calAlarm: "30", parent: "", textSize: "1", moreOpen: false, checks: {}, roleAsked: false,
   load() { try { Object.assign(this, JSON.parse(localStorage.getItem("tristan-prefs")) || {}); } catch (e) {} },
-  save() { try { localStorage.setItem("tristan-prefs", JSON.stringify({ sound: this.sound, voice: this.voice, haptic: this.haptic, remind: this.remind, remindTime: this.remindTime, calTime: this.calTime, calAlarm: this.calAlarm, parent: this.parent, textSize: this.textSize, moreOpen: this.moreOpen, checks: this.checks })); } catch (e) {} },
+  save() { try { localStorage.setItem("tristan-prefs", JSON.stringify({ sound: this.sound, voice: this.voice, haptic: this.haptic, remind: this.remind, remindTime: this.remindTime, calTime: this.calTime, calAlarm: this.calAlarm, parent: this.parent, textSize: this.textSize, moreOpen: this.moreOpen, checks: this.checks, roleAsked: this.roleAsked })); } catch (e) {} },
 };
 Prefs.load();
 const buzz = (p) => { if (Prefs.haptic && navigator.vibrate) navigator.vibrate(p); };
@@ -1194,8 +1199,9 @@ function checkNewDay() {
   lastDay = k;
   ui.day = todayIdx();
   ui.weekOffset = 0;
-  if (settleMonthly()) persist();
+  if (settleMonthly()) { persist(); celebrateBadge(); }
   takeSnapshot();
+  checkTz();
   if (!ui.form && !ui.guided) render();
 }
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { checkNewDay(); gTick(); scheduleReminder(); } });
@@ -1367,7 +1373,7 @@ function formProfile() {
   const p = S.profile;
   openForm({
     title: "Profile",
-    fields: [{ k: "name", label: "Name", value: p.name }, { k: "team", label: "Team", value: p.team }, { k: "league", label: "League / age group", value: p.league }, { k: "number", label: "Jersey number", value: p.number || "" }, { k: "logo", label: "Team logo (choose an image)", type: "file", accept: "image/*" }, { k: "photo", label: "Photo for the player card (stays on this phone)", type: "file", accept: "image/*" }, { k: "subtitle", label: "Team and level", value: p.subtitle }, { k: "priority", label: "Priority", type: "textarea", value: p.priority }, { k: "why", label: "My Why", type: "textarea", value: p.why, ph: "Why I train" }],
+    fields: [{ k: "name", label: "Name", value: p.name }, { k: "team", label: "Team", value: p.team }, { k: "league", label: "League / age group", value: p.league }, { k: "number", label: "Jersey number", value: p.number || "" }, { k: "logo", label: "Team logo (choose an image)", type: "file", accept: "image/*" }, { k: "photo", label: "Photo for the player card (stays on this phone)", type: "file", accept: "image/*" }, { k: "subtitle", label: "Team and level", value: p.subtitle }, { k: "priority", label: "Priority", type: "textarea", value: p.priority }, { k: "why", label: "My Why", type: "textarea", value: p.why, ph: "Why I train" }, { k: "lines", label: "Extra encouragement lines for Today (one per line)", type: "textarea", value: p.lines, ph: "Proud of you. Keep going." }],
     required: ["name"],
     extra: [...(p.logo ? [{ label: "Remove logo", fn: () => { delete p.logo; } }] : []), ...(photoUrl() ? [{ label: "Remove card photo", fn: () => { try { localStorage.removeItem(PHOTO_KEY); } catch (e) {} } }] : [])],
     async save(f) {
@@ -1636,7 +1642,8 @@ const ACTIONS = {
     required: ["code"],
     extra: [{ label: "Scan the QR code instead", fn: () => { ui.scan = {}; } }],
     async save(f) {
-      try { await Sync.join(f.code); toast("Joined. Your plan and progress are syncing."); } catch (e) { toast(e.message || "Could not join."); }
+      toast("Joining…");
+      try { await Sync.join(f.code); toast("Joined. Your plan and progress are syncing."); afterJoin(); } catch (e) { toast(e.message || "Could not join."); }
     },
   }),
   syncShare: async () => {
@@ -1706,8 +1713,9 @@ if (coachParam) {
 } else {
   if (!S.profile.onboarded && Object.keys(S.logs).length === 0 && !Sync.code) ui.welcome = { step: 1, name: S.profile.name, why: S.profile.why };
   applyTextSize();
-  settleMonthly();
+  if (settleMonthly()) { persist(); celebrateBadge(); }
   takeSnapshot();
+  checkTz();
   if (Prefs.parent) ui.overview = true;
   render();
   scheduleReminder();

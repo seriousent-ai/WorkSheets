@@ -615,3 +615,16 @@ details.more[open] > summary { margin-bottom: 8px; }
 @media (min-width: 700px) { .cmp-grid { grid-template-columns: 1fr 1fr; } }
 .cmp-yt { border: 0; }
 .cmp-stage iframe { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+.cycnote { margin-top: 4px; color: var(--label2); }
+.g-text.cyc { color: #ffb340; margin-top: -6px; }
+.badgewin { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 0; }
+.badgewin h2 { margin: 6px 0 0; font-size: 22px; }
+.badgewin p { margin: 0; color: var(--label2); }
+.psum { display: flex; align-items: center; gap: 12px; background: var(--card); border-radius: var(--card-r); padding: var(--card-pad); margin: 0 0 12px; }
+.psum b { display: block; font-size: var(--fs-body); }
+.psum span:not(.badge) { color: var(--label2); font-size: var(--fs-sm); }
+@keyframes flipin { from { transform: rotateX(80deg); opacity: 0; } to { transform: none; opacity: 1; } }
+.s-row.gold { animation: flipin .7s ease-out both; transform-origin: top; }
+@media (prefers-reduced-motion: reduce) { .s-row.gold { animation: none; } }
+#splash span { display: block; margin-top: 6px; font-size: 15px; opacity: .75; }

@@ -28,7 +28,7 @@ function gamesHtml() {
        <div class="row"><div class="grow">Per game</div><div class="detail">${st.pts.toFixed(1)} pts · ${st.ast.toFixed(1)} ast · ${st.tov.toFixed(1)} TO</div></div>`
     : "";
   return `<h2 class="section">Games <button data-a="addGame">Add</button></h2>
-  <div class="group">${top}${rows || '<div class="empty">After a Rens game, log points, assists and turnovers. +15 XP each. The assist to turnover ratio is the point guard number.</div>'}</div>`;
+  <div class="group">${goalRow()}${top}${rows || '<div class="empty">After a Rens game, log points, assists and turnovers. +15 XP each. The assist to turnover ratio is the point guard number.</div>'}</div>`;
 }
 function formGame(id) {
   const g = (S.games || []).find((x) => x.id === id) || {};
@@ -744,7 +744,7 @@ async function startScan() {
     try { code = new URL(code).searchParams.get("join") || code; } catch (e) {}
     scanBusy = true;
     msg("Joining…");
-    try { await Sync.join(code); stopScan(); ui.scan = null; toast("Joined. Your plan and progress are syncing."); render(); }
+    try { await Sync.join(code); stopScan(); ui.scan = null; toast("Joined. Your plan and progress are syncing."); render(); afterJoin(); }
     catch (e) { msg((e.message || "That code did not work.") + " Try again."); setTimeout(() => (scanBusy = false), 1500); return; }
     scanBusy = false;
   }, 250);
@@ -778,3 +778,155 @@ Object.assign(EXTRA_ACTIONS, {
   cmpSync: () => { const [a, b] = cmpPlayers(); if (a && b) pSeek(b, pTime(a)); },
   cmpRate: (d) => { ui.compare.rate = Number(d.r); cmpPlayers().forEach((p) => pRate(p, ui.compare.rate)); document.querySelectorAll("[data-a=cmpRate]").forEach((b) => b.classList.toggle("on", b.dataset.r === d.r)); },
 });
+
+/* ---------- drill difficulty by cycle week ---------- */
+function cycleNoteHtml(b, cls = "detail cycnote") {
+  if (!b || /warm|cool/i.test(b.title)) return "";
+  const n = cycleInfo().n;
+  return `<div class="${cls}"><b>Cycle week ${n}:</b> ${esc(CYCLE[n - 1][0])}</div>`;
+}
+
+/* ---------- joining: who is using this phone? ---------- */
+function afterJoin() { if (Prefs.parent || Prefs.roleAsked) return; setTimeout(formRole, 700); }
+function formRole() {
+  openForm({
+    title: "Who is using this phone?",
+    fields: [
+      { k: "who", label: "This phone belongs to", type: "select", value: "tristan", opts: [["tristan", firstName(S.profile.name)], ["family", "A parent or sibling"]] },
+      { k: "name", label: "If a parent or sibling, your first name", ph: "Your first name" },
+    ],
+    save(f) {
+      if (f.who === "family") {
+        if (!f.name) { toast("Type your first name to turn on Family view."); return false; }
+        Prefs.parent = f.name; ui.overview = true; toast("Family view is on for " + f.name + ".");
+      } else toast("Welcome! This is " + firstName(S.profile.name) + "'s plan.");
+      Prefs.roleAsked = true; Prefs.save();
+    },
+  });
+}
+
+/* ---------- celebrations ---------- */
+function celebrateBadge() {
+  const b = (S.badges || [])[(S.badges || []).length - 1];
+  if (!b || !b.earned) return;
+  setTimeout(() => {
+    celebrate();
+    try { Sfx.chime && Sfx.chime(); } catch (e) {}
+    openInfo("Badge earned", `<div class="badgewin">${badge("trophy", "lg pulse")}<h2>${esc(b.title)}</h2><p>${b.done} of ${b.days} days finished. +100 XP</p></div>`);
+  }, 900);
+}
+
+/* ---------- milestones ---------- */
+const MILESTONES = [
+  ["first-session", "Your first session is finished. That is how it starts.", () => completeDates().length >= 1],
+  ["sessions-10", "10 sessions finished. That is a habit now.", () => completeDates().length >= 10],
+  ["sessions-25", "25 sessions finished. Point guards are built like this.", () => completeDates().length >= 25],
+  ["first-game", "Your first game is in the log. Keep it going.", () => (S.games || []).length >= 1],
+  ["ratio-2", "Assist to turnover is above 2.0 over your last games.", () => { const st = gameStats(); return st.n >= 3 && st.ratio >= 2; }],
+  ["streak-2", "Two training weeks in a row.", () => weekStreak() >= 2],
+  ["badge", "You earned a monthly challenge badge.", () => (S.badges || []).some((b) => b.earned)],
+];
+const MS_KEY = "tristan-milestones";
+function seenMilestones() {
+  try {
+    const raw = localStorage.getItem(MS_KEY);
+    if (raw) return JSON.parse(raw);
+    const first = MILESTONES.filter(([, , ok]) => ok()).map(([k]) => k); // do not announce what was already true
+    localStorage.setItem(MS_KEY, JSON.stringify(first));
+    return first;
+  } catch (e) { return []; }
+}
+function milestoneCard() {
+  if (Prefs.parent) return "";
+  const seen = seenMilestones();
+  const m = MILESTONES.find(([k, , ok]) => !seen.includes(k) && ok());
+  if (!m) return "";
+  return `<div class="pnote">${badge("star")}<div class="grow"><b>Milestone</b><p>${esc(m[1])}</p></div><button data-a="milestoneSeen" data-k="${m[0]}">Nice</button></div>`;
+}
+EXTRA_ACTIONS.milestoneSeen = (d) => { try { const s = seenMilestones(); s.push(d.k); localStorage.setItem(MS_KEY, JSON.stringify(s)); } catch (e) {} };
+
+/* ---------- season goal ---------- */
+const GOAL_METRICS = { ratio: ["Assist to turnover", () => gameStats().ratio, 1], pts: ["Points per game", () => gameStats().pts, 1], sessions: ["Finished sessions", () => completeDates().length, 0] };
+function goalRow() {
+  const g = S.goal;
+  if (!g || !GOAL_METRICS[g.metric]) return `<div class="row tap" data-a="editGoal">${badge("target")}<div class="grow"><div class="title strong">Set a season goal</div><div class="detail">Pick a number to reach by a date, such as assist to turnover 2.5 by December.</div></div><span class="chev">›</span></div>`;
+  const [label, fn, dp] = GOAL_METRICS[g.metric];
+  const now = fn(), pct = Math.max(0, Math.min(100, (now / g.target) * 100));
+  const left = daysUntil(g.by);
+  return `<div class="row tap" data-a="editGoal">${badge("target")}<div class="grow"><div class="title strong">Goal: ${esc(label)} ${g.target} by ${fmtShort(parseKey(g.by))}</div><div class="progress"><i style="width:${pct}%"></i></div><div class="detail">Now ${now.toFixed(dp)}${pct >= 100 ? ". Goal reached!" : left >= 0 ? `. ${left} day${left === 1 ? "" : "s"} left.` : ". The date has passed."}</div></div><span class="chev">›</span></div>`;
+}
+function formGoal() {
+  const g = S.goal || {};
+  openForm({
+    title: "Season goal",
+    fields: [
+      { k: "metric", label: "What to track", type: "select", value: g.metric || "ratio", opts: Object.entries(GOAL_METRICS).map(([k, v]) => [k, v[0]]) },
+      { k: "target", label: "Target number", type: "number", value: g.target, ph: "2.5" },
+      { k: "by", label: "By this date", type: "date", value: g.by || dateKey(addDays(new Date(), 60)) },
+    ],
+    required: ["target", "by"],
+    save(f) { const n = num(f.target); if (!n || n <= 0) { toast("Type a target above zero."); return false; } S.goal = { metric: f.metric, target: n, by: f.by }; },
+    del: S.goal ? () => { S.goal = null; } : null,
+    delLabel: "Remove goal",
+  });
+}
+EXTRA_ACTIONS.editGoal = () => formGoal();
+
+/* ---------- what a parent sees first (sessions only) ---------- */
+function parentSummary() {
+  if (!Prefs.parent) return "";
+  const first = firstName(S.profile.name);
+  const done = completeDates().sort();
+  const last = done[done.length - 1];
+  const week = sessionsInWeek(weekKeyNow());
+  let line;
+  if (!last) line = `${first} has not finished a session yet.`;
+  else {
+    const d = daysUntil(last);
+    line = d === 0 ? `${first} finished today's session.` : d === -1 ? `${first} finished yesterday's session.` : `${first} last finished a session on ${parseKey(last).toLocaleDateString(undefined, { weekday: "long" })}.`;
+  }
+  return `<div class="psum">${badge("check")}<div class="grow"><b>${esc(line)}</b><span>${week} session${week === 1 ? "" : "s"} this week.</span></div></div>`;
+}
+
+/* ---------- coach spreadsheet ---------- */
+const csvCell = (v) => { const s = String(v ?? ""); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+function buildCsv() {
+  const first = firstName(S.profile.name), rows = [[`${first} training summary`, new Date().toISOString().slice(0, 10)], [], ["Sessions"], ["date", "finished", "blocks done"]];
+  Object.keys(S.logs).sort().forEach((k) => { const l = S.logs[k]; const n = Object.keys(l.done || {}).length; if (n || l.complete) rows.push([k, l.complete ? "yes" : "no", n]); });
+  rows.push([], ["Skill ratings"], ["skill", "rating"]);
+  const { r, ovr } = ratings();
+  SKILLS.forEach(([k, name]) => rows.push([name, r[k]]));
+  rows.push(["Overall", ovr], [], ["Games"], ["date", "opponent", "result", "points", "assists", "turnovers", "steals"]);
+  gameStats().g.forEach((g) => rows.push([g.date, g.opp || "", g.result || "", g.pts ?? "", g.ast ?? "", g.tov ?? "", g.stl ?? ""]));
+  return rows.map((r) => r.map(csvCell).join(",")).join("\n") + "\n";
+}
+EXTRA_ACTIONS.csvExport = async () => {
+  const file = new File([buildCsv()], `${firstName(S.profile.name)}-summary.csv`, { type: "text/csv" });
+  try { await deliverFile(file); } catch (e) { if (!(e && e.name === "AbortError")) toast("Could not export the file."); }
+};
+
+/* ---------- time zone notice ---------- */
+function checkTz() {
+  try {
+    const now = Intl.DateTimeFormat().resolvedOptions().timeZone, was = localStorage.getItem("tristan-tz");
+    if (was && now && was !== now) setTimeout(() => toast("This phone's time zone changed to " + now.replace(/_/g, " ") + ". Days now follow it."), 1200);
+    if (now) localStorage.setItem("tristan-tz", now);
+  } catch (e) {}
+}
+
+/* ---------- pull down to sync, swipe to change the day ---------- */
+{
+  let sx = 0, sy = 0, tracking = false;
+  const blocked = (t) => !!(t.closest && t.closest("input, textarea, select, .cmp, .guided, .sheet, .scanview, .ovr, details.more[open] .stats"));
+  document.addEventListener("touchstart", (e) => { tracking = e.touches.length === 1 && ui.tab === "today" && !ui.form && !blocked(e.target); sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+  document.addEventListener("touchend", (e) => {
+    if (!tracking) return;
+    tracking = false;
+    const t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy;
+    if (window.scrollY <= 0 && dy > 90 && Math.abs(dx) < 60) { if (Sync.code) { Sync.sync(); toast("Syncing…"); } else toast("Nothing to sync yet. Turn on sync in Guide."); return; }
+    if (Math.abs(dx) > 80 && Math.abs(dy) < 45 && e.target.closest && e.target.closest(".hero, .seg, .wstrip")) {
+      const next = Math.max(0, Math.min(S.days.length - 1, ui.day + (dx < 0 ? 1 : -1)));
+      if (next !== ui.day) { ui.day = next; render(); }
+    }
+  }, { passive: true });
+}
