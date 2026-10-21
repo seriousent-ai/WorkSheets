@@ -37,8 +37,14 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
     const p = t.page;
     await finishWelcome(p);
     ok((await p.textContent(".greet")).includes("Tristan"), "greets Tristan");
+    ok(await p.locator(".firstwk").count() === 1, "day-one guide shows for a new user");
     await p.click("button[data-a=toggle]");
     ok((await p.evaluate(() => Object.values(S.logs).some((l) => Object.keys(l.done).length))), "checking a block saves it");
+
+    ok(await p.locator(".firstwk").count() === 1, "first-session guide stays until a whole session is finished");
+    await p.evaluate(() => { const k = dateKey(new Date()); logOf(k).complete = true; render(); });
+    ok(await p.locator(".firstwk").count() === 0, "first-session guide goes away after the first finished session");
+    await p.evaluate(() => { const k = dateKey(new Date()); logOf(k).complete = false; render(); });
 
     console.log("Game log");
     await tab(p, "log");
@@ -93,6 +99,26 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
     await p.click("[data-a=cmpClose]");
     ok((await p.locator(".cmp").count()) === 0, "compare screen closes");
 
+    console.log("Photo, history and restore");
+    await tab(p, "guide");
+    await p.click("[data-a=editProfile]");
+    const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
+    await p.setInputFiles('#f [name="photo"]', { name: "me.png", mimeType: "image/png", buffer: png });
+    await p.click("[data-a=save]");
+    await p.waitForFunction(() => !!localStorage.getItem("tristan-photo"));
+    await tab(p, "today");
+    await p.click(".cardbtn");
+    ok(await p.locator(".pcard .pc-photo").count() === 1, "player card shows the photo");
+    await p.click("[data-a=cardClose]");
+    await p.evaluate(() => takeSnapshot("test"));
+    await p.evaluate(() => { S.days[0].blocks.pop(); persist(); render(); });
+    const n0 = await p.evaluate(() => S.days[0].blocks.length);
+    await tab(p, "guide");
+    await p.click("[data-a=restoreOpen]");
+    await p.selectOption('#f [name="snap"]', { index: 0 });
+    await p.click("[data-a=save]");
+    ok(await p.evaluate(() => S.days[0].blocks.length) === n0 + 1, "restore brings the deleted block back");
+
     console.log("Family sync, Family view and coach page");
     await tab(p, "guide");
     await p.click("[data-a=syncCreate]");
@@ -115,6 +141,12 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
     ok((await q.locator(".ovr").count()) > 0, "Family view opens the progress overview");
     await q.click("[data-a=ovrClose]");
     ok((await q.textContent(".greet")).includes("Jalen"), "greets Jalen");
+    // edits to different parts of the plan on two phones must both survive
+    await p.evaluate(() => { S.links.push({ id: "lx", title: "Phone A link", url: "https://example.com", note: "" }); persist(); });
+    await q.evaluate(() => { S.videos.push({ id: "vx", code: "VX", title: "Phone B video", url: "https://example.com/v", note: "" }); persist(); });
+    for (let i = 0; i < 3; i++) { await p.evaluate(() => Sync.sync()); await q.evaluate(() => Sync.sync()); }
+    ok(await p.evaluate(() => S.videos.some((v) => v.id === "vx") && S.links.some((l) => l.id === "lx")), "phone A has both edits after sync");
+    ok(await q.evaluate(() => S.videos.some((v) => v.id === "vx") && S.links.some((l) => l.id === "lx")), "phone B has both edits after sync");
     const logsBefore = await q.evaluate(() => JSON.stringify(S.logs));
     await q.click("button[data-a=toggle]", { force: true });
     ok((await q.evaluate(() => JSON.stringify(S.logs))) === logsBefore, "Family view cannot log training");

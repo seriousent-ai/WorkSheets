@@ -579,3 +579,9 @@ button[data-a="toggle"]::after, [data-a="blockInfo"]::after, [data-a="bodySet"]:
 .coachpage .brandrow .logo { width: 44px; height: 44px; object-fit: contain; }
 .coachpage .brandrow div { display: flex; flex-direction: column; }
 .coachpage .brandrow span { color: var(--label2); font-size: 14px; }
+
+.firstwk { margin: 12px 0 0; padding: 14px 16px; border-radius: var(--radius); background: color-mix(in srgb, var(--orange) 16%, var(--card)); }
+.firstwk ol { margin: 6px 0 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; font-size: 15px; }
+.pcard { position: relative; overflow: hidden; }
+.pcard::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(circle at var(--mx, 30%) var(--my, 15%), rgba(255, 255, 255, .28), transparent 55%); mix-blend-mode: soft-light; }
+.pc-top .pc-photo { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 3px solid var(--t1); }

@@ -418,3 +418,62 @@ function coachGroup() {
     <div class="row tap" data-a="coachStop"><div class="grow" style="color:var(--red-text)">Stop sharing</div></div>` : `
     <div class="row tap" data-a="coachCreate"><div class="grow"><div class="title strong">Create a view-only coach link</div><div class="detail">For a Rens coach or trainer. Shows a summary only and cannot change anything. You can turn it off at any time. Needs family sync.</div></div><span class="chev">›</span></div>`}</div>`;
 }
+
+/* ---------- first session guide ---------- */
+function firstWeekCard() {
+  if (completeDates().length > 0 || Prefs.parent) return "";
+  return `<div class="firstwk"><b>Your first session</b><ol><li>Tap <b>Start session</b> and follow the timer.</li><li>Finish a block to earn +10 XP.</li><li>Finish every block for +50 XP and move toward your first level.</li></ol></div>`;
+}
+
+/* ---------- player card photo (kept on this phone only) ---------- */
+const PHOTO_KEY = "tristan-photo";
+const photoUrl = () => { try { return localStorage.getItem(PHOTO_KEY) || ""; } catch (e) { return ""; } };
+function shrinkPhoto(file) {
+  return new Promise((res) => {
+    const img = new Image();
+    img.onload = () => {
+      const side = Math.min(img.width, img.height), out = 280;
+      const c = document.createElement("canvas");
+      c.width = c.height = out;
+      c.getContext("2d").drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, out, out);
+      res(c.toDataURL("image/jpeg", 0.85));
+    };
+    img.onerror = () => res(undefined);
+    img.src = URL.createObjectURL(file);
+  });
+}
+document.addEventListener("pointermove", (e) => {
+  const card = e.target && e.target.closest && e.target.closest(".pcard");
+  if (!card) return;
+  const r = card.getBoundingClientRect();
+  card.style.setProperty("--mx", ((e.clientX - r.left) / r.width) * 100 + "%");
+  card.style.setProperty("--my", ((e.clientY - r.top) / r.height) * 100 + "%");
+});
+
+/* ---------- plan history: a daily snapshot on this device, restorable ---------- */
+const SNAP_KEY = "tristan-snapshots";
+const readSnaps = () => { try { return JSON.parse(localStorage.getItem(SNAP_KEY)) || []; } catch (e) { return []; } };
+function writeSnaps(list) { try { localStorage.setItem(SNAP_KEY, JSON.stringify(list.slice(-8))); } catch (e) {} }
+const snapPlan = () => JSON.parse(JSON.stringify({ days: S.days, videos: S.videos.map((v) => ({ ...v })), links: S.links, notes: S.notes, rewards: S.rewards }));
+function takeSnapshot(label) {
+  const list = readSnaps(), today = dateKey(new Date());
+  if (!label && list.some((x) => x.date === today && !x.label)) return;
+  list.push({ id: uid("s"), date: today, label: label || "", plan: snapPlan() });
+  writeSnaps(list);
+}
+function formRestore() {
+  const list = readSnaps().slice().reverse();
+  if (!list.length) { toast("No earlier versions yet. One is saved each day."); return; }
+  openForm({
+    title: "Restore the plan",
+    fields: [{ k: "snap", label: "Go back to the plan as it was on", type: "select", value: list[0].id, opts: list.map((x) => [x.id, fmtShort(parseKey(x.date)) + (x.label ? " (" + x.label + ")" : "")]) }],
+    save(f) {
+      const pick = readSnaps().find((x) => x.id === f.snap);
+      if (!pick) return false;
+      takeSnapshot("before restore");
+      Object.assign(S, JSON.parse(JSON.stringify(pick.plan)));
+      toast("Plan restored to " + fmtShort(parseKey(pick.date)) + ". Progress was not changed.");
+    },
+  });
+}
+EXTRA_ACTIONS.restoreOpen = () => formRestore();
