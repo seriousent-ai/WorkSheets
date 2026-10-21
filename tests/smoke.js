@@ -1,7 +1,8 @@
 "use strict";
 /* End to end check of the app in an emulated phone: core flow, Phase 7 features, family sync,
    Family view, coach page and an accessibility audit. Run with: npm test (from the tests folder). */
-const { chromium, devices } = require("playwright");
+const { chromium, webkit, devices } = require("playwright");
+const engine = process.env.BROWSER === "webkit" ? webkit : chromium;
 const fs = require("fs"), path = require("path"), cp = require("child_process"), os = require("os");
 const axeSource = fs.readFileSync(require.resolve("axe-core/axe.min.js"), "utf8");
 const { start } = require("./server");
@@ -25,11 +26,13 @@ async function finishWelcome(page) {
 }
 const fill = async (page, name, value) => page.fill(`#f [name="${name}"]`, String(value));
 const tab = async (page, t) => { await page.click(`[data-a=tab][data-t=${t}]`); await page.waitForTimeout(150); };
+const settle = (pg) => pg.evaluate(async () => { const idle = async () => { while (Sync.busy) await new Promise((r) => setTimeout(r, 40)); }; await idle(); await Sync.sync(); await idle(); });
 const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
 (async () => {
   const { server, url } = await start();
-  const browser = await chromium.launch(process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {});
+  const browser = await engine.launch(process.env.PW_CHROMIUM && engine === chromium ? { executablePath: process.env.PW_CHROMIUM } : {});
+    console.log("Browser engine: " + (process.env.BROWSER || "chromium"));
   try {
     /* ---- Tristan's phone ---- */
     console.log("Core flow");
@@ -122,7 +125,7 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
     console.log("Clip compare");
     await tab(p, "videos");
     let clip = null;
-    try { clip = path.join(os.tmpdir(), "rens-test-clip.webm"); cp.execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-f", "lavfi", "-i", "testsrc=duration=2:size=160x90:rate=30", "-c:v", "libvpx", clip]); } catch (e) { clip = null; }
+    if (process.env.BROWSER !== "webkit") try { clip = path.join(os.tmpdir(), "rens-test-clip.webm"); cp.execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-f", "lavfi", "-i", "testsrc=duration=2:size=160x90:rate=30", "-c:v", "libvpx", clip]); } catch (e) { clip = null; }
     if (clip) {
       await p.setInputFiles("#clip-in", clip);
       await p.waitForFunction(() => S.videos.some((v) => v.code === "Me"));
@@ -143,6 +146,16 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
     }
     await p.click("[data-a=cmpClose]");
     ok((await p.locator(".cmp").count()) === 0, "compare screen closes");
+
+    console.log("Clip storage");
+    if (clip) {
+      await tab(p, "guide");
+      await p.waitForSelector("#clip-list .row .pill.red");
+      ok((await p.textContent("#clip-list")).includes("used"), "Guide lists saved clips with the space they use");
+      await p.click("[data-a=clipDelete]"); await p.click("[data-a=clipDelete]");
+      await p.waitForFunction(() => !S.videos.some((v) => v.code === "Me"));
+      ok(true, "a clip can be deleted from Guide");
+    }
 
     console.log("Photo, history and restore");
     await tab(p, "guide");
@@ -184,6 +197,17 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
     await finishWelcome(q).catch(() => {});
     await q.evaluate(async (c) => { await Sync.join(c); render(); }, code);
     ok(await q.evaluate(() => (S.games || []).length === 1), "parent phone received the game");
+    // progress changed on the same day on two phones is merged, not overwritten
+    const day0 = await p.evaluate(() => dateKey(new Date()));
+    await p.evaluate((k) => { const l = logOf(k); l.sleep = 9; l.done.a1 = true; persist(); }, day0);
+    await settle(p);
+    await settle(q);
+    await p.evaluate((k) => { logOf(k).done.a2 = true; persist(); }, day0);
+    await q.evaluate((k) => { logOf(k).done.b1 = true; logOf(k).energy = 4; persist(); }, day0);
+    for (let i = 0; i < 4; i++) { await settle(p); await settle(q); }
+    const merged = (pg) => pg.evaluate((k) => { const l = S.logs[k] || {}; return !!(l.done && l.done.a1 && l.done.a2 && l.done.b1 && l.sleep === 9 && l.energy === 4); }, day0);
+    ok(await merged(p), "phone A has both phones' progress for the same day");
+    ok(await merged(q), "phone B has both phones' progress for the same day");
     await q.evaluate(() => { Prefs.parent = "Jalen"; Prefs.save(); });
     await q.reload(); await q.waitForSelector("#splash", { state: "detached" });
     ok((await q.locator(".ovr").count()) > 0, "Family view opens the progress overview");
@@ -192,9 +216,15 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
     // edits to different parts of the plan on two phones must both survive
     await p.evaluate(() => { S.links.push({ id: "lx", title: "Phone A link", url: "https://example.com", note: "" }); persist(); });
     await q.evaluate(() => { S.videos.push({ id: "vx", code: "VX", title: "Phone B video", url: "https://example.com/v", note: "" }); persist(); });
-    for (let i = 0; i < 3; i++) { await p.evaluate(() => Sync.sync()); await q.evaluate(() => Sync.sync()); }
+    for (let i = 0; i < 3; i++) { await settle(p); await settle(q); }
     ok(await p.evaluate(() => S.videos.some((v) => v.id === "vx") && S.links.some((l) => l.id === "lx")), "phone A has both edits after sync");
     ok(await q.evaluate(() => S.videos.some((v) => v.id === "vx") && S.links.some((l) => l.id === "lx")), "phone B has both edits after sync");
+    // different days edited on two phones both survive
+    await p.evaluate(() => { S.days[1].theme = "Phone A theme"; persist(); });
+    await q.evaluate(() => { S.days[3].theme = "Phone B theme"; persist(); });
+    for (let i = 0; i < 3; i++) { await settle(p); await settle(q); }
+    ok(await p.evaluate(() => S.days[1].theme === "Phone A theme" && S.days[3].theme === "Phone B theme"), "phone A has both day edits");
+    ok(await q.evaluate(() => S.days[1].theme === "Phone A theme" && S.days[3].theme === "Phone B theme"), "phone B has both day edits");
     const logsBefore = await q.evaluate(() => JSON.stringify(S.logs));
     await q.click("button[data-a=toggle]", { force: true });
     ok((await q.evaluate(() => JSON.stringify(S.logs))) === logsBefore, "Family view cannot log training");

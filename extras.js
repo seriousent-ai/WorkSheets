@@ -640,3 +640,36 @@ document.addEventListener("keydown", (e) => {
 });
 // Forms open and close without a full render, so watch the form container too.
 { const m = document.getElementById("modal"); if (m) new MutationObserver(() => manageFocus()).observe(m, { childList: true }); }
+
+/* ---------- saved clips and storage ---------- */
+const fmtBytes = (n) => (n >= 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB");
+function clipsGroup() {
+  if (!S.videos.some((v) => v.fileId)) return "";
+  queueMicrotask(fillClips);
+  return `<h2 class="section">Clips on this phone</h2><div class="group" id="clip-list"><div class="row"><div class="grow detail">Counting…</div></div></div>`;
+}
+async function fillClips() {
+  const box = document.getElementById("clip-list");
+  if (!box) return;
+  const rows = [];
+  let total = 0;
+  for (const v of S.videos.filter((x) => x.fileId)) {
+    let size = 0;
+    try { const b = await idb.get(v.fileId); size = b ? b.size : 0; } catch (e) {}
+    total += size;
+    rows.push(`<div class="row">${badge("clip")}<div class="grow"><div class="title strong">${esc(v.title)}</div><div class="detail">${size ? fmtBytes(size) : "Missing"}</div></div><button class="pill red" data-a="clipDelete" data-id="${v.id}">Delete</button></div>`);
+  }
+  let est = "";
+  try { if (navigator.storage && navigator.storage.estimate) { const e = await navigator.storage.estimate(); if (e.quota) est = ` of about ${fmtBytes(e.quota)} available to the app`; } } catch (e) {}
+  const again = document.getElementById("clip-list");
+  if (again) again.innerHTML = rows.join("") + `<div class="row"><div class="grow detail">${rows.length} clip${rows.length === 1 ? "" : "s"}, ${fmtBytes(total)} used${est}. Clips stay on the phone that saved them and are not in backups or sync.</div></div>`;
+}
+EXTRA_ACTIONS.clipDelete = async (d) => {
+  const v = S.videos.find((x) => x.id === d.id);
+  if (!v) return;
+  if (ui.delClip !== d.id) { ui.delClip = d.id; toast("Tap Delete again to remove this clip."); setTimeout(() => { if (ui.delClip === d.id) ui.delClip = null; }, 3000); return; }
+  ui.delClip = null;
+  try { await idb.del(v.fileId); } catch (e) {}
+  if (v.code === "Me" && !v.url) S.videos = S.videos.filter((x) => x.id !== v.id); else delete v.fileId;
+  persist(); render(); toast("Clip deleted.");
+};

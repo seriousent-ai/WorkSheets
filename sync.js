@@ -37,10 +37,12 @@ const Sync = {
   },
   strip(o) { const c = { ...o }; delete c._ts; return JSON.stringify(c); },
   /* The plan is synced in separate pieces so an edit to a video on one phone cannot overwrite an edit to a note on another. */
-  PARTS: { days: ["days"], videos: ["videos"], links: ["links"], notes: ["notes"], rewards: ["rewards"], profile: ["profile"], misc: ["note", "games", "events", "monthly", "badges"] },
+  PARTS: { videos: ["videos"], links: ["links"], notes: ["notes"], rewards: ["rewards"], profile: ["profile"], misc: ["note", "games", "events", "monthly", "badges"] },
   planParts() {
     const out = {};
     for (const p in this.PARTS) { const o = {}; this.PARTS[p].forEach((k) => (o[k] = S[k])); out[p] = JSON.stringify(o); }
+    // Each day of the plan is its own piece, so two phones can edit different days.
+    S.days.forEach((d) => (out["day-" + d.id] = JSON.stringify({ day: d })));
     return out;
   },
 
@@ -108,6 +110,25 @@ const Sync = {
   apply(id, json, ts) {
     let o;
     try { o = JSON.parse(json); } catch (e) { return false; }
+    const dm = id.match(/^plan-day-(.+)$/);
+    if (dm) {
+      this.last[id] = this.hash(json);
+      S.partTs ||= {};
+      const key = "day-" + dm[1];
+      if (ts <= (S.partTs[key] || 0) || !o.day) return false;
+      const i = S.days.findIndex((d) => d.id === dm[1]);
+      if (i >= 0) S.days[i] = o.day; else S.days.push(o.day);
+      S.partTs[key] = ts;
+      return true;
+    }
+    if (id === "plan-days") {
+      // Whole-week piece from an earlier version. Ignored once per-day pieces exist.
+      this.last[id] = this.hash(json);
+      S.partTs ||= {};
+      if (Object.keys(S.partTs).some((k) => k.startsWith("day-")) || ts <= (S.partTs.days || 0) || !o.days) return false;
+      S.days = o.days; S.partTs.days = ts;
+      return true;
+    }
     const pm = id.match(/^plan-(.+)$/);
     if (pm && this.PARTS[pm[1]]) {
       this.last[id] = this.hash(json);
@@ -129,11 +150,26 @@ const Sync = {
     const m = id.match(/^(log|wk)-(.+)$/);
     if (!m) return false;
     const bag = m[1] === "log" ? S.logs : S.weekly;
+    const local = bag[m[2]];
+    // Unsent changes on this phone are merged with the newer copy instead of being thrown away.
+    const dirty = !!local && this.last[id] !== this.hash(this.strip(local)) && this.strip(local) !== '{"done":{}}';
     this.last[id] = this.hash(this.strip(o));
-    if (ts <= ((bag[m[2]] && bag[m[2]]._ts) || 0)) return false;
+    if (ts <= ((local && local._ts) || 0)) return false;
+    if (dirty) { const merged = this.mergeLog(local, o, m[1] === "log"); merged._ts = ts; bag[m[2]] = merged; return true; }
     o._ts = ts;
     bag[m[2]] = o;
     return true;
+  },
+
+  mergeLog(local, remote, isLog) {
+    const out = { ...remote, ...local };
+    if (!isLog) { delete out._ts; return out; }
+    for (const k of ["done", "watched", "shots"]) if (remote[k] || local[k]) out[k] = { ...(remote[k] || {}), ...(local[k] || {}) };
+    if (out.done && Object.keys(out.done).length === 0 && !local.done) delete out.done;
+    out.done ||= {};
+    if (remote.complete || local.complete) out.complete = true;
+    delete out._ts;
+    return out;
   },
 
   async pushNow() {

@@ -885,6 +885,7 @@ function viewGuide() {
     <div class="row"><div class="grow"><div class="title strong">Reminder notification</div><div class="detail">Works while the app is open or recently used, and only if you added it to the Home Screen. For a reminder that always works, use Add the plan to my calendar in the Week tab.</div></div><button class="switch ${Prefs.remind ? "on" : ""}" role="switch" aria-checked="${Prefs.remind}" aria-label="Reminder notification" data-a="remindToggle"><i></i></button></div>
     <div class="row tap" data-a="remindTime"><div class="grow">Reminder time</div><div class="detail">${esc(Prefs.remindTime)}</div><span class="chev">›</span></div>
   </div>
+  ${clipsGroup()}
   ${aboutGroup()}
   <h2 class="section">Your data</h2>
   <div class="group">
