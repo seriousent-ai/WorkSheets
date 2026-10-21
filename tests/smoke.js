@@ -195,6 +195,38 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
     await p.evaluate(() => { S.videos = S.videos.filter((v) => v.id !== "yt1"); });
     ok((await p.locator(".cmp").count()) === 0, "compare screen closes");
 
+    console.log("Video library");
+    await tab(p, "videos");
+    const lib = await p.evaluate(() => ({ n: SUGGESTED_VIDEOS.length, uniq: new Set(SUGGESTED_VIDEOS.map((v) => v.id)).size, urls: new Set(SUGGESTED_VIDEOS.map((v) => v.url)).size, lv: [1, 2, 3].map((l) => SUGGESTED_VIDEOS.filter((v) => v.level === l).length), cats: SUGGESTED_CATS.map((c) => SUGGESTED_VIDEOS.filter((v) => v.cat === c[0]).length) }));
+    ok(lib.n >= 200 && lib.uniq === lib.n && lib.urls === lib.n, `library is large with unique ids and links (${lib.n})`);
+    ok(lib.lv.every((n) => n >= 20) && lib.cats.every((n) => n >= 10), `every level and topic has videos (${lib.lv.join("/")} ; ${lib.cats.join("/")})`);
+    ok(await p.evaluate(() => sugVisible().every((v) => v.level >= 2)), "basics are hidden by default");
+    await p.click("[data-a=setLevel][data-n='1']");
+    ok(await p.evaluate(() => sugVisible().some((v) => v.level === 1)), "the level switch brings basics back");
+    await p.click("[data-a=setLevel][data-n='3']");
+    ok(await p.evaluate(() => sugVisible().every((v) => v.level === 3)), "advanced only filters to advanced");
+    await p.click("[data-a=setLevel][data-n='2']");
+    await p.click("details[data-lib=offense] summary");
+    await p.waitForSelector("details[data-lib=offense] .row");
+    ok((await p.locator("details[data-lib=offense] .row").count()) > 5, "opening a topic lists its videos");
+    await p.click("[data-a=watchAll][data-c=defense]");
+    const src = await p.evaluate(() => document.querySelector(".ytwrap iframe").src);
+    ok(/youtube\.com\/embed\/[\w-]{11}\?playlist=[\w-]{11},/.test(src), "a topic plays non-stop as one playlist");
+    await p.click("[data-a=close]");
+    const first = await p.evaluate(() => sugVisible().find((v) => v.yt && v.cat === "offense").id);
+    await p.click(`[data-a=sugAdd][data-id='${first}']`);
+    ok(await p.evaluate((id) => inLibrary(SUGGESTED_VIDEOS.find((v) => v.id === id)), first), "adding a suggestion puts it in my videos");
+    await p.click(`[data-a=sugHide][data-id='${first}']`);
+    ok(await p.evaluate((id) => S.sugHidden.includes(id), first), "hiding removes a suggestion");
+    await p.click("[data-a=sugUnhide]");
+    ok(await p.evaluate(() => S.sugHidden.length === 0), "hidden videos can be shown again");
+    await p.evaluate(() => { Object.defineProperty(navigator, "clipboard", { value: { readText: async () => "https://youtu.be/dQw4w9WgXcQ" }, configurable: true }); });
+    const before = await p.evaluate(() => S.videos.length);
+    await p.click("[data-a=ytPaste]");
+    await p.waitForFunction((n) => S.videos.length > n, before);
+    ok(await p.evaluate(() => S.videos.at(-1).url.includes("dQw4w9WgXcQ")), "a pasted YouTube link is added");
+    await p.evaluate(() => { S.videos = S.videos.filter((v) => !v.url.includes("dQw4w9WgXcQ") && !SUGGESTED_VIDEOS.some((x) => x.url === v.url)); render(); });
+
     console.log("Clip storage");
     if (clip) {
       await tab(p, "guide");

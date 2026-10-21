@@ -18,7 +18,7 @@ function load() {
   try { s = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
   if (!s || !Array.isArray(s.days)) s = JSON.parse(JSON.stringify(DEFAULT_DATA));
   s.logs ||= {}; s.weekly ||= {}; s.videos ||= []; s.links ||= []; s.notes ||= [];
-  s.games ||= []; s.events ||= []; s.badges ||= []; s.monthly ||= null; s.goal ||= null;
+  s.games ||= []; s.events ||= []; s.badges ||= []; s.monthly ||= null; s.goal ||= null; s.sugHidden ||= [];
   s.rewards ||= JSON.parse(JSON.stringify(DEFAULT_DATA.rewards));
   s.planTs ||= 0;
   s.profile.cycleStart ||= dateKey(mondayOf(new Date()));
@@ -212,6 +212,7 @@ function achievements() {
 /* ---------- video helpers ---------- */
 function embed(url) {
   let m;
+  if ((m = url.match(/youtube\.com\/playlist\?(?:.*&)?list=([\w-]+)/))) return { kind: "iframe", src: `https://www.youtube.com/embed/videoseries?list=${m[1]}&playsinline=1` };
   if ((m = url.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/))) return { kind: "iframe", src: `https://www.youtube.com/embed/${m[1]}?playsinline=1` };
   if ((m = url.match(/vimeo\.com\/(?:video\/)?(\d+)/))) return { kind: "iframe", src: `https://player.vimeo.com/video/${m[1]}` };
   if (/\.(mp4|webm|mov|m4v)(\?|$)/i.test(url)) return { kind: "video", src: url };
@@ -685,11 +686,13 @@ function viewVideos() {
   <h1 class="large">Videos</h1>
   <p class="sub">Watch the clip that matches today's drill.</p>
   ${clipsHtml()}
+  ${watchSection()}
   <button class="feature film-card" data-a="filmStart"><b>Film study</b><span>Watch a clip, answer 5 questions, score yourself. +20 XP</span></button>
   <a class="feature" style="margin-top:10px" href="https://jr.nba.com/jrnbaathome/" target="_blank" rel="noopener"><b>Jr. NBA at Home</b><span>Free drills and videos you can do anywhere ↗</span></a>
   ${todaysIds.length ? `<h2 class="section">Watch first today</h2><div class="group">${todaysIds.map((id) => S.videos.find((v) => v.id === id)).filter(Boolean).map(card).join("")}</div>` : ""}
   <h2 class="section">All drill videos <button data-a="addVideo">Add</button></h2>
   <div class="group">${S.videos.map(card).join("") || `<div class="empty">No videos yet. Tap Add to save one.</div>`}</div>
+  ${librarySection()}
   <h2 class="section">Websites <button data-a="addLink">Add</button></h2>
   <div class="group">${S.links.map((l) => `<div class="row"><div class="grow"><a class="title strong lnk" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.title)} ↗</a>${l.note ? `<div class="detail">${esc(l.note)}</div>` : ""}</div><button data-a="editLink" data-id="${l.id}">Edit</button></div>`).join("") || `<div class="empty">No websites yet.</div>`}</div>
   <p class="small">Tip: paste a YouTube or Vimeo link and it plays right here. You can also add a clip from your phone.</p>`;
@@ -1128,9 +1131,9 @@ function toast(msg) {
   setTimeout(() => t.remove(), 2400);
 }
 const Prefs = {
-  sound: true, voice: true, haptic: true, remind: false, remindTime: "16:00", calTime: "16:00", calAlarm: "30", parent: "", textSize: "1", moreOpen: false, checks: {}, roleAsked: false,
+  sound: true, voice: true, haptic: true, remind: false, remindTime: "16:00", calTime: "16:00", calAlarm: "30", parent: "", textSize: "1", moreOpen: false, checks: {}, roleAsked: false, libOpen: {}, shuffle: false, minLevel: 2,
   load() { try { Object.assign(this, JSON.parse(localStorage.getItem("tristan-prefs")) || {}); } catch (e) {} },
-  save() { try { localStorage.setItem("tristan-prefs", JSON.stringify({ sound: this.sound, voice: this.voice, haptic: this.haptic, remind: this.remind, remindTime: this.remindTime, calTime: this.calTime, calAlarm: this.calAlarm, parent: this.parent, textSize: this.textSize, moreOpen: this.moreOpen, checks: this.checks, roleAsked: this.roleAsked })); } catch (e) {} },
+  save() { try { localStorage.setItem("tristan-prefs", JSON.stringify({ sound: this.sound, voice: this.voice, haptic: this.haptic, remind: this.remind, remindTime: this.remindTime, calTime: this.calTime, calAlarm: this.calAlarm, parent: this.parent, textSize: this.textSize, moreOpen: this.moreOpen, checks: this.checks, roleAsked: this.roleAsked, libOpen: this.libOpen, shuffle: this.shuffle, minLevel: this.minLevel })); } catch (e) {} },
 };
 Prefs.load();
 const buzz = (p) => { if (Prefs.haptic && navigator.vibrate) navigator.vibrate(p); };

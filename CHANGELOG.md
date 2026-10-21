@@ -1,5 +1,10 @@
 # Changes
 
+## Phase 9
+- Video library: 229 suggested videos on offense, defense, teamwork, point guard play and warm-up. Each is tagged Basics, Intermediate or Advanced; basics are hidden by default (a level switch brings them back).
+- "Watch non-stop" plays a whole topic as one YouTube playlist, with optional shuffle. Paste a YouTube video or playlist link to add it. Add to my videos, or hide, any suggestion.
+- Titles and links come from web searches and were not all watched; a parent should check them.
+
 ## Phase 8
 - Version and "Check for an update" in Guide, a diagnostics button, and a "Test this phone" list.
 - Shorter Today screen with a remembered "More" fold; one card style, a short type scale, icons for the newer features.
