@@ -18,7 +18,8 @@
 # Config: ~/.mac-cleanup.conf (optional, shell syntax), e.g.
 #   APP_DIRS="$HOME/Developer/app1:$HOME/Developer/app2:$HOME/Developer/app3:$HOME/Developer/app4"
 #   CLEAN_ROOTS="$HOME/Developer"        # extra places scanned for stale build artifacts
-#   RUNTIME_DAYS=30                      # simulator runtimes unused this long are deleted
+#   RUNTIME_DAYS=90                      # opt-in: delete simulator runtimes unused this many days
+#                                        # (they are re-downloadable but several GB each)
 #
 # Never touched: Documents, Desktop, Downloads, the Trash, Docker volumes, Xcode Archives (unless
 # --aggressive), source code, uncommitted work, anything outside the paths listed below.
@@ -26,7 +27,7 @@
 set -o pipefail
 
 DRY=0; AGGR=0; SUDO=0; DAYS=30; REPORT=0; INSTALL=0; SCHED_DAYS=0; FIND=0
-APP_DIRS="${APP_DIRS:-}"; CLEAN_ROOTS="${CLEAN_ROOTS:-}"; RUNTIME_DAYS="${RUNTIME_DAYS:-30}"
+APP_DIRS="${APP_DIRS:-}"; CLEAN_ROOTS="${CLEAN_ROOTS:-}"; RUNTIME_DAYS="${RUNTIME_DAYS:-}"
 CONF="$HOME/.mac-cleanup.conf"
 [ -f "$CONF" ] && . "$CONF"
 LABEL="com.user.mac-cleanup"
@@ -150,8 +151,8 @@ remove "$HOME/Library/Developer/CoreSimulator/Caches"
 remove "$HOME/Library/Logs/CoreSimulator"
 if have xcrun; then
   run xcrun simctl delete unavailable
-  # simulator OS images nobody has launched in N days (re-downloadable from Xcode > Settings > Components)
-  run xcrun simctl runtime delete --notUsedSinceDays "$RUNTIME_DAYS"
+  # opt-in only: simulator OS images nobody has launched in N days (re-download: Xcode > Settings > Components)
+  [ -n "$RUNTIME_DAYS" ] && run xcrun simctl runtime delete --notUsedSinceDays "$RUNTIME_DAYS"
   [ "$AGGR" -eq 1 ] && { remove "$HOME/Library/Developer/Xcode/Archives"; run xcrun simctl erase all; }
 fi
 
@@ -174,9 +175,9 @@ else
     # compact git history storage (loose objects, stale packs); never touches working files or commits
     if [ -d "$app/.git" ] && have git; then
       gb=$(du -sk "$app/.git" 2>/dev/null | awk '{print $1}')
-      if [ "$DRY" -eq 1 ]; then echo "  (dry-run) git gc --prune=now in $app"
+      if [ "$DRY" -eq 1 ]; then echo "  (dry-run) git gc in $app"
       else
-        git -C "$app" gc --prune=now --quiet 2>/dev/null
+        git -C "$app" gc --quiet 2>/dev/null
         ga=$(du -sk "$app/.git" 2>/dev/null | awk '{print $1}')
         [ "${gb:-0}" -gt "${ga:-0}" ] && { echo "$((gb - ga))" >> "$TALLY"; printf '  %10s  git gc %s\n' "$(human $((gb - ga)))" "$app"; }
       fi
@@ -215,10 +216,10 @@ remove "$HOME/.composer/cache"
 remove "$HOME/.gem/cache" 2>/dev/null
 
 # ---------------------------------------------------------------- Docker
-say "Docker (images/containers/build cache — volumes are kept)"
+say "Docker (dangling images, stopped containers, dangling build cache — your images and volumes are kept)"
 if have docker && docker info >/dev/null 2>&1; then
-  run docker system prune -af
-  run docker builder prune -af
+  run docker system prune -f
+  run docker builder prune -f
 else
   echo "  Docker not running — skipped (start Docker Desktop to include it)"
 fi
