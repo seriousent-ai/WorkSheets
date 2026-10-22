@@ -20,7 +20,7 @@
 #   CLEAN_ROOTS="$HOME/Developer"        # extra places scanned for stale build artifacts
 #   RUNTIME_DAYS=30                      # simulator runtimes unused this long are deleted
 #
-# Never touched: Documents, Desktop, Downloads, Docker volumes, Xcode Archives (unless
+# Never touched: Documents, Desktop, Downloads, the Trash, Docker volumes, Xcode Archives (unless
 # --aggressive), source code, uncommitted work, anything outside the paths listed below.
 
 set -o pipefail
@@ -264,10 +264,6 @@ done
 remove_contents "$HOME/Library/Caches" "com.apple.*"
 remove_contents "$HOME/Library/Logs"
 remove "$HOME/Library/Application Support/CrashReporter"
-
-# ---------------------------------------------------------------- Trash
-say "Trash"
-remove_contents "$HOME/.Trash"
 
 # ---------------------------------------------------------------- Time Machine
 if [ "$SUDO" -eq 1 ] && have tmutil; then
