@@ -10,6 +10,7 @@
 #   ./tools/mac-cleanup.sh --with-sudo      also thin Time Machine local snapshots (asks for password)
 #   ./tools/mac-cleanup.sh --days N         build dirs (node_modules etc.) untouched for N days (default 30)
 #   ./tools/mac-cleanup.sh --log            append all output to ~/Library/Logs/mac-cleanup.log (used by the schedule)
+#   ./tools/mac-cleanup.sh --notify         show a macOS notification when done (scheduled runs always do; --no-notify turns it off)
 #   ./tools/mac-cleanup.sh --report         also size ~/Library folders in the closing report (slow)
 #   ./tools/mac-cleanup.sh --install-schedule [--on 1,3,5]
 #                                           schedule with launchd on those weekdays at 22:00
@@ -28,7 +29,7 @@
 
 set -o pipefail
 
-DRY=0; AGGR=0; SUDO=0; DAYS=30; REPORT=0; INSTALL=0; SCHED_DAYS=0; SCHED_HOUR=22; FIND=0; LOGTO=0
+DRY=0; AGGR=0; SUDO=0; DAYS=30; REPORT=0; INSTALL=0; SCHED_DAYS=0; SCHED_HOUR=22; FIND=0; LOGTO=0; NOTIFY=0; NO_NOTIFY=0
 APP_DIRS="${APP_DIRS:-}"; CLEAN_ROOTS="${CLEAN_ROOTS:-}"; RUNTIME_DAYS="${RUNTIME_DAYS:-}"
 CONF="$HOME/.mac-cleanup.conf"
 [ -f "$CONF" ] && . "$CONF"
@@ -45,13 +46,15 @@ while [ $# -gt 0 ]; do
     --report) REPORT=1 ;;
     --find-apps) FIND=1 ;;
     --log) LOGTO=1 ;;
+    --notify) NOTIFY=1 ;;
+    --no-notify) NO_NOTIFY=1 ;;
     --days) shift; DAYS="${1:?--days needs a number}" ;;
     --at) shift; SCHED_HOUR="${1:?--at needs an hour 0-23, e.g. 22}" ;;
     --on) shift; SCHED_DAYS="${1:?--on needs weekday numbers, e.g. 1,3,5}" ;;
     --install-weekly|--install-schedule) INSTALL=1 ;;
     --uninstall-weekly|--uninstall-schedule)
       launchctl unload "$PLIST" 2>/dev/null; rm -f "$PLIST"; echo "Schedule removed."; exit 0 ;;
-    -h|--help) sed -n "2,27p" "$0"; exit 0 ;;
+    -h|--help) sed -n "2,28p" "$0"; exit 0 ;;
     *) echo "Unknown option: $1" >&2; exit 2 ;;
   esac
   shift
@@ -293,6 +296,12 @@ if [ "$DRY" -eq 1 ]; then
   echo "  Would remove about $(human "$TOTAL_KB") directly (tool-managed caches such as brew/docker/go are extra)."
 else
   echo "  Removed about $(human "$TOTAL_KB") directly.  Free space: $(human "$BEFORE") -> $(human "$AFTER")  (net $(human $((AFTER - BEFORE))))"
+fi
+
+# macOS notification when a scheduled (--log) or --notify run finishes
+if [ "$DRY" -eq 0 ] && [ "$NO_NOTIFY" -eq 0 ] && { [ "$LOGTO" -eq 1 ] || [ "$NOTIFY" -eq 1 ]; } && have osascript; then
+  if [ "$TOTAL_KB" -lt 1024 ]; then MSG="Nothing much to clean this time."; else MSG="Removed about $(human "$TOTAL_KB") of rebuildable files."; fi
+  osascript -e "display notification \"$MSG\" with title \"Mac cleanup finished\"" >/dev/null 2>&1
 fi
 
 # interactive runs only: scanning big folders is slow and pointless in the background
