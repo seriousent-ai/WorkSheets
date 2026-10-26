@@ -12,8 +12,9 @@
 #   ./tools/mac-cleanup.sh --log            append all output to ~/Library/Logs/mac-cleanup.log (used by the schedule)
 #   ./tools/mac-cleanup.sh --report         also size ~/Library folders in the closing report (slow)
 #   ./tools/mac-cleanup.sh --install-schedule [--on 1,3,5]
-#                                           schedule with launchd at 10:00 on those weekdays
+#                                           schedule with launchd on those weekdays at 22:00
 #                                           (0=Sun … 6=Sat, default 0). --install-weekly is the same.
+#   ./tools/mac-cleanup.sh --install-schedule --on 1,3,5 --at 6    use another hour (0-23, default 22)
 #   ./tools/mac-cleanup.sh --uninstall-schedule
 #
 # Config: ~/.mac-cleanup.conf (optional, shell syntax), e.g.
@@ -27,7 +28,7 @@
 
 set -o pipefail
 
-DRY=0; AGGR=0; SUDO=0; DAYS=30; REPORT=0; INSTALL=0; SCHED_DAYS=0; FIND=0; LOGTO=0
+DRY=0; AGGR=0; SUDO=0; DAYS=30; REPORT=0; INSTALL=0; SCHED_DAYS=0; SCHED_HOUR=22; FIND=0; LOGTO=0
 APP_DIRS="${APP_DIRS:-}"; CLEAN_ROOTS="${CLEAN_ROOTS:-}"; RUNTIME_DAYS="${RUNTIME_DAYS:-}"
 CONF="$HOME/.mac-cleanup.conf"
 [ -f "$CONF" ] && . "$CONF"
@@ -45,6 +46,7 @@ while [ $# -gt 0 ]; do
     --find-apps) FIND=1 ;;
     --log) LOGTO=1 ;;
     --days) shift; DAYS="${1:?--days needs a number}" ;;
+    --at) shift; SCHED_HOUR="${1:?--at needs an hour 0-23, e.g. 22}" ;;
     --on) shift; SCHED_DAYS="${1:?--on needs weekday numbers, e.g. 1,3,5}" ;;
     --install-weekly|--install-schedule) INSTALL=1 ;;
     --uninstall-weekly|--uninstall-schedule)
@@ -75,7 +77,7 @@ if [ "$INSTALL" -eq 1 ]; then
   INTERVALS=""
   OLDIFS=$IFS; IFS=','
   for d in $SCHED_DAYS; do
-    INTERVALS="$INTERVALS<dict><key>Weekday</key><integer>$d</integer><key>Hour</key><integer>10</integer><key>Minute</key><integer>0</integer></dict>"
+    INTERVALS="$INTERVALS<dict><key>Weekday</key><integer>$d</integer><key>Hour</key><integer>$SCHED_HOUR</integer><key>Minute</key><integer>0</integer></dict>"
   done
   IFS=$OLDIFS
   cat > "$PLIST" <<EOF
@@ -91,7 +93,7 @@ if [ "$INSTALL" -eq 1 ]; then
 </dict></plist>
 EOF
   launchctl unload "$PLIST" 2>/dev/null; launchctl load "$PLIST"
-  echo "Scheduled for weekday(s) $SCHED_DAYS (0=Sun) at 10:00 — runs when the Mac wakes if it was asleep. Log: $LOG"
+  echo "Scheduled for weekday(s) $SCHED_DAYS (0=Sun) at $SCHED_HOUR:00 — runs when the Mac wakes if it was asleep. Log: $LOG"
   exit 0
 fi
 
