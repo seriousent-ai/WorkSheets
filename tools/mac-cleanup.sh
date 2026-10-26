@@ -271,7 +271,7 @@ for app in Code "Code - Insiders" Cursor Windsurf; do
   done
 done
 remove_contents "$HOME/Library/Caches" "com.apple.*"
-remove_contents "$HOME/Library/Logs"
+remove_contents "$HOME/Library/Logs" "mac-cleanup.log"   # keep our own log
 remove "$HOME/Library/Application Support/CrashReporter"
 
 # ---------------------------------------------------------------- Time Machine
