@@ -9,6 +9,7 @@
 #                                           ignore the staleness window for build dirs
 #   ./tools/mac-cleanup.sh --with-sudo      also thin Time Machine local snapshots (asks for password)
 #   ./tools/mac-cleanup.sh --days N         build dirs (node_modules etc.) untouched for N days (default 30)
+#   ./tools/mac-cleanup.sh --log            append all output to ~/Library/Logs/mac-cleanup.log (used by the schedule)
 #   ./tools/mac-cleanup.sh --report         also size ~/Library folders in the closing report (slow)
 #   ./tools/mac-cleanup.sh --install-schedule [--on 1,3,5]
 #                                           schedule with launchd at 10:00 on those weekdays
@@ -26,7 +27,7 @@
 
 set -o pipefail
 
-DRY=0; AGGR=0; SUDO=0; DAYS=30; REPORT=0; INSTALL=0; SCHED_DAYS=0; FIND=0
+DRY=0; AGGR=0; SUDO=0; DAYS=30; REPORT=0; INSTALL=0; SCHED_DAYS=0; FIND=0; LOGTO=0
 APP_DIRS="${APP_DIRS:-}"; CLEAN_ROOTS="${CLEAN_ROOTS:-}"; RUNTIME_DAYS="${RUNTIME_DAYS:-}"
 CONF="$HOME/.mac-cleanup.conf"
 [ -f "$CONF" ] && . "$CONF"
@@ -42,16 +43,23 @@ while [ $# -gt 0 ]; do
     --with-sudo) SUDO=1 ;;
     --report) REPORT=1 ;;
     --find-apps) FIND=1 ;;
+    --log) LOGTO=1 ;;
     --days) shift; DAYS="${1:?--days needs a number}" ;;
     --on) shift; SCHED_DAYS="${1:?--on needs weekday numbers, e.g. 1,3,5}" ;;
     --install-weekly|--install-schedule) INSTALL=1 ;;
     --uninstall-weekly|--uninstall-schedule)
       launchctl unload "$PLIST" 2>/dev/null; rm -f "$PLIST"; echo "Schedule removed."; exit 0 ;;
-    -h|--help) sed -n '2,26p' "$0"; exit 0 ;;
+    -h|--help) sed -n "2,27p" "$0"; exit 0 ;;
     *) echo "Unknown option: $1" >&2; exit 2 ;;
   esac
   shift
 done
+
+# scheduled runs write their own log instead of relying on launchd to open it
+if [ "$LOGTO" -eq 1 ]; then
+  mkdir -p "$(dirname "$LOG")"
+  exec >>"$LOG" 2>&1
+fi
 
 if [ "$FIND" -eq 1 ]; then
   echo "Project folders under $HOME (add the ones that are your apps to APP_DIRS in $CONF):"
@@ -75,7 +83,7 @@ if [ "$INSTALL" -eq 1 ]; then
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
   <key>Label</key><string>$LABEL</string>
-  <key>ProgramArguments</key><array><string>/bin/bash</string><string>$SELF</string></array>
+  <key>ProgramArguments</key><array><string>/bin/bash</string><string>$SELF</string><string>--log</string></array>
   <key>StartCalendarInterval</key><array>$INTERVALS</array>
   <key>EnvironmentVariables</key><dict><key>PATH</key><string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string></dict>
   <key>StandardOutPath</key><string>$LOG</string>
