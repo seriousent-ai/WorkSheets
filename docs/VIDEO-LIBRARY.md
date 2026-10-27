@@ -6,7 +6,7 @@ This file records the suggested videos and the written content added in Phase 9.
 
 **Levels:** 2 Intermediate, 3 Advanced (no Basics). The app shows only Advanced by default (Level switch under Watch non-stop). Levels were set from titles and my judgement, not from watching.
 
-Totals: 259 entries (Intermediate 138, Advanced 121); 217 play in the app, 42 open in the browser.
+Totals: 274 entries (Intermediate 146, Advanced 128); 228 play in the app, 46 open in the browser.
 
 ## Offense
 
@@ -25,6 +25,10 @@ Totals: 259 entries (Intermediate 138, Advanced 121); 217 play in the app, 42 op
 - O23 (Intermediate) [Ball Handling Drills That Force Defenders to React: Pressure Release](https://www.youtube.com/watch?v=j3x9aTGClf8) - YouTube. Part 4 of 4.
 - O24 (Intermediate) [Drills for Pivoting, Protecting the Ball, Passing Under Pressure](https://www.youtube.com/watch?v=hF6XdlhEX44) - YouTube
 - O25 (Advanced) [3 Drills To Improve vs. Pressure Defense: Traps and Presses](https://www.youtube.com/watch?v=eqOIdubWo0E) - YouTube
+- O191 (Intermediate) [How To Handle Pressure and Avoid Turnovers (Partner Ball Handling Workout)](https://www.youtube.com/watch?v=JM41oqTB6Pk) - YouTube
+- O192 (Intermediate) [4 Ball Handling Keys to Stop Turning the Ball Over](https://www.youtube.com/watch?v=CNikXo9sfas) - YouTube
+- O193 (Intermediate) [Stop Turnovers! How to Handle Ball Pressure (Full Workout)](https://www.youtube.com/watch?v=uXY1v9WmqHQ) - YouTube
+- O194 (Intermediate) [Greg Gard: Offensive Ball Security Drills](https://www.youtube.com/watch?v=TQXj14w7UKI) - YouTube. A college head coach.
 
 ### Passing and decisions
 
@@ -127,6 +131,8 @@ Totals: 259 entries (Intermediate 138, Advanced 121); 217 play in the app, 42 op
 - O188 (Advanced) [How Every High Level PG Should Train: 23 NBA Point Guard Drills](https://www.youtube.com/watch?v=0uDgOuDjbcE) - YouTube
 - O189 (Advanced) [Become an Elite Scoring Guard Workout](https://www.youtube.com/watch?v=7Q-HMpQsgJI) - YouTube
 - O190 (Intermediate) [Full Guard Workout For Basketball Players (By Yourself)](https://www.youtube.com/watch?v=3AKCf4xbu2k) - YouTube
+- O200 (Advanced) [Point Guard Workout: 25 Minutes](https://www.levelupbasket.com/basketball-workouts/point-guard-workout) - Level Up Basketball. Handles, wall passing, floaters and Euro steps.
+- O201 (Advanced) [Small Guard Basketball Workout: 3 Levels to Score From Anywhere](https://ilbelite.com/post/small-guard-basketball-workout) - ILoveBasketballTV. Handles, finishing and shooting off the dribble.
 
 ### Advanced web guides and drills
 
@@ -161,6 +167,8 @@ Totals: 259 entries (Intermediate 138, Advanced 121); 217 play in the app, 42 op
 - O153 (Advanced) [Point Guard Shooting Drills: Off Ball Screens](https://hoopsking.com/blogs/default-blog/blogpoint-guard-shooting-drills-off-ball-screens) - Hoops King
 - O171 (Advanced) [Shooting Off The Dribble: 30 Point Drill](https://www.breakthroughbasketball.com/play.asp?id=8275) - Breakthrough Basketball. Three-pointer after one dribble, pull-ups and free throws.
 - O172 (Advanced) [Quick Release: Advanced Shooting off the Dribble Drill](https://www.breakthroughbasketball.com/training/dribble-quick-shot) - Breakthrough Basketball. A combo move, then shoot right away.
+- O198 (Advanced) [How to Do Step Backs](https://www.levelupbasket.com/basketball-drills/shooting-drills/step-backs) - Level Up Basketball. One or two hard dribbles, then plant and push off.
+- O199 (Advanced) [Steph Curry Shooting Drill: 3-Shot Movement Workout](https://www.levelupbasket.com/basketball-drills/shooting-drills/steph-curry-3-shots-drill) - Level Up Basketball
 
 ### Floaters and finishing
 
@@ -207,6 +215,12 @@ Totals: 259 entries (Intermediate 138, Advanced 121); 217 play in the app, 42 op
 - O174 (Advanced) [The Hook Pass: Unstoppable Point Guards](https://pgcbasketball.com/blog/the-hook-pass-unstoppable-point-guards/) - PGC Basketball. Snap the ball down with the arm extended over the defender.
 - O175 (Advanced) [2 on 2 Drive and Kick (Steve Clifford)](https://www.youtube.com/watch?v=c7aOHMgwbqw) - YouTube
 - O176 (Intermediate) [Drive and Kick Shooting with Coach Tony Miller](https://www.youtube.com/watch?v=QSbyKMl7u1U) - YouTube
+
+### Triple threat and fakes
+
+- O195 (Intermediate) [Jab and Go Tutorial (Best Triple Threat Move)](https://www.youtube.com/watch?v=5FVxTX7_io4) - YouTube
+- O196 (Intermediate) [Triple Threat Rip Moves](https://www.youtube.com/watch?v=QLC0b2zBCrw) - YouTube. Attack the closeout.
+- O197 (Intermediate) [Triple Threat Combo: Shot Fake and Jab Step](https://www.youtube.com/watch?v=dg9y9-PuQNE) - YouTube
 
 ## Defense
 
@@ -255,6 +269,7 @@ Totals: 259 entries (Intermediate 138, Advanced 121); 217 play in the app, 42 op
 
 - D52 (Advanced) [How to Contain Quick Guards](https://www.youtube.com/watch?v=sEn1sQkmJkI) - YouTube
 - D53 (Advanced) [The Ultimate On-Ball Defense Masterclass](https://www.youtube.com/watch?v=3vtaGR4b2K8) - YouTube
+- D73 (Advanced) [How Great Defenders Guard the Jab Step](https://www.youtube.com/watch?v=QbH3fqa3UlA) - YouTube
 
 ### Advanced web guides and drills
 
@@ -330,6 +345,8 @@ Totals: 259 entries (Intermediate 138, Advanced 121); 217 play in the app, 42 op
 ### Team offense and spacing
 
 - T31 (Advanced) [Four Point Guard Rules for Attacking Zone Defense](https://coachad.com/articles/point-guard-attack-zone-defense/) - CoachAD
+- T34 (Advanced) [How To Attack A 2-3 Zone Defense](https://www.youtube.com/watch?v=Qf1GsFtaz5M) - YouTube
+- T35 (Intermediate) [How To Beat A 2-3 Zone Defense With No Plays](https://www.youtube.com/watch?v=tVA0d1pnKEY) - YouTube
 
 ### Fast break
 
@@ -352,6 +369,7 @@ Totals: 259 entries (Intermediate 138, Advanced 121); 217 play in the app, 42 op
 - P41 (Intermediate) [How To Train Like a Point Guard: Elite Basketball Training](https://www.youtube.com/watch?v=GiRW1znBLyQ) - YouTube
 - P43 (Advanced) [Drew Hanlen: NBA Skills Coach](https://www.youtube.com/watch?v=tOCFdG_7ntU) - YouTube
 - P44 (Advanced) [Ganon Baker (playlist)](https://www.youtube.com/playlist?list=PLkbZLMYuAQ9tjFvS97Drs1PrxLpLChqXi) - YouTube. Playlist.
+- P45 (Advanced) [Your Point Guard Will Love This Zone Offense](https://www.youtube.com/watch?v=p-QTCf4sE7g) - YouTube
 
 ### Court vision and basketball IQ
 

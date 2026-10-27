@@ -1,6 +1,7 @@
 # Changes
 
 ## Phase 9
+- 15 more entries (274 in all, 128 Advanced): attacking a 2-3 zone, handling pressure and turnovers, triple threat jab and rip moves, defending the jab step, step-back drills and two more guard workouts (3 of them web pages).
 - Fix: a curriculum step showed "7 blocks, 70 min" and a ring that stopped at 86% because the optional video block was counted. Today, the Week list, the weekly hours, the calendar file and the reminder now count only the required blocks (6 blocks, 60 min, "+ 1 optional"), and the optional block is labelled "Optional, 10 min" instead of a time range.
 - Fix: while the curriculum is on, the Week screen's goal said "of 6 sessions" while the progress overview said 2. Both now use the two step days.
 - Watched tracker: every playable library video has Mark watched, the Videos tab shows how many he has watched, and tutorial pills show a check mark. The player sheet has Mark watched and "Does not play or does not fit? Hide it". Watched marks sync and are cleared when starting from scratch. Family view phones cannot mark videos watched.
