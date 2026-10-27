@@ -199,3 +199,15 @@ Tristan is past intermediate and heading toward advanced, so this phase added le
 - Only today's work can be checked off, and nothing before `CURR_START`.
 - Start from scratch (`startCurriculum()`): snapshot (with events), a full backup in `tristan-backup-before-restart`, progress and games cleared, `progressFrom` set, weekday plan and repeating events applied. `pruneBefore()` and the sync apply step drop anything dated before `progressFrom`.
 - Repeating events: `repeat: "weekly"` on an event, expanded by `eventsOn(date)` and `occurrences()`.
+
+### Library cleanup and tutorials (merged in #37)
+- The library was cut to 223 entries aimed at ages 12 and up (126 Intermediate, 97 Advanced, no Basics). Videos for young children, beginners and Jr. NBA kids were removed. Of the 223, 188 play in the app and 35 open in the browser. The generator is a scratch Python script (`build_lib.py`, not in the repo): it appends the `SUGGESTED_VIDEOS` block to the end of `data.js`, so `data.js` must be stripped from `/* Suggested videos` onward before regenerating. Ids (`s-<code>`) are not renumbered after removals.
+- Tutorials: curriculum blocks carry a `tut` array of YouTube ids (maps `TUT_WARM`, `TUT_SESSION`, `TUT_LADDER`, `TUT_FILM`, `TUT_LEAD` in `curriculum.js`). `tutHtml(b)` in `extras.js` shows them as "How to do it (videos)" under the block details; each pill calls `sugPlay`. The smoke test checks every id resolves to a library video.
+- Titles and links came from searches and were never watched. A parent should skim the list and use Hide on anything that does not fit.
+
+### Where we stopped (to continue later)
+- Merged and live on GitHub Pages: curriculum engine, real weekly schedule, start from scratch, cleaned library, tutorials. The simulator artifact is at version 24 (matches main). The game plan artifact (v19) and the screens gallery do not yet show the curriculum, schedule or tutorials.
+- Nothing has been started on Tristan's phone. To begin: update both phones (Guide, Check for an update), then once on Tristan's phone open Guide, Curriculum, Start from scratch. Step 1 appears Tuesday, November 3, 2026. The backup of old progress stays on his phone only and has no restore button.
+- Ideas not built yet: an "All topics" chip to play everything non-stop (call `watchAll` with category all); a "watched" tracker (`S.libSeen` with a Mark watched pill, a counter, synced in `misc`, cleared in `startCurriculum`); more search rounds for advanced videos for ages 12 and up; a restore button for the progress backup; a weekly-hours guardrail (about 8 hours of team practice plus two 1-hour sessions is roughly 10 hours); updating the game plan and gallery artifacts.
+- Not verified: the app on a real phone, whether each video embeds, and iPhone video stopping when the screen locks (web apps generally do not keep playing).
+- Rules for working here: merge only when the owner says "merge it"; both browser checks must pass first; no force pushes; reset the branch to main after each squash merge.
