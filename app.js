@@ -18,7 +18,7 @@ function load() {
   try { s = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
   if (!s || !Array.isArray(s.days)) s = JSON.parse(JSON.stringify(DEFAULT_DATA));
   s.logs ||= {}; s.weekly ||= {}; s.videos ||= []; s.links ||= []; s.notes ||= [];
-  s.games ||= []; s.events ||= []; s.badges ||= []; s.monthly ||= null; s.goal ||= null; s.sugHidden ||= []; s.ladder ||= {}; s.levelUp ||= {}; s.blockTitles ||= {}; s.watchTry ||= {}; s.filmNotes ||= [];
+  s.games ||= []; s.events ||= []; s.badges ||= []; s.monthly ||= null; s.goal ||= null; s.sugHidden ||= []; s.ladder ||= {}; s.levelUp ||= {}; s.blockTitles ||= {}; s.watchTry ||= {}; s.filmNotes ||= []; s.libSeen ||= {}; s.leadExtra ||= []; s.ladderEdit ||= {};
   if (s.profile && /\| Intermediate \|/.test(s.profile.subtitle || "")) s.profile.subtitle = s.profile.subtitle.replace("| Intermediate |", "| Advanced |");
   s.rewards ||= JSON.parse(JSON.stringify(DEFAULT_DATA.rewards));
   s.planTs ||= 0;
@@ -383,7 +383,9 @@ function hoursCard(monKey, compact) {
   const state = hours > 10 ? "over" : hours >= 8 ? "near" : "ok";
   const msg = hours > 10 ? "Over the 10-hour weekly ceiling. Take a lighter day and a full rest day." : hours >= 8 ? "Getting close to the 10-hour weekly ceiling. Plan a rest day." : active >= 7 ? "Every day this week had basketball. Keep one day fully off." : "Within the plan's 10-hour weekly ceiling.";
   if (compact && state === "ok" && active < 7) return "";
-  return `<div class="hours ${state}"><div class="hrs-top"><b>Organized basketball this week</b><span>${hours.toFixed(1)} of 10 h</span></div><div class="progress"><i style="width:${Math.min(100, (hours / 10) * 100)}%"></i></div><p>${msg}</p></div>`;
+  const pl = typeof plannedLoad === "function" ? plannedLoad(monKey) : null;
+  const plan = pl && !compact ? `<p class="cyc-sub">Planned this week: ${pl.hours.toFixed(1)} h (${pl.team.toFixed(1)} h team + ${pl.own.toFixed(1)} h of his sessions).${pl.hours >= 10 ? " That is the full 10 hours. Skip the optional notes and keep school and rest first." : ""}</p>` : "";
+  return `<div class="hours ${state}"><div class="hrs-top"><b>Organized basketball this week</b><span>${hours.toFixed(1)} of 10 h</span></div><div class="progress"><i style="width:${Math.min(100, (hours / 10) * 100)}%"></i></div><p>${msg}</p>${plan}</div>`;
 }
 
 /* ---------- shot chart ---------- */
@@ -915,6 +917,7 @@ function viewGuide() {
     <div class="row tap" data-a="export"><div class="grow">Export backup</div><span class="chev">›</span></div>
     <div class="row tap" data-a="import"><div class="grow">Import backup</div><span class="chev">›</span></div>
     <div class="row tap" data-a="currOpen"><div class="grow"><div class="title strong">Curriculum</div><div class="detail">${currOn() ? esc("Step " + currStepObj().n + " of " + CURRICULUM.length + ": " + currStepObj().name) : "Start the 29-step curriculum from scratch"}</div></div><span class="chev">›</span></div>
+    <div class="row tap" data-a="customOpen"><div class="grow"><div class="title strong">Customize goals and tests</div><div class="detail">Add leadership goals and reword skill ladder tests</div></div><span class="chev">›</span></div>
     <div class="row tap" data-a="restoreOpen"><div class="grow">Restore an earlier version of the plan</div><span class="chev">›</span></div>
     <div class="row tap" data-a="reset"><div class="grow" style="color:var(--red-text)">Reset to original plan</div></div></div>
   <p class="small">Everything is saved on this device. Uploaded video clips stay on this device and are not part of the backup file. Each device keeps its own copy. To move progress or changes between devices, use Send backup on one and Import backup on the other. Install: in Safari tap Share, then Add to Home Screen.</p>`;
@@ -1499,7 +1502,7 @@ function download(name, text) {
   a.download = name; document.body.appendChild(a); a.click(); a.remove();
 }
 let confirmReset = false;
-const PARENT_BLOCKED = new Set(["toggle", "gStart", "challengeDone", "bodySet", "sleepAdj", "energy", "watchMark", "filmStart", "editReflect", "editSkill", "editLogDay", "monthlyDone", "offSet"]);
+const PARENT_BLOCKED = new Set(["toggle", "gStart", "challengeDone", "bodySet", "sleepAdj", "energy", "watchMark", "filmStart", "editReflect", "editSkill", "editLogDay", "monthlyDone", "offSet", "sugSeen", "currRestoreDo"]);
 const ACTIONS = {
   ...EXTRA_ACTIONS,
   tab: (d) => { ui.tab = d.t; window.scrollTo(0, 0); },

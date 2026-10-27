@@ -211,3 +211,12 @@ Tristan is past intermediate and heading toward advanced, so this phase added le
 - Ideas not built yet: an "All topics" chip to play everything non-stop (call `watchAll` with category all); a "watched" tracker (`S.libSeen` with a Mark watched pill, a counter, synced in `misc`, cleared in `startCurriculum`); more search rounds for advanced videos for ages 12 and up; a restore button for the progress backup; a weekly-hours guardrail (about 8 hours of team practice plus two 1-hour sessions is roughly 10 hours); updating the game plan and gallery artifacts.
 - Not verified: the app on a real phone, whether each video embeds, and iPhone video stopping when the screen locks (web apps generally do not keep playing).
 - Rules for working here: merge only when the owner says "merge it"; both browser checks must pass first; no force pushes; reset the branch to main after each squash merge.
+
+
+### Follow-up features (after the curriculum)
+- Watched tracker: `S.libSeen` (video id to date, in the synced `misc` piece), `isSeen(v)`, actions `sugSeen` and `sugHideClose`. Cleared by `startCurriculum()`. `sugSeen` and `currRestoreDo` are in `PARENT_BLOCKED`, so Family view phones cannot change them.
+- Restore old progress: `readBackup()`, `restoreOldProgress()`, actions `currRestoreAsk` and `currRestoreDo`. It reads `tristan-backup-before-restart`, saves the current state to `tristan-backup-before-restore`, replaces `S`, and sets `S.curr` off and `S.progressFrom` empty so sync accepts the older data. It works only on a phone that still has the backup.
+- `S.curr.carried` is set by `currTick()` when a step comes back unfinished, and `currCard()` explains it. `currDone()` is the finished-steps count used by the card and the plain-words week.
+- `plannedLoad(monKey)` in `extras.js` returns planned hours (team events plus the required blocks of his step days). `hoursCard()` in `app.js` shows it on Week. The older actual-hours guardrail (`weekLoad`, 10-hour ceiling) is unchanged.
+- Customize: `S.leadExtra` (extra leadership goals, read through `leadAll()`) and `S.ladderEdit` (`"skill:rung"` to wording, read through `ladderText()`); both synced in `misc`. `placeStep()` applies reworded ladder tests to newly placed steps.
+- Not built, on purpose: audio-only playback (iPhone web apps stop video when the screen locks), a Family-view restore, and editing the other drill text in the app.

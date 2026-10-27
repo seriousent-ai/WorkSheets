@@ -1,6 +1,13 @@
 # Changes
 
 ## Phase 9
+- Watched tracker: every playable library video has Mark watched, the Videos tab shows how many he has watched, and tutorial pills show a check mark. The player sheet has Mark watched and "Does not play or does not fit? Hide it". Watched marks sync and are cleared when starting from scratch. Family view phones cannot mark videos watched.
+- Restore old progress: after starting from scratch, Guide, Curriculum can bring back the old sessions, XP, badges and games (it turns the curriculum off and keeps a copy of the current state first). Works from the backup saved on that phone.
+- A step that comes back says why: "back because it was not finished last time", and on other days "Still waiting".
+- Start screen: a before-you-start checklist (family sync, newest version, start date, press Start on Tristan's phone only).
+- Hours: the Week hours card shows the planned week (team time plus his two required sessions) and says when the plan is already at 10 hours.
+- The plain-words week and weekly report include the curriculum step.
+- Customize (Guide): add leadership goals and reword skill ladder tests. Reworded tests show in the Skill ladder and in curriculum steps placed from then on.
 - 28 more YouTube entries (259 in all): drive and kick and reading help defense, ball screen reads and counters, defending ball screens, change of pace, reading the defense, point guard film and decision videos, reverse and weak-hand finishing, and a guard drills series, plus full elite point guard workouts, a Ganon Baker playlist and a Drew Hanlen video.
 - 8 more advanced entries (231 in all): euro step finishing, shooting off the dribble, pocket and hook passing, 3-on-2 and 2-on-1 decisions (Steve Nash), a 1-on-1 contain defense drill and a decision-making progression. One is a YouTube video; the rest are web pages that open in the browser.
 - Watch non-stop: a new "All topics" chip plays a shuffled mix of every topic (up to 60 videos), for the car, the bus or the sofa.
