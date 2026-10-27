@@ -1,6 +1,7 @@
 # Changes
 
 ## Phase 9
+- 15 more entries (289 in all, 135 Advanced): pre-game visualization and mental routines, a point guard passing drill, finishing through contact and off two feet, press-break drills and two Level Up pull-up workouts (4 of them web pages).
 - 15 more entries (274 in all, 128 Advanced): attacking a 2-3 zone, handling pressure and turnovers, triple threat jab and rip moves, defending the jab step, step-back drills and two more guard workouts (4 of them web pages).
 - Fix: a curriculum step showed "7 blocks, 70 min" and a ring that stopped at 86% because the optional video block was counted. Today, the Week list, the weekly hours, the calendar file and the reminder now count only the required blocks (6 blocks, 60 min, "+ 1 optional"), and the optional block is labelled "Optional, 10 min" instead of a time range.
 - Fix: while the curriculum is on, the Week screen's goal said "of 6 sessions" while the progress overview said 2. Both now use the two step days.
