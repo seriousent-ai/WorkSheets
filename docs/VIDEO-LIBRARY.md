@@ -6,7 +6,7 @@ This file records the suggested videos and the written content added in Phase 9.
 
 **Levels:** 2 Intermediate, 3 Advanced (no Basics). The app shows only Advanced by default (Level switch under Watch non-stop). Levels were set from titles and my judgement, not from watching.
 
-Totals: 248 entries (Intermediate 134, Advanced 114); 206 play in the app, 42 open in the browser.
+Totals: 259 entries (Intermediate 138, Advanced 121); 217 play in the app, 42 open in the browser.
 
 ## Offense
 
@@ -121,6 +121,12 @@ Totals: 248 entries (Intermediate 134, Advanced 114); 206 play in the app, 42 op
 - O122 (Advanced) [Jump Rope x Ball Handling Workout for Elite Skills and Athleticism](https://www.youtube.com/watch?v=NkZMqNTcAe8) - YouTube
 - O123 (Advanced) [Daily Grind: Elite Ball Handling and Form Shooting Routine](https://www.youtube.com/watch?v=j4k53HYx_D0) - YouTube
 - O124 (Advanced) [Shooting and Ball Handling Workouts for Serious Players (17 drills)](https://www.breakthroughbasketball.com/drills/shooting-ballhandling-workout) - Breakthrough Basketball. Includes speed layups off dribble moves.
+- O185 (Advanced) [Full Elite Guard Basketball Workout (Finishing and Shooting)](https://www.youtube.com/watch?v=42woLJwvA7A) - YouTube
+- O186 (Advanced) [Building Elite Point Guards: Full College Workout with Coleman Ayers](https://www.youtube.com/watch?v=Wqw-yP7TK0s) - YouTube
+- O187 (Advanced) [Elite Guard Workout ft. D1 Transfer Jason Drake](https://www.youtube.com/watch?v=Mqi_G5Z1uL0) - YouTube
+- O188 (Advanced) [How Every High Level PG Should Train: 23 NBA Point Guard Drills](https://www.youtube.com/watch?v=0uDgOuDjbcE) - YouTube
+- O189 (Advanced) [Become an Elite Scoring Guard Workout](https://www.youtube.com/watch?v=7Q-HMpQsgJI) - YouTube
+- O190 (Intermediate) [Full Guard Workout For Basketball Players (By Yourself)](https://www.youtube.com/watch?v=3AKCf4xbu2k) - YouTube
 
 ### Advanced web guides and drills
 
@@ -342,6 +348,10 @@ Totals: 248 entries (Intermediate 134, Advanced 114); 206 play in the app, 42 op
 - P7 (Intermediate) [I Studied the Best Point Guards](https://www.youtube.com/watch?v=8QKTtMerPbs) - YouTube
 - P38 (Intermediate) [How to Play Point Guard the Right Way](https://www.youtube.com/watch?v=zVmbjQ66Wnc) - YouTube. Coach Matt. Driving, finishing and ball screens.
 - P39 (Advanced) [Dribble Drive Motion Offense: Training Your Point Guard](https://www.youtube.com/watch?v=igm6F9k4vtA) - YouTube
+- P40 (Intermediate) [How to Become an Elite Point Guard: Drills for Point Guards](https://www.youtube.com/watch?v=q6TWqhKHHX0) - YouTube
+- P41 (Intermediate) [How To Train Like a Point Guard: Elite Basketball Training](https://www.youtube.com/watch?v=GiRW1znBLyQ) - YouTube
+- P43 (Advanced) [Drew Hanlen: NBA Skills Coach](https://www.youtube.com/watch?v=tOCFdG_7ntU) - YouTube
+- P44 (Advanced) [Ganon Baker (playlist)](https://www.youtube.com/playlist?list=PLkbZLMYuAQ9tjFvS97Drs1PrxLpLChqXi) - YouTube. Playlist.
 
 ### Court vision and basketball IQ
 
@@ -360,6 +370,7 @@ Totals: 248 entries (Intermediate 134, Advanced 114); 206 play in the app, 42 op
 - P35 (Advanced) [How to Actually Read the Defense (Step by Step)](https://www.youtube.com/watch?v=PaUKMDmj3fU) - YouTube
 - P36 (Intermediate) [The 5 Levels of Basketball IQ, Explained](https://www.youtube.com/watch?v=M1sMMjY00ig) - YouTube
 - P37 (Advanced) [Draymond Green's Basketball IQ Takes Away the Raptors' End-of-Game Play](https://www.youtube.com/watch?v=Nop8k5N5Tho) - YouTube. Film of one defensive read.
+- P42 (Intermediate) [Expert Tips for Decision Making and Player Development](https://www.youtube.com/watch?v=9NssH1hp62Y) - YouTube
 
 ### Advanced passing
 
