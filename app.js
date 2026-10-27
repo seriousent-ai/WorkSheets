@@ -234,9 +234,12 @@ const ICONS = {
 const TABS = [["today", "Today"], ["week", "Week"], ["videos", "Videos"], ["log", "Log"], ["guide", "Guide"]];
 
 /* ---------- views ---------- */
+/* Optional blocks (the curriculum's video blocks) do not count toward the session's minutes, blocks or completion. */
+const reqOf = (d) => d.blocks.filter((b) => !b.optional);
+const reqMin = (d) => reqOf(d).reduce((p, b) => p + (Number(b.minutes) || 0), 0);
 function blockTimes(day) {
   let t = 0;
-  return day.blocks.map((b) => { const s = t; t += Number(b.minutes) || 0; return `${s}–${t} min`; });
+  return day.blocks.map((b) => { const m = Number(b.minutes) || 0; if (b.optional) return `Optional, ${m} min`; const s = t; t += m; return `${s}–${t} min`; });
 }
 function fmtTime(sec) { return `${Math.floor(sec / 60)}:${pad(Math.max(0, sec % 60))}`; }
 
@@ -299,7 +302,7 @@ function buildIcs({ time, alarm, weeks, sunday }) {
       if (i === 6 && !sunday) return;
       const day = addDays(mon0, w * 7 + i);
       const start = new Date(day.getFullYear(), day.getMonth(), day.getDate(), hh, mm);
-      const mins = d.blocks.reduce((p, b) => p + (Number(b.minutes) || 0), 0) || 60;
+      const mins = reqMin(d) || 60;
       const end = new Date(start.getTime() + mins * 60000);
       if (end < now) return;
       const vids = d.videoIds.map((id) => S.videos.find((v) => v.id === id)).filter((v) => v && v.url);
@@ -325,7 +328,7 @@ async function showReminder() {
   const day = S.days[todayIdx()];
   if (!day || logOf(todayKey()).complete) return;
   const title = "Time to train, " + firstName(S.profile.name);
-  const body = `${day.theme}. ${day.blocks.reduce((p, b) => p + (Number(b.minutes) || 0), 0)} minutes. Let's go.`;
+  const body = `${day.theme}. ${reqMin(day)} minutes. Let's go.`;
   try {
     const reg = navigator.serviceWorker && (await navigator.serviceWorker.getRegistration());
     if (reg && reg.showNotification) { await reg.showNotification(title, { body, icon: "icons/icon-192.png", tag: "rens-reminder" }); return; }
@@ -372,7 +375,7 @@ function weekLoad(monKey) {
     if (ev) { total += ev; active++; }
     if (!l) continue;
     const team = Number(l.team) || 0;
-    const own = l.minutes ? Number(l.minutes) || 0 : l.complete && i < 6 && S.days[i] ? S.days[i].blocks.reduce((p, b) => p + (Number(b.minutes) || 0), 0) : 0;
+    const own = l.minutes ? Number(l.minutes) || 0 : l.complete && i < 6 && S.days[i] ? reqMin(S.days[i]) : 0;
     total += team + own;
     if (team || own || l.complete) active++;
   }
@@ -541,8 +544,9 @@ function viewToday() {
   const date = dateOf(ui.day);
   const lg = S.logs[date] || { done: {} };
   const done = lg.done || {};
-  const doneN = day.blocks.filter((b) => done[b.id]).length;
-  const pct = day.blocks.length ? (doneN / day.blocks.length) * 100 : 0;
+  const reqB = reqOf(day), optN = day.blocks.length - reqB.length;
+  const doneN = reqB.filter((b) => done[b.id]).length;
+  const pct = reqB.length ? (doneN / reqB.length) * 100 : 0;
   const total = completeDates().length;
   const lv = levelInfo(total);
   const xp = xpTotal();
@@ -576,7 +580,7 @@ function viewToday() {
     <div class="herorow"><div class="grow">
       <div class="eyebrow">${isToday ? "Today" : esc(day.name)} · ${fmtShort(parseKey(date))}</div>
       <div class="big">${esc(day.theme)}</div>
-      <div class="detail">${doneN} of ${day.blocks.length} blocks · ${day.blocks.reduce((a, b) => a + (Number(b.minutes) || 0), 0)} min</div>
+      <div class="detail">${doneN} of ${reqB.length} blocks · ${reqMin(day)} min${optN ? ` + ${optN} optional` : ""}</div>
       ${day.cue ? `<div class="herocue"><b>Cue</b> ${esc(day.cue)}</div>` : ""}
     </div>
     <svg class="ring" viewBox="0 0 72 72" aria-label="${Math.round(pct)} percent done"><circle cx="36" cy="36" r="30" class="rt"/><circle cx="36" cy="36" r="30" class="rf ${pct === 100 ? "full" : ""}" stroke-dasharray="188.5" stroke-dashoffset="${(188.5 * (1 - pct / 100)).toFixed(1)}"/><text x="36" y="41" text-anchor="middle">${Math.round(pct)}%</text></svg></div>
@@ -646,8 +650,8 @@ function viewWeek() {
     <div class="detail">${wk.priority ? "Coach's priority: " + esc(wk.priority) : "Set a priority for the week in Log."}</div></div>
   <div class="wstrip">${S.days.map((d, i) => {
     const l = S.logs[dateOf(i)] || { done: {} };
-    const c = d.blocks.filter((b) => l.done?.[b.id]).length;
-    const p = d.blocks.length ? c / d.blocks.length : 0;
+    const c = reqOf(d).filter((b) => l.done?.[b.id]).length;
+    const p = reqOf(d).length ? c / reqOf(d).length : 0;
     return `<button class="wd ${i === todayIdx() ? "today" : ""}" data-a="openDay" data-i="${i}" aria-label="${esc(d.name)} ${Math.round(p * 100)} percent"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="14" class="rt"/><circle cx="18" cy="18" r="14" class="rf ${l.complete ? "full" : ""}" stroke-dasharray="88" stroke-dashoffset="${(88 * (1 - p)).toFixed(1)}"/>${l.complete ? '<path d="M11.5 18.5l4.2 4.2 8.8-9" class="ck"/>' : ""}</svg><span>${esc(d.name.slice(0, 3))}</span></button>`;
   }).join("")}</div>
   ${hoursCard(weekKeyNow(), false)}
@@ -655,12 +659,12 @@ function viewWeek() {
   <div class="group">${S.days.map((d, i) => {
     const date = dateOf(i);
     const lg = S.logs[date] || { done: {} };
-    const c = d.blocks.filter((b) => lg.done?.[b.id]).length;
+    const c = reqOf(d).filter((b) => lg.done?.[b.id]).length;
     const full = !!lg.complete;
     return `<div class="row tap" data-a="openDay" data-i="${i}">
       <div class="check ${full ? "on" : ""}">${full ? "✓" : ""}</div>
       <div class="grow"><div class="title strong">${esc(d.name)}${i === todayIdx() ? ' <span class="pill blue">Today</span>' : ""}</div><div class="detail">${esc(d.theme)}</div></div>
-      <div class="detail">${c}/${d.blocks.length}</div><span class="chev">›</span></div>`;
+      <div class="detail">${c}/${reqOf(d).length}</div><span class="chev">›</span></div>`;
   }).join("")}</div>
   ${scheduleHtml()}
   <button class="btn gray" data-a="calStart">Add the plan to my calendar</button>
@@ -1038,7 +1042,7 @@ function overviewHtml() {
   const first = firstName(S.profile.name);
   const mon = mondayOf(new Date()), wk = dateKey(mon);
   const total = completeDates().length, lv = levelInfo(total), xp = xpTotal(), { r, ovr } = ratings();
-  const days = S.days.slice(0, 7).map((d, i) => { const date = dateKey(addDays(mon, i)); const l = S.logs[date] || { done: {} }; return { d, i, date, l, c: d.blocks.filter((b) => l.done && l.done[b.id]).length }; });
+  const days = S.days.slice(0, 7).map((d, i) => { const date = dateKey(addDays(mon, i)); const l = S.logs[date] || { done: {} }; return { d, i, date, l, c: reqOf(d).filter((b) => l.done && l.done[b.id]).length }; });
   const sessions = days.filter((x) => x.l.complete).length, goal = weeklyGoal();
   const load = weekLoad(wk);
   const sleeps = days.map((x) => x.l.sleep).filter(Boolean), avgSleep = sleeps.length ? Math.round((sleeps.reduce((p, q) => p + q, 0) / sleeps.length) * 10) / 10 : null;
@@ -1070,7 +1074,7 @@ function overviewHtml() {
   <h2 class="section">Day by day</h2>
   <div class="group">${days.map(({ d, i, l, c }) => {
     const future = i > todayI;
-    const status = l.complete ? `<span class="pill green">Done</span>` : c ? `<span class="pill">${c}/${d.blocks.length}</span>` : future ? `<span class="pill">Ahead</span>` : l.team ? `<span class="pill">Team</span>` : `<span class="pill">–</span>`;
+    const status = l.complete ? `<span class="pill green">Done</span>` : c ? `<span class="pill">${c}/${reqOf(d).length}</span>` : future ? `<span class="pill">Ahead</span>` : l.team ? `<span class="pill">Team</span>` : `<span class="pill">–</span>`;
     const bits = [l.off ? (l.off === "rest" ? "Rest day" : "Sick day") : "", l.body ? ["", "Fresh", "OK", "Sore"][l.body] : "", l.sleep ? l.sleep + "h sleep" : "", l.energy ? faces[l.energy] : "", l.team ? l.team + " min team" : "", l.film ? `Film ${l.film.score}/5` : ""].filter(Boolean);
     return `<div class="row ${i === todayI ? "current" : ""}"><div class="grow"><div class="title strong">${esc(d.name)} <span class="detail" style="display:inline">${esc(d.theme)}</span></div><div class="detail ${l.body === 3 ? "warn" : ""}">${bits.length ? esc(bits.join(" · ")) : future ? "Not yet" : "No check-in"}</div></div>${status}</div>`;
   }).join("")}</div>

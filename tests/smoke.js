@@ -293,6 +293,8 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
     const s1 = await cp.evaluate(() => ({ step: S.curr.step, date: S.curr.date, ids: S.days[1].blocks.map((b) => b.id).join(","), opt: S.days[1].blocks.filter((b) => b.optional).length }));
     ok(s1.step === 0 && s1.date === "2026-11-03" && /^c1-0,c1-1/.test(s1.ids) && s1.opt === 1, "on the first Tuesday step 1 appears, with its video block marked optional");
     ok((await doStep()) === "true", "finishing the required blocks completes the step without the optional video");
+    ok(await cp.evaluate(() => { ui.tab = "today"; ui.day = (new Date().getDay() + 6) % 7; render(); const t = document.body.innerText; return /6 of 6 blocks/.test(t) && /60 min \+ 1 optional/.test(t) && /Session complete/.test(t) && blockTimes(S.days[ui.day]).slice(-1)[0].startsWith("Optional"); }), "the Today card counts only the required blocks (60 min) and shows the optional video separately");
+    ok(await cp.evaluate(() => weekLoad(weekKeyNow()).hours >= 0 && reqMin(S.days[ui.day]) === 60), "a finished step counts as 60 minutes in the hours check");
     const tutOk = await cp.evaluate(() => { const ids = new Set(sugList().map((v) => v.yt)); let n = 0, bad = []; CURRICULUM.forEach((st) => (st.blocks || []).forEach((b) => (b.tut || []).forEach((t) => { n++; if (!ids.has(t)) bad.push(t); }))); return { n, bad }; });
     ok(tutOk.n > 100 && tutOk.bad.length === 0, "every tutorial link in the curriculum points at a library video");
     ok(await cp.evaluate(() => { ui.day = 1; const d = S.days[1].blocks.find((b) => !b.optional && b.tut && b.tut.length); return !!d && /How to do it/.test(tutHtml(d)) && /sugPlay/.test(tutHtml(d)); }), "step blocks show tutorial videos");
