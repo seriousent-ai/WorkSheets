@@ -1727,6 +1727,7 @@ const coachParam = new URLSearchParams(location.search).get("coach");
 if (coachParam) {
   renderCoachPage(Sync.normalize(coachParam));
 } else {
+  Sync.load();
   if (!S.profile.onboarded && Object.keys(S.logs).length === 0 && !Sync.code) ui.welcome = { step: 1, name: S.profile.name, why: S.profile.why };
   applyTextSize();
   if (settleMonthly()) { persist(); celebrateBadge(); }
