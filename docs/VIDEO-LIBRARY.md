@@ -4,34 +4,19 @@ This file records the suggested videos and the written content added in Phase 9.
 
 **How these were chosen:** titles and links came from web searches. They were not watched, and the build machine could not open YouTube. A parent should skim the list, and use Hide in the app for anything that does not fit. Some videos may refuse to play inside the app; those show an Open on YouTube link. Entries that are not on YouTube (Breakthrough Basketball, Jr. NBA, LevelUp Basketball and others) open in the browser and cannot play non-stop.
 
-**Levels:** 1 Basics, 2 Intermediate, 3 Advanced. The app shows only Advanced by default (Level switch under Watch non-stop). Levels were set from titles and my judgement, not from watching.
+**Levels:** 2 Intermediate, 3 Advanced (no Basics). The app shows only Advanced by default (Level switch under Watch non-stop). Levels were set from titles and my judgement, not from watching.
 
-Totals: 323 entries (Basics 75, Intermediate 151, Advanced 97); 258 play in the app, 65 open in the browser.
+Totals: 223 entries (Basics undefined, Intermediate 126, Advanced 97); 188 play in the app, 35 open in the browser.
 
 ## Offense
 
 ### Ball handling
 
-- O1 (Intermediate) [Dribble Balance Drill](https://jr.nba.com/video/dribble-balance-drill/) - Jr. NBA. Balance together with ball handling.
-- O2 (Basics) [Figure 8 Fingertips Drill](https://jr.nba.com/video/figure-8-fingertips-drill/) - Jr. NBA. Keep the ball low and work on fingertip control.
-- O3 (Intermediate) [Cone Dribbling Drill](https://jr.nba.com/video/cone-dribbling-drill/) - Jr. NBA. Use cones as defenders.
-- O4 (Intermediate) [Behind the Back Wrap Breakdown Drill](https://jr.nba.com/video/behind-the-back-wrap-breakdown-drill/) - Jr. NBA. Dribbling basics behind the back.
-- O5 (Intermediate) [Dribble Relay Drill](https://jr.nba.com/video/dribble-relay-drill/) - Jr. NBA. A team relay that mixes teamwork and ball handling.
 - O6 (Advanced) [Ball Handling with Chris Paul](https://jr.nba.com/video/ball-handling-with-chris-paul/) - Jr. NBA. A pro point guard on ball handling. A step up.
-- O7 (Intermediate) [Stationary 2-Ball Dribble Drill](https://jr.nba.com/video/stationary-2-ball-dribble-drill-same-time-adds-lowmiddlehigh/) - Jr. NBA. Two balls at once. A challenge for later.
-- O8 (Basics) [Ball Handling Drills for Beginners and Youth Point Guards](https://www.youtube.com/watch?v=EATjIV0tqY8) - YouTube. Aimed at youth point guards.
 - O9 (Intermediate) [Basketball Drills For Point Guards: Ball Handling](https://www.youtube.com/watch?v=6zRKjzQ-FAg) - YouTube
 - O10 (Intermediate) [10 Dribbling Drills Every Guard Should Know](https://www.youtube.com/watch?v=bvy5u3YgDEk) - YouTube
-- O11 (Basics) [7 Best Youth Basketball Dribbling Drills](https://www.youtube.com/watch?v=UVAz2aASZx4) - YouTube
-- O12 (Basics) [How To Crossover Dribble For Beginners](https://www.youtube.com/watch?v=vYKacBAyDWs) - YouTube
-- O13 (Basics) [How To Crossover For Beginners](https://www.youtube.com/watch?v=I-_yRvGPkWU) - YouTube. Step by step for beginners.
-- O14 (Basics) [Basic Crossover with Dribble for Youth Basketball](https://www.youtube.com/watch?v=8abLTTZrHbw) - YouTube
-- O15 (Basics) [Stationary Crossover and Between the Legs](https://www.youtube.com/watch?v=h7s31K0kPh4) - YouTube. Beginner dribble moves.
 - O16 (Intermediate) [The Crossover Dribble](https://www.youtube.com/watch?v=M3yD-gwjoRE) - YouTube
-- O17 (Basics) [See it, Do it #6: Crossover Dribble](https://www.youtube.com/watch?v=eGwJTTiFt0Y) - YouTube
 - O18 (Intermediate) [Change of Direction Dribble Moves](https://www.youtube.com/watch?v=3KSaDrCZZoA) - YouTube
-- O19 (Basics) [How to Crossover Dribble Tutorial, Step by Step](https://www.youtube.com/watch?v=Gbkr6xiCaPU) - YouTube
-- O20 (Basics) [Top 5 Drills to Improve Ball Handling and Shooting for 10 Year Olds](https://www.youtube.com/watch?v=8nMaNBmTNxw) - YouTube
 - O21 (Intermediate) [Basketball Drills For Point Guards (playlist)](https://www.youtube.com/playlist?list=PLVvu-7enStA9LAYEyYYidLX1CAQksk1-z) - YouTube. Playlist.
 
 ### Handling pressure
@@ -43,12 +28,6 @@ Totals: 323 entries (Basics 75, Intermediate 151, Advanced 97); 258 play in the 
 
 ### Passing and decisions
 
-- O26 (Intermediate) [4 Corner Passing Drill](https://jr.nba.com/video/4-corner-passing-drill/) - Jr. NBA. Passing and catching in a group.
-- O27 (Basics) [Toss and Catch Drill](https://jr.nba.com/video/toss-and-catch-drill/) - Jr. NBA. Coordination through basic handling.
-- O28 (Intermediate) [Star Passing Drill](https://jr.nba.com/video/star-passing-drill/) - Jr. NBA. Movement and passing.
-- O29 (Intermediate) [Pass and Follow Drill](https://jr.nba.com/video/pass-and-follow-drill/) - Jr. NBA. Work together while passing.
-- O30 (Intermediate) [The Backdoor Pass Breakdown Drill](https://jr.nba.com/video/the-backdoor-pass-breakdown-drill/) - Jr. NBA. Pass off the dribble to a cutting teammate.
-- O31 (Intermediate) [Post Pass Shooting Drill](https://jr.nba.com/video/post-pass-shooting-drill/) - Jr. NBA
 - O32 (Intermediate) [Partner Pass and Pivot Drill](https://www.breakthroughbasketball.com/play.asp?id=75) - Breakthrough Basketball. Dribble, jump stop, pivot, pass.
 - O33 (Intermediate) [Ultimate Passing](https://www.breakthroughbasketball.com/play.asp?id=1503) - Breakthrough Basketball. Passing, spacing, footwork and decisions.
 - O34 (Intermediate) [Jump Stop, Pivot, and Pass Drill](https://www.youtube.com/watch?v=jgqdv9ySjYM) - YouTube
@@ -56,44 +35,26 @@ Totals: 323 entries (Basics 75, Intermediate 151, Advanced 97); 258 play in the 
 
 ### Shooting form
 
-- O36 (Basics) [Youth Basketball Shooting Drills, Tips and Technique for Beginners](https://www.youtube.com/watch?v=k3WABHjzZB4) - YouTube
-- O37 (Basics) ["Daily Dozen" Shooting Drills for Youth Basketball](https://www.youtube.com/watch?v=YEttDju1nzA) - YouTube
-- O38 (Basics) [10 Best Basketball Form Shooting Drills](https://www.youtube.com/watch?v=2hY6fQmPJQ8) - YouTube. Fixes common form problems.
-- O39 (Basics) [10 Basketball Shooting Drills for 10 Year Olds](https://www.youtube.com/watch?v=Gbn8GGd98Bg) - YouTube. A good form refresher.
-- O40 (Basics) [How to Shoot the Basketball for Beginners](https://www.youtube.com/watch?v=J6_-SaW_GUE) - YouTube
-- O41 (Basics) [Amazing Basketball Shooting Drills for Kids](https://www.youtube.com/watch?v=vd1SwGwK46o) - YouTube
-- O42 (Basics) [Teach Your Child How to Shoot a Basketball Step by Step](https://www.youtube.com/watch?v=OQK7v24wPF8) - YouTube
-- O43 (Basics) [How To Shoot A Basketball For Kids](https://www.youtube.com/watch?v=A8732V-ZuWY) - YouTube
+- O38 (Intermediate) [10 Best Basketball Form Shooting Drills](https://www.youtube.com/watch?v=2hY6fQmPJQ8) - YouTube. Fixes common form problems.
 - O44 (Intermediate) [5 Must-Know Catch and Shoot Drills](https://www.youtube.com/watch?v=ecPyYg53Rw8) - YouTube
 - O45 (Intermediate) [Perfecting 3-Point Shots](https://www.youtube.com/watch?v=PdgeX_3pB0A) - YouTube
 - O46 (Intermediate) [How To Shoot Better 3 Point Shots (playlist)](https://www.youtube.com/playlist?list=PLO5DgInYakGbctZ-ePWfwM2-i3xfKuY1F) - YouTube. Playlist.
 
 ### Free throws
 
-- O47 (Basics) [Fundamentals of the Free Throw](https://www.youtube.com/watch?v=lnuZNZPDvaY) - YouTube. Jr. NBA Coach Megan Griffith.
+- O47 (Intermediate) [Fundamentals of the Free Throw](https://www.youtube.com/watch?v=lnuZNZPDvaY) - YouTube. Jr. NBA Coach Megan Griffith.
 - O48 (Intermediate) [Build a Free-Throw Routine](https://www.youtube.com/shorts/PPIPlRPBdtA) - YouTube. A short video.
 - O49 (Intermediate) [How to Shoot a Free Throw in Basketball](https://www.youtube.com/watch?v=Hrjl91zw7mQ) - YouTube
-- O50 (Basics) [Youth Basketball Free Throws: Foot Position](https://www.youtube.com/watch?v=AYZ4nqd0fqc) - YouTube
 - O51 (Intermediate) [Mental Routine to Make More Free Throws](https://www.youtube.com/watch?v=5-4QrCdskko) - YouTube
 - O52 (Intermediate) [Free Throw Golf](https://www.youtube.com/watch?v=Z-SbJIJAFOE) - YouTube. A game to make free throw practice fun.
 
 ### Finishing
 
-- O53 (Intermediate) [Chase Layup Drill](https://jr.nba.com/video/chase-layup-drill/) - Jr. NBA. Fast break finishing.
-- O54 (Intermediate) [Layup Hi-Five Drill](https://jr.nba.com/video/layup-hi-five-drill/) - Jr. NBA. Layup fundamentals.
-- O55 (Intermediate) [V Cut Layup Drill](https://jr.nba.com/video/v-cut-layup-drill/) - Jr. NBA. Open a driving lane.
-- O56 (Intermediate) [Layup Skip Drill](https://jr.nba.com/video/layup-skip-drill/) - Jr. NBA. A lead-in to layups.
-- O57 (Intermediate) [Backdoor Pass Layup Drill](https://jr.nba.com/video/backdoor-pass-layup-drill/) - Jr. NBA. A game-like situation.
 - O58 (Intermediate) [3 Drills to Help with Your Weak Hand Layup and Ball Handling](https://www.youtube.com/watch?v=ya_SODOUHTQ) - YouTube
-- O59 (Basics) [5 Basketball Finishing Drills for a Better Warm-Up](https://www.youtube.com/watch?v=QHIEZkya_ig) - YouTube
+- O59 (Intermediate) [5 Basketball Finishing Drills for a Better Warm-Up](https://www.youtube.com/watch?v=QHIEZkya_ig) - YouTube
 - O60 (Intermediate) [How To Never Miss A Layup](https://www.youtube.com/watch?v=3jj9l2oqcxA) - YouTube. Floaters, reverse layups and euro steps.
 - O61 (Intermediate) [Master the Euro Step](https://www.youtube.com/watch?v=MDbS4QF71Iw) - YouTube
 - O62 (Intermediate) [Layup Drill: Finishing Under Pressure](https://www.youtube.com/shorts/sB3Pljfqy9U) - YouTube. A short video.
-- O63 (Basics) [How To Teach The Lay Up to Youth Players in 5 Minutes](https://www.youtube.com/watch?v=YYLvlPQgPrs) - YouTube
-- O64 (Basics) [Teaching Basketball Layups for Beginners](https://www.youtube.com/watch?v=SIq8KC_FH34) - YouTube
-- O65 (Basics) [3 Lay Up Progressions For Beginners](https://www.youtube.com/watch?v=Tm7N2HU4noQ) - YouTube
-- O66 (Basics) [Basketball Layup Drills For Kids](https://www.youtube.com/watch?v=hOu2l7GKc5E) - YouTube
-- O67 (Basics) [3 Finishing Drills For Beginners](https://www.youtube.com/watch?v=_sf0CrcVtZA) - YouTube
 
 ### Pick and roll and screens
 
@@ -104,9 +65,7 @@ Totals: 323 entries (Basics 75, Intermediate 151, Advanced 97); 258 play in the 
 - O72 (Advanced) [Breaking Down Every Pick-and-Roll Coverage](https://www.youtube.com/watch?v=XW2SmmhjeZY) - YouTube. Advanced. Good to watch with a parent or coach.
 - O73 (Intermediate) [How To Read Your Defender (3 Simple Tips)](https://www.youtube.com/watch?v=w0Cnz289BCo) - YouTube
 - O74 (Advanced) [1v1 Tips: How To Read Your Defender](https://www.youtube.com/watch?v=1jHj41QKsXQ) - YouTube
-- O75 (Basics) [Top 5 Screen and Roll Drills For Youth](https://www.youtube.com/watch?v=sxqBwdJjB8U) - YouTube
 - O76 (Advanced) [3 Drills To Teach The Screen And Roll](https://www.youtube.com/watch?v=wI2RK_L_qqA) - YouTube
-- O77 (Basics) [Simple Screen and Roll Basketball Drill](https://www.youtube.com/watch?v=PWd2Qm9ihPc) - YouTube
 - O78 (Advanced) [Basketball Drills: Ball Screen](https://www.youtube.com/watch?v=20e07MFdl-Y) - YouTube
 - O79 (Advanced) [How To Use an Off Ball Screen](https://www.youtube.com/watch?v=xvkvOxsHax0) - YouTube
 - O80 (Advanced) [Using A Screen Shooting Drill](https://www.youtube.com/watch?v=NqgaWL7b86A) - YouTube
@@ -114,29 +73,12 @@ Totals: 323 entries (Basics 75, Intermediate 151, Advanced 97); 258 play in the 
 
 ### Team offense and spacing
 
-- O82 (Intermediate) [Pass and Cut Drill](https://jr.nba.com/video/pass-and-cut-drill/) - Jr. NBA. Offensive movement that builds teamwork.
-- O83 (Intermediate) [3-Person Pass, Cut and Replace](https://jr.nba.com/video/3-person-pass-cut-replace/) - Jr. NBA. Fill the open spot.
-- O84 (Intermediate) [Give and Go Drill](https://jr.nba.com/video/give-and-go-drill/) - Jr. NBA. Basic passing and cutting.
-- O85 (Basics) [Give and Go Basketball Plays For Youth](https://www.youtube.com/watch?v=MQJErnxF4ng) - YouTube
 - O86 (Intermediate) [Give and Go Team Basketball Drills](https://www.youtube.com/watch?v=njTCssKLmkY) - YouTube
 - O87 (Intermediate) [Give and Go Drill](https://www.youtube.com/watch?v=wH79CAnB9Vw) - YouTube
-- O88 (Basics) [Basic Pass and Cut Offense](https://www.youtube.com/watch?v=qNhe0MoXiro) - YouTube
-- O89 (Basics) [Cutting Drill for Youth Basketball](https://www.youtube.com/watch?v=qd7iXUrJ1fg) - YouTube
-- O90 (Intermediate) [Pass and Cut Basketball Drills For All Ages](https://www.youtube.com/watch?v=bO__JwVv1S0) - YouTube
-- O91 (Basics) [Pass and Cut for Beginners](https://www.youtube.com/watch?v=QPC1CBvao0Y) - YouTube
-- O92 (Basics) [Offensive Drills for Youth Basketball](https://www.youtube.com/watch?v=TXlFGkZXujQ) - YouTube
-- O93 (Basics) [Best Basketball Drills for Youth Teams: Spacing, Cutting, Passing, Scoring](https://www.youtube.com/watch?v=CGd_iijKwAU) - YouTube
 - O94 (Intermediate) [3 Motion Offense Drills: Screening and Cutting](https://www.youtube.com/watch?v=WEBZhXX_ft0) - YouTube
-- O95 (Basics) [Basic Motion Offense for Youth Basketball](https://www.youtube.com/watch?v=9DSk_8PRASk) - YouTube
-- O96 (Basics) [How to Teach a Youth Motion Offense in One Hour](https://www.youtube.com/watch?v=6uzQx2iPI64) - YouTube. More for coaches, but it shows how a team moves.
-- O97 (Intermediate) [Easy to Understand Motion Offense for Any Age Level](https://www.youtube.com/watch?v=dmBn6fdGA1o) - YouTube
-- O98 (Basics) [Motion Offense Basketball Drills For Youth](https://www.youtube.com/watch?v=Lf-_uGqmC1E) - YouTube
-- O99 (Basics) [Easy Spread Motion Offense Play for Youth Basketball](https://www.youtube.com/watch?v=zeNFZoQf90g) - YouTube
-- O100 (Intermediate) [Top 5 Youth 5 Out Basketball Offense Plays](https://www.youtube.com/watch?v=yHD_fKv1osQ) - YouTube
 
 ### Fast break
 
-- O101 (Basics) [7 Fast Break Basketball Drills For Youth](https://www.youtube.com/watch?v=JQVV40UO_Hs) - YouTube
 - O102 (Intermediate) [3 on 2 on 1 Drill Run by Steve Nash](https://www.youtube.com/watch?v=vpXqZTiUKyc) - YouTube
 - O103 (Intermediate) [3 on 2 / 2 on 1 Drill](https://www.youtube.com/watch?v=qIq21bMuFmA) - YouTube
 - O104 (Intermediate) [3 on 2 Fast Break Cardio Basketball Drill](https://www.youtube.com/watch?v=5IFu20SLKgs) - YouTube
@@ -243,43 +185,26 @@ Totals: 323 entries (Basics 75, Intermediate 151, Advanced 97); 258 play in the 
 
 ### Stance and slides
 
-- D1 (Intermediate) [Follow the Leader Slides Drill](https://jr.nba.com/video/follow-the-leader-slides-drill/) - Jr. NBA. Defensive slides.
-- D2 (Intermediate) [Side/Lateral Push Drill](https://jr.nba.com/video/side-lateral-push-drill/) - Jr. NBA. Cover more ground on slides.
-- D3 (Intermediate) [Side/Lateral Push Breakdown Drill](https://jr.nba.com/video/side-lateral-push-breakdown-drill/) - Jr. NBA. The basics of a stance and slide.
-- D4 (Basics) [5 Best Drills For Youth Basketball Defense](https://www.youtube.com/watch?v=XTIfQoI-kEI) - YouTube
-- D5 (Basics) [Top 5 Basketball Defense Drills For Youth](https://www.youtube.com/watch?v=DKRqdXK_6Lc) - YouTube
-- D6 (Basics) [Best Youth Basketball Defense Drills For Beginners](https://www.youtube.com/watch?v=dIroC2i6gHc) - YouTube
-- D7 (Basics) [Youth Basketball Defense Drills](https://www.youtube.com/watch?v=vfyM-lvQXoY) - YouTube
-- D8 (Basics) [10 Best Basketball Defense Drills for Kids](https://www.youtube.com/watch?v=gQ8GETRH2GY) - YouTube
 - D9 (Intermediate) [Basketball Defense Footwork to Become a Lock Down Defender](https://www.youtube.com/watch?v=9XWs6g4zlCg) - YouTube
 - D10 (Intermediate) [5 On-Ball Defense Tips](https://www.youtube.com/watch?v=a9-g_bY7Ouk) - YouTube
-- D11 (Basics) [Top 5 Basketball Footwork Drills](https://www.youtube.com/watch?v=Qc7xi22Aozs) - YouTube
-- D12 (Basics) [Basketball Defense Drills for Kids (playlist)](https://www.youtube.com/playlist?list=PLO5DgInYakGZqUvCNNq_NWkMkoD06gQ77) - YouTube. Playlist.
+- D11 (Intermediate) [Top 5 Basketball Footwork Drills](https://www.youtube.com/watch?v=Qc7xi22Aozs) - YouTube
 - D13 (Intermediate) [Basketball Defense Drills (playlist)](https://www.youtube.com/playlist?list=PLO5DgInYakGY5Od5Z1w0zQna-1oCX_XkC) - YouTube. Playlist.
-- D14 (Basics) [Building Your Youth Basketball Defense (playlist)](https://www.youtube.com/playlist?list=PL1l0r0Z_xqKt3YT7-g04pt7Uy0xFawYV2) - YouTube. Playlist. Stance, closeouts and jumping to the ball.
 
 ### Closeouts
 
-- D15 (Intermediate) [Closeout, Slide and Backpedal Drill](https://jr.nba.com/video/closeout-slide-backpedal-drill/) - Jr. NBA. Stay in front of an opponent.
-- D16 (Intermediate) [The Closeout Breakdown Drill](https://jr.nba.com/video/the-closeout-breakdown-drill/) - Jr. NBA. Chop your feet when closing out.
-- D17 (Intermediate) [Tracing the Ball Breakdown Drill](https://jr.nba.com/video/tracing-the-ball-breakdown-drill/) - Jr. NBA. Add active hands to a closeout.
-- D18 (Basics) [Defensive Drills for Youth Basketball](https://www.youtube.com/watch?v=ZsI4iCR3lak) - YouTube
 - D19 (Intermediate) [Vegas Closeouts (Conditioning and Defense)](https://www.youtube.com/watch?v=Bg1ZlDzvF3g) - YouTube
-- D20 (Basics) [Youth Basketball Drills: Partner Closeout Shooting](https://www.youtube.com/watch?v=U6d-IhBpfgw) - YouTube
 - D21 (Intermediate) [Defensive Close-Outs and Shuffles](https://www.youtube.com/watch?v=U5_4mkYOo8c) - YouTube
 - D22 (Intermediate) [Defensive Close Out Basketball Drills](https://www.youtube.com/watch?v=eXgB-4ZKLGI) - YouTube
-- D23 (Basics) [Close Out Footwork Agility Drill](https://www.youtube.com/watch?v=q6i4O_9l5k4) - YouTube
+- D23 (Intermediate) [Close Out Footwork Agility Drill](https://www.youtube.com/watch?v=q6i4O_9l5k4) - YouTube
 - D24 (Intermediate) [Defensive Close Outs: Best Practice Drills](https://www.youtube.com/watch?v=2P9ShY9AAmU) - YouTube
 - D25 (Intermediate) [3 Defense Drills: Closeouts, Defensive Slides, Deflections](https://www.youtube.com/watch?v=lFY__uSOJIY) - YouTube
 
 ### Team defense and help
 
-- D26 (Intermediate) [Shell Drill 3 on 3](https://jr.nba.com/video/shell-drill-3-on-3/) - Jr. NBA. Team defense in a small group.
 - D27 (Intermediate) [How to Teach Help Side Defense: 4 Drills](https://www.youtube.com/watch?v=lYMHGPNq_78) - YouTube
 - D28 (Intermediate) [Essential Basketball Drills to Get Back on Defense](https://www.youtube.com/watch?v=rRVY6XcoO4o) - YouTube
 - D29 (Intermediate) [Man to Man Defense: The Fundamentals](https://www.youtube.com/watch?v=vh96pvvzODk) - YouTube
 - D30 (Intermediate) [Man to Man Help Principles: Shell Defense](https://www.youtube.com/watch?v=MTU14SOeYi4) - YouTube
-- D31 (Basics) [Youth Basketball Defense: Shell Drill](https://www.youtube.com/watch?v=U4obAypdUdw) - YouTube. Parts 1 to 4.
 - D32 (Intermediate) [Building Man to Man Defense Through 3 on 3 Drills](https://www.youtube.com/watch?v=30hxiajfi9E) - YouTube
 - D33 (Intermediate) [Drills for Building Your Man-to-Man Defense](https://www.youtube.com/watch?v=UKGkBTCJ-EE) - YouTube
 - D34 (Intermediate) [Basketball Defense: How To Play Man to Man](https://www.youtube.com/watch?v=PUnY_EkLZ9o) - YouTube
@@ -291,17 +216,9 @@ Totals: 323 entries (Basics 75, Intermediate 151, Advanced 97); 258 play in the 
 
 ### Rebounding
 
-- D40 (Intermediate) [No Ball Box Out Drill](https://jr.nba.com/video/no-ball-box-out-drill/) - Jr. NBA. Rebounding fundamentals without a ball.
-- D41 (Intermediate) [Self-Toss Rebounding Drill](https://jr.nba.com/video/self-toss-rebounding-drill/) - Jr. NBA. A solo rebounding routine.
-- D42 (Intermediate) [Tag and Pursue Drill](https://jr.nba.com/video/tag-and-pursue-drill/) - Jr. NBA. Pursuit in perimeter rebounding.
-- D43 (Basics) [Best Youth Basketball Box Out Drills](https://www.youtube.com/watch?v=gOofKe4_NnE) - YouTube
-- D44 (Basics) [3 Essential Basketball Rebounding Drills for Youth Teams](https://www.youtube.com/watch?v=PkkZn_IC69E) - YouTube
-- D45 (Basics) [Youth Basketball Warmup Drills: Box Out Drill](https://www.youtube.com/watch?v=Lf8oH6yldIw) - YouTube
 - D46 (Intermediate) [No Ball Box Out Drill](https://www.youtube.com/watch?v=J6QmHTVdKKc) - YouTube
-- D47 (Basics) [Fun Rebound and Transition Drills for Kids](https://www.youtube.com/watch?v=AQKWHTzE2IE) - YouTube
 - D48 (Intermediate) [2 Rebounding Drills: Defense, Box Out, Rebound](https://www.youtube.com/watch?v=NiwfyUgomJE) - YouTube
 - D49 (Intermediate) [How To Train Box Outs and Pursuing the Ball](https://www.youtube.com/watch?v=W8X-2aQXPsQ) - YouTube
-- D50 (Basics) [Basketball Rebound Drills For Kids (playlist)](https://www.youtube.com/playlist?list=PLO5DgInYakGYM_ill3vGjXDBvDbPyEgFG) - YouTube. Playlist.
 
 ### Advanced ball screens
 
@@ -347,16 +264,11 @@ Totals: 323 entries (Basics 75, Intermediate 151, Advanced 97); 258 play in the 
 
 ### Communication and team culture
 
-- T1 (Intermediate) [Easy Basketball Teamwork Drills](https://www.youtube.com/watch?v=DdeeIRiCb94) - YouTube
 - T2 (Intermediate) [Basketball Drills: Team Building](https://www.youtube.com/watch?v=qDz-lhNvEu4) - YouTube
-- T3 (Intermediate) [Dot2Dot Dribbling: A Communication and Trust Game](https://www.youtube.com/watch?v=Lm_TtSMzG_A) - YouTube. A partner guides a blindfolded dribbler using only words.
-- T4 (Intermediate) [How to Build Positive Team Communication Among Young Players](https://www.youtube.com/watch?v=AVhVCUzIQZY) - YouTube
-- T5 (Basics) [How to Encourage Teamwork and Passing in Youth Hoops](https://www.youtube.com/watch?v=LBaay-YjMEM) - YouTube
 - T6 (Intermediate) [How To Communicate With Teammates](https://www.youtube.com/watch?v=TWhcYeqsZNo) - YouTube
 - T7 (Intermediate) [Build a Great Team Culture in Basketball](https://www.youtube.com/watch?v=aoWfij239aA) - YouTube
 - T8 (Intermediate) [Mastering Game Control: Leadership in Basketball](https://www.youtube.com/shorts/SOMNv7e7MaQ) - YouTube. A short video.
 - T9 (Intermediate) [3 Drills That Build Toughness, Communication, and Team Culture](https://www.youtube.com/watch?v=c_cJh_qIDts) - YouTube. From a college coach. Adapt for 12U.
-- T10 (Intermediate) [5 Best Basketball Drills For 10-12 Year Olds](https://www.youtube.com/watch?v=hpdu2NX_PQ0) - YouTube
 - T30 (Intermediate) [Five Ways To Show Leadership On The Court](https://pgcbasketball.com/blog/five-ways-show-leadership-court/) - PGC Basketball
 
 ### Small games and 3 on 3
@@ -364,8 +276,6 @@ Totals: 323 entries (Basics 75, Intermediate 151, Advanced 97); 258 play in the 
 - T11 (Intermediate) [5 Small Sided Games For Your Next Practice](https://www.youtube.com/watch?v=qVsXFhRlz_g) - YouTube
 - T12 (Intermediate) [3 Team Small-Sided Basketball Games](https://www.youtube.com/watch?v=fVPFR_jdFm0) - YouTube
 - T13 (Intermediate) [Small Sided Game: The Battle](https://www.youtube.com/watch?v=6BjU8ltyy4Y) - YouTube
-- T14 (Basics) [3 on 3 Basketball Drills For Youth](https://www.youtube.com/watch?v=My8UBID01MA) - YouTube
-- T15 (Basics) [Top 5 Basketball 3 on 3 Drills For Youth](https://www.youtube.com/watch?v=86HoysaVyYk) - YouTube
 - T16 (Intermediate) [3 Best 3v3 Basketball Drills For Offense and Defense](https://www.youtube.com/watch?v=ZXbfHpmOUoU) - YouTube
 - T17 (Intermediate) [Drills and Small-Sided Games for Skill Development](https://www.youtube.com/watch?v=NT5Ccdein7s) - YouTube
 - T18 (Intermediate) [Small-Sided Games for Decision-Based Training](https://www.youtube.com/watch?v=Y7OKE3t-D24) - YouTube. From a college coach.
@@ -375,10 +285,7 @@ Totals: 323 entries (Basics 75, Intermediate 151, Advanced 97); 258 play in the 
 
 ### Beat the press as a team
 
-- T20 (Intermediate) [How to Break a Full Court Press With Any Age Group](https://www.youtube.com/watch?v=YX8_udUbVok) - YouTube
-- T21 (Basics) [Easiest Press Break Plays For Youth](https://www.youtube.com/watch?v=h2drIIv4DkI) - YouTube
 - T22 (Intermediate) [How To Break Any Full Court Press](https://www.youtube.com/watch?v=p1Y_9NROVEQ) - YouTube
-- T23 (Intermediate) [How to Break a Full Court Press: Works With All Ages](https://www.youtube.com/watch?v=98RANhoiDJU) - YouTube
 - T24 (Intermediate) [How to Break a Full Court or Half Court Press](https://www.youtube.com/watch?v=D6IL1yNMIFg) - YouTube
 - T25 (Intermediate) [Top 3 Tips How To Beat A Press Defense](https://www.youtube.com/watch?v=nuiPMdlILIA) - YouTube
 - T27 (Advanced) [3 Press Break Strategies That Punish Full-Court Pressure](https://www.breakthroughbasketball.com/offense/press-break-offense) - Breakthrough Basketball
@@ -399,10 +306,9 @@ Totals: 323 entries (Basics 75, Intermediate 151, Advanced 97); 258 play in the 
 
 ### Point guard skills
 
-- P1 (Basics) [5 Skills Every Point Guard Needs](https://www.youtube.com/watch?v=FSw9Jn055vU) - YouTube. Passing, ball handling and quick decisions.
+- P1 (Intermediate) [5 Skills Every Point Guard Needs](https://www.youtube.com/watch?v=FSw9Jn055vU) - YouTube. Passing, ball handling and quick decisions.
 - P2 (Intermediate) [The Point Guard Blueprint](https://www.youtube.com/watch?v=YoFBjTJUDn8) - YouTube
 - P3 (Intermediate) [4 Drills Every Point Guard Needs](https://www.youtube.com/watch?v=v4XeZZyhfKc) - YouTube
-- P4 (Basics) [Youth Point Guard Skills: Advancing the Ball Up Court](https://www.youtube.com/watch?v=YaQcfHtieLU) - YouTube
 - P5 (Advanced) [3 Elite Guard Drills Every Player and Coach Needs](https://www.youtube.com/watch?v=0d0LdBygnEo) - YouTube. Some may be advanced.
 - P6 (Intermediate) [How Great Guards Handle Intense Pressure](https://www.youtube.com/watch?v=HMZPUFhDkN4) - YouTube. More advanced. Watch with a parent or coach first.
 - P7 (Intermediate) [I Studied the Best Point Guards](https://www.youtube.com/watch?v=8QKTtMerPbs) - YouTube
@@ -413,13 +319,11 @@ Totals: 323 entries (Basics 75, Intermediate 151, Advanced 97); 258 play in the 
 - P9 (Intermediate) [How To Develop Court Vision In Basketball](https://www.youtube.com/watch?v=DJNSm1HSRCQ) - YouTube
 - P10 (Advanced) [How Elite Hoopers Use Court Vision](https://www.youtube.com/watch?v=mDQ-JeC03Xc) - YouTube
 - P11 (Intermediate) [The Point Guard's Ultimate Guide To Basketball IQ](https://www.youtube.com/watch?v=07TeLBrYPm0) - YouTube
-- P12 (Basics) [5 Basketball IQ Drills For Youth](https://www.youtube.com/watch?v=pGRNfvmUAWc) - YouTube
 - P13 (Intermediate) [How To Develop A High Basketball IQ](https://www.youtube.com/watch?v=qEOudmB7PDM) - YouTube
 - P14 (Intermediate) [How to Improve Your Basketball IQ](https://www.youtube.com/watch?v=X_USUbes35U) - YouTube
 - P15 (Intermediate) [It Takes 10 Minutes to Transform Your Basketball IQ](https://www.youtube.com/watch?v=pPWlkZYaUvw) - YouTube
 - P16 (Intermediate) [This One Read Will Help You Score More](https://www.youtube.com/watch?v=3GAGMEIjztI) - YouTube
 - P17 (Intermediate) [3 Ways To Level Up Your Basketball IQ](https://www.youtube.com/watch?v=DZ5QWZyNvD8) - YouTube
-- P18 (Basics) [5 Best Basketball Drills For Youth Teams](https://www.youtube.com/watch?v=V-R3dkkhBBk) - YouTube
 - P19 (Intermediate) [Decision Making Basketball Drill](https://www.youtube.com/shorts/6hqiGRbP-jM) - YouTube. A short video.
 - P20 (Intermediate) [How to Make Your Training Actually Show Up in Games](https://www.youtube.com/watch?v=FloGIOB39iU) - YouTube
 
@@ -455,19 +359,15 @@ Totals: 323 entries (Basics 75, Intermediate 151, Advanced 97); 258 play in the 
 
 ### Warm-up
 
-- W1 (Basics) [The Only Warm-Up Drill Your Youth Team Needs](https://www.youtube.com/watch?v=Mj-vaDEH7_M) - YouTube
-- W2 (Basics) [Roots 11: A Dynamic Basketball Warm-Up Routine](https://www.youtube.com/watch?v=jKsnNE7M0Kw) - YouTube
-- W3 (Basics) [The Easiest Warm-Up Ever: 12 Best Basketball Warm-Ups](https://www.youtube.com/watch?v=DKmgbBuQvZw) - YouTube
-- W4 (Basics) [Basketball ACL Injury Prevention Warm-Up](https://www.youtube.com/watch?v=J5WBx2NoqcU) - YouTube
+- W2 (Intermediate) [Roots 11: A Dynamic Basketball Warm-Up Routine](https://www.youtube.com/watch?v=jKsnNE7M0Kw) - YouTube
+- W3 (Intermediate) [The Easiest Warm-Up Ever: 12 Best Basketball Warm-Ups](https://www.youtube.com/watch?v=DKmgbBuQvZw) - YouTube
+- W4 (Intermediate) [Basketball ACL Injury Prevention Warm-Up](https://www.youtube.com/watch?v=J5WBx2NoqcU) - YouTube
 
 ### Footwork
 
-- W5 (Basics) [Jump Stop Pivots (Beginner Footwork)](https://www.youtube.com/watch?v=94nJmvt-6qo) - YouTube
-- W6 (Basics) [How To Do A Jump Stop In Basketball For Kids](https://www.youtube.com/watch?v=FH5xgYD5vQQ) - YouTube
-- W7 (Basics) [Youth Pivot Drill: Forward Pivot to Jump Stop](https://www.youtube.com/shorts/xPMvq9-_2N4) - YouTube. A short video.
-- W8 (Basics) [Basketball Skills: Footwork and Pivoting](https://www.youtube.com/watch?v=yZGe_lad1_Y) - YouTube
-- W9 (Basics) [The Triple Threat](https://www.youtube.com/watch?v=szkISZ7z0XU) - YouTube
-- W10 (Basics) [Triple Threat: Pivot to Pass](https://www.youtube.com/watch?v=5T2yntRCzx8) - YouTube
+- W8 (Intermediate) [Basketball Skills: Footwork and Pivoting](https://www.youtube.com/watch?v=yZGe_lad1_Y) - YouTube
+- W9 (Intermediate) [The Triple Threat](https://www.youtube.com/watch?v=szkISZ7z0XU) - YouTube
+- W10 (Intermediate) [Triple Threat: Pivot to Pass](https://www.youtube.com/watch?v=5T2yntRCzx8) - YouTube
 - W11 (Advanced) [7 Best Drills To Teach Elite Basketball Footwork](https://www.youtube.com/watch?v=nFNXFc0dvzI) - YouTube
 - W12 (Intermediate) [7 Footwork Drills That Made Me A Better Ballhandler](https://www.youtube.com/watch?v=Uz2cdC5ANFY) - YouTube
 
@@ -595,3 +495,9 @@ Five rungs per skill. Passing a rung gives 30 XP.
 - Warm up: 8 minutes of footwork and layups
 - Pick one read to make in the game
 - Pack shoes, jersey, ball and water
+
+## Tutorials under each curriculum block
+
+Every required block in the curriculum (warm-up, session blocks, ladder tests, film note, leadership goal) has a "How to do it (videos)" row of 1 to 3 library videos that explain it. They are mapped in `curriculum.js` (TUT_WARM, TUT_SESSION, TUT_LADDER, TUT_FILM, TUT_LEAD) by YouTube id. The app test checks that every id exists in the library.
+
+**Library cleanup:** entries for young children, beginners and Jr. NBA kid clips were removed, so every video is aimed at ages 12 and up. There is no Basics level left.

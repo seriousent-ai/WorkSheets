@@ -293,6 +293,9 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
     const s1 = await cp.evaluate(() => ({ step: S.curr.step, date: S.curr.date, ids: S.days[1].blocks.map((b) => b.id).join(","), opt: S.days[1].blocks.filter((b) => b.optional).length }));
     ok(s1.step === 0 && s1.date === "2026-11-03" && /^c1-0,c1-1/.test(s1.ids) && s1.opt === 1, "on the first Tuesday step 1 appears, with its video block marked optional");
     ok((await doStep()) === "true", "finishing the required blocks completes the step without the optional video");
+    const tutOk = await cp.evaluate(() => { const ids = new Set(sugList().map((v) => v.yt)); let n = 0, bad = []; CURRICULUM.forEach((st) => (st.blocks || []).forEach((b) => (b.tut || []).forEach((t) => { n++; if (!ids.has(t)) bad.push(t); }))); return { n, bad }; });
+    ok(tutOk.n > 100 && tutOk.bad.length === 0, "every tutorial link in the curriculum points at a library video");
+    ok(await cp.evaluate(() => { ui.day = 1; const d = S.days[1].blocks.find((b) => !b.optional && b.tut && b.tut.length); return !!d && /How to do it/.test(tutHtml(d)) && /sugPlay/.test(tutHtml(d)); }), "step blocks show tutorial videos");
     await cp.evaluate(() => { ui.day = 2; toggleBlock(S.days[2].blocks[0].id); });
     ok(await cp.evaluate(() => !S.logs[dateKey(addDays(mondayOf(new Date()), 2))]), "work on another day cannot be checked off");
     await goDay("2026-11-06T16:00:00");
@@ -315,12 +318,12 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
 
     console.log("Video library");
     await tab(p, "videos");
-    const lib = await p.evaluate(() => ({ n: SUGGESTED_VIDEOS.length, uniq: new Set(SUGGESTED_VIDEOS.map((v) => v.id)).size, urls: new Set(SUGGESTED_VIDEOS.map((v) => v.url)).size, lv: [1, 2, 3].map((l) => SUGGESTED_VIDEOS.filter((v) => v.level === l).length), cats: SUGGESTED_CATS.map((c) => SUGGESTED_VIDEOS.filter((v) => v.cat === c[0]).length) }));
-    ok(lib.n >= 200 && lib.uniq === lib.n && lib.urls === lib.n, `library is large with unique ids and links (${lib.n})`);
-    ok(lib.lv.every((n) => n >= 20) && lib.cats.every((n) => n >= 10), `every level and topic has videos (${lib.lv.join("/")} ; ${lib.cats.join("/")})`);
+    const lib = await p.evaluate(() => ({ n: SUGGESTED_VIDEOS.length, play: SUGGESTED_VIDEOS.filter((v) => v.yt).length, uniq: new Set(sugList().filter((v) => v.yt).map((v) => v.yt)).size, urls: new Set(SUGGESTED_VIDEOS.map((v) => v.url)).size, lv: [1, 2, 3].map((l) => SUGGESTED_VIDEOS.filter((v) => v.level === l).length), cats: SUGGESTED_CATS.map((c) => SUGGESTED_VIDEOS.filter((v) => v.cat === c[0]).length) }));
+    ok(lib.n >= 200 && lib.uniq === lib.play && lib.play >= 150 && lib.urls === lib.n, `library is large with unique ids and links (${lib.n})`);
+    ok(lib.lv[0] === 0 && lib.lv[1] >= 50 && lib.lv[2] >= 50 && lib.cats.every((n) => n >= 10), `every level and topic has videos (${lib.lv.join("/")} ; ${lib.cats.join("/")})`);
     ok(await p.evaluate(() => sugVisible().length > 20 && sugVisible().every((v) => v.level === 3)), "only advanced videos show by default");
     await p.click("[data-a=setLevel][data-n='1']");
-    ok(await p.evaluate(() => sugVisible().some((v) => v.level === 1)), "the level switch brings basics back");
+    ok(await p.evaluate(() => sugVisible().some((v) => v.level === 2)), "the level switch brings intermediate back");
     await p.click("[data-a=setLevel][data-n='3']");
     ok(await p.evaluate(() => sugVisible().every((v) => v.level === 3)), "advanced only filters to advanced");
     await p.click("[data-a=setLevel][data-n='2']");

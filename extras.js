@@ -1316,3 +1316,12 @@ Object.assign(EXTRA_ACTIONS, {
   currBack: () => { if (!currOn()) return; S.curr.step = Math.max(0, S.curr.step - 1); S.curr.finished = false; S.curr.date = ""; $("#modal").innerHTML = ""; toast("Moved back one step."); },
 });
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && typeof currTick === "function" && currTick()) { persist(); if (!ui.form) render(); } });
+
+
+/* ---------- tutorials under each block ---------- */
+function tutHtml(b) {
+  if (!b || !b.tut || !b.tut.length) return "";
+  const items = b.tut.map((id) => sugList().find((v) => v.yt === id)).filter(Boolean);
+  if (!items.length) return "";
+  return `<div class="detail cycnote"><b>How to do it (videos):</b></div><div class="pills">${items.map((v) => `<button class="pill blue" data-a="sugPlay" data-id="${v.id}">${esc(v.title.length > 40 ? v.title.slice(0, 38) + "…" : v.title)}</button>`).join("")}</div>`;
+}

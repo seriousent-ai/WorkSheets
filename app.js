@@ -591,7 +591,7 @@ function viewToday() {
         <button class="check ${on ? "on" : ""}${on && ui.fresh === b.id ? " fresh" : ""}" data-a="toggle" data-id="${b.id}" aria-label="Mark ${esc(b.title)} done">${on ? "✓" : ""}</button>
         <div class="grow"><div class="title strong">${esc(b.title)}</div>
           <div class="detail"><span class="pill">${times[i]}</span>${cur ? ' <span class="pill blue">Up next</span>' : ""}</div>
-          ${b.text ? `<button class="linkbtn" data-a="blockInfo" data-id="${b.id}">${open ? "Hide details" : "Details"}</button>${open ? `<div class="detail">${esc(b.text)}</div>${cycleNoteHtml(b)}${levelUpHtml(b)}` : ""}` : ""}</div>
+          ${b.text ? `<button class="linkbtn" data-a="blockInfo" data-id="${b.id}">${open ? "Hide details" : "Details"}</button>${open ? `<div class="detail">${esc(b.text)}</div>${cycleNoteHtml(b)}${levelUpHtml(b)}${tutHtml(b)}` : ""}` : ""}</div>
         <div class="side">
           <button class="play" data-a="gFrom" data-id="${b.id}" aria-label="Start ${esc(b.title)} timer">▶</button>
           <button class="more" data-a="editBlock" data-id="${b.id}" aria-label="Edit ${esc(b.title)}">•••</button>
