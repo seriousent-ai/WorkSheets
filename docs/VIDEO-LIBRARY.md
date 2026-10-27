@@ -6,7 +6,7 @@ This file records the suggested videos and the written content added in Phase 9.
 
 **Levels:** 1 Basics, 2 Intermediate, 3 Advanced. The app shows only Advanced by default (Level switch under Watch non-stop). Levels were set from titles and my judgement, not from watching.
 
-Totals: 296 entries (Basics 75, Intermediate 138, Advanced 83); 239 play in the app, 57 open in the browser.
+Totals: 323 entries (Basics 75, Intermediate 151, Advanced 97); 258 play in the app, 65 open in the browser.
 
 ## Offense
 
@@ -214,6 +214,31 @@ Totals: 296 entries (Basics 75, Intermediate 138, Advanced 83); 239 play in the 
 - O150 (Intermediate) [How To: Shoot A Floater](https://www.youtube.com/watch?v=s334AgLPDrM) - YouTube
 - O151 (Advanced) [How to Shoot a Floater (with a drill)](https://www.levelupbasket.com/basketball-drills/finishing-drills/floater) - LevelUp Basketball. A timed drill with up to two dribbles.
 
+### Free throws under pressure
+
+- O154 (Advanced) [Train Players to Make Free Throws Under Pressure](https://www.youtube.com/watch?v=3Y1Eebbq1U4) - YouTube. The Win the Game drill.
+- O155 (Intermediate) [7 Best Free Throw Shooting Drills](https://www.youtube.com/watch?v=hXE4PpjSnkg) - YouTube
+- O156 (Intermediate) [A Free Throw Routine to Make More Free Throws](https://www.youtube.com/watch?v=n3BYwfVRxlY) - YouTube
+- O157 (Intermediate) [A Great Free Throw Drill for the End of Practice](https://www.youtube.com/watch?v=TXRGIMIFEls) - YouTube
+- O158 (Advanced) [Finish the Game Pressure Free Throw Shooting Drill](https://coachingtoolbox.net/blog/finish-the-game-pressure-free-throw-shooting-drill) - Coaching Toolbox. Done when tired.
+- O159 (Intermediate) [Free Throw Pressure Shooting Drill](https://shootingdrills.com/drills/free-throw-pressure-shooting-drill/) - ShootingDrills.com. Streaks of 2, 3, 4 and 5 makes.
+
+### Two-ball and advanced dribbling
+
+- O160 (Advanced) [Full 2 Ball Dribbling Workout (Advanced)](https://www.youtube.com/watch?v=J2E4qVaU574) - YouTube
+- O161 (Intermediate) [Top 5 Two Ball Dribbling Drills](https://www.youtube.com/watch?v=znK1nTqRcHk) - YouTube
+- O162 (Intermediate) [The Ultimate 5 Minute 2 Ball Dribbling Workout](https://www.youtube.com/watch?v=g2FaABi85nY) - YouTube
+- O163 (Advanced) [Full Shifty Workout: Ball Handling Workout For Guards](https://www.youtube.com/watch?v=VLxSBheZjlo) - YouTube
+- O164 (Advanced) [Two Ball Dribbling and Ball Handling Drills](https://www.breakthroughbasketball.com/drills/twoballdribblingmoves) - Breakthrough Basketball. High and low combinations.
+- O165 (Advanced) [Two-Ball Dribbling Routine](https://www.usab.com/videos/2021/04/two-ball-dribbling-routine) - USA Basketball
+
+### Off-ball movement
+
+- O166 (Intermediate) [How To Move Without The Ball (Off-Ball Movement and Cuts)](https://www.youtube.com/watch?v=igT90HjVEsI) - YouTube
+- O167 (Advanced) [The No.1 Drill That Unlocks Perfect Off The Ball Movement](https://www.youtube.com/watch?v=9cYsVCVGqcU) - YouTube. Four phases.
+- O168 (Intermediate) [How to Move without the Ball](https://www.youtube.com/watch?v=MX9EobPQg18) - YouTube
+- O169 (Intermediate) [How to Move without the Ball and Get Open Shots](https://www.breakthroughbasketball.com/offense/cutting-moving-without-ball) - Breakthrough Basketball
+
 ## Defense
 
 ### Stance and slides
@@ -305,6 +330,19 @@ Totals: 296 entries (Basics 75, Intermediate 138, Advanced 83); 239 play in the 
 - D61 (Advanced) [6 Footwork Progressions For Elite Defenders](https://www.youtube.com/watch?v=s46bufWWJ6c) - YouTube. From a Nike Elite Guard Camp.
 - D62 (Advanced) [The 4 Backyard Drills That Build Elite Defenders](https://www.youtube.com/watch?v=S3pP8pvSpyo) - YouTube
 
+### Closeouts and help
+
+- D63 (Intermediate) [The New Way to Teach Defensive Closeouts](https://www.youtube.com/watch?v=LVrOh4KLNyQ) - YouTube
+- D64 (Advanced) [How to Guard Anyone (Lockdown Defense Tips)](https://www.youtube.com/watch?v=rUngFjrnc9o) - YouTube
+- D65 (Intermediate) [Basketball Defense: Closeouts](https://www.youtube.com/watch?v=PFY5mw-iYHo) - YouTube
+- D66 (Advanced) [Master The Art Of Help Defense: Lockdown Drills](https://www.youtube.com/watch?v=aAG9Xbw1KLA) - YouTube
+- D67 (Advanced) [Closeout Defense with Dan Burke](https://www.youtube.com/watch?v=4RuYhzwnzDE) - YouTube. An NBA assistant coach.
+
+### Defending bigger and quicker players
+
+- D68 (Advanced) [How to Play Elite Defense as an Undersized Guard](https://www.youtube.com/watch?v=Ro6Ni3g9PZg) - YouTube
+- D69 (Intermediate) [How to Guard Bigger Players (Even If You're Undersized)](https://www.youtube.com/watch?v=p4ipGkMQ8OU) - YouTube
+
 ## Teamwork
 
 ### Communication and team culture
@@ -352,6 +390,10 @@ Totals: 296 entries (Basics 75, Intermediate 138, Advanced 83); 239 play in the 
 ### Team offense and spacing
 
 - T31 (Advanced) [Four Point Guard Rules for Attacking Zone Defense](https://coachad.com/articles/point-guard-attack-zone-defense/) - CoachAD
+
+### Fast break
+
+- T32 (Advanced) [Mastering the Fast Break: The 3-on-2 Transition Drill](https://www.vantasports.ai/drills/fast-break-3-on-2-transition-drill-basketball) - Vanta Sports
 
 ## Point guard
 
@@ -402,6 +444,12 @@ Totals: 296 entries (Basics 75, Intermediate 138, Advanced 83); 239 play in the 
 ### Mindset
 
 - P30 (Intermediate) [Increase Your Mental Toughness](https://pgcbasketball.com/blog/increase-your-mental-toughness/) - PGC Basketball
+
+### Film study
+
+- P31 (Advanced) [How to Be an Elite Point Guard](https://www.youtube.com/watch?v=iDOxVSkPMLc) - YouTube. Darren Collison reviews film with young point guards.
+- P32 (Intermediate) [Film Breakdown Part 1: Post-Game Analysis](https://betterbasketball.com/film-breakdown-part-1-post-game-analysis/) - Better Basketball
+- P33 (Advanced) [Point Guard Film Study: Coverage and Concepts](https://peaktraining.ai/basketball/point-guard/film-study) - Peak Training. Name the coverage at the snap of the screen.
 
 ## Warm-up and footwork
 

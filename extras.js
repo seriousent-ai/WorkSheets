@@ -72,25 +72,17 @@ function formGame(id) {
 
 /* ---------- team schedule ---------- */
 const EVENT_TYPES = [["practice", "Team practice", 90], ["game", "Game", 60], ["other", "Other", 60]];
-const eventSort = (a, b) => ((a.date + (a.time || "")) < (b.date + (b.time || "")) ? -1 : 1);
-/* A weekly event repeats on the same weekday from its start date (or until its end date). */
-const eventsOn = (ds) => (S.events || []).filter((e) => e.date === ds || (e.repeat === "weekly" && ds >= e.date && (!e.until || ds <= e.until) && Math.round((parseKey(ds) - parseKey(e.date)) / 864e5) % 7 === 0));
-function occurrences(span = 42) {
-  const out = [], last = dateKey(addDays(new Date(), span));
-  for (let i = 0; i <= span; i++) { const ds = dateKey(addDays(new Date(), i)); eventsOn(ds).forEach((e) => out.push({ ...e, date: ds })); }
-  (S.events || []).forEach((e) => { if (e.repeat !== "weekly" && e.date > last) out.push(e); });
-  return out.sort(eventSort);
-}
-const upcomingEvents = (n) => occurrences().slice(0, n);
+const eventsSorted = () => [...(S.events || [])].sort((a, b) => ((a.date + (a.time || "")) < (b.date + (b.time || "")) ? -1 : 1));
+const upcomingEvents = (n) => eventsSorted().filter((e) => daysUntil(e.date) >= 0).slice(0, n);
 function eventMinutes(ds) {
   const l = S.logs[ds];
   if (l && l.team) return 0;
-  return eventsOn(ds).reduce((p, e) => p + (Number(e.minutes) || (EVENT_TYPES.find((t) => t[0] === e.type) || [0, 0, 60])[2]), 0);
+  return (S.events || []).filter((e) => e.date === ds).reduce((p, e) => p + (Number(e.minutes) || (EVENT_TYPES.find((t) => t[0] === e.type) || [0, 0, 60])[2]), 0);
 }
 function scheduleHtml() {
   const list = upcomingEvents(8);
   return `<h2 class="section">Team schedule <button data-a="addEvent">Add</button></h2>
-  <div class="group">${list.map((e) => `<div class="row tap" data-a="editEvent" data-id="${e.id}">${badge("calendar")}<div class="grow"><div class="title strong">${esc(e.title || (EVENT_TYPES.find((t) => t[0] === e.type) || [0, "Event"])[1])} <span class="pill ${e.type === "game" ? "blue" : ""}">${e.type === "game" ? "Game" : e.type === "practice" ? "Practice" : "Event"}</span>${e.repeat === "weekly" ? ' <span class="pill">Every week</span>' : ""}</div><div class="detail">${whenText(e.date)}${e.time ? " · " + clockText(e.time) : ""}${e.place ? " · " + esc(e.place) : ""}</div></div><span class="chev">›</span></div>`).join("") || '<div class="empty">Add Rens practices and games. Today will show what is coming, and the day before a game gets a light session.</div>'}</div>
+  <div class="group">${list.map((e) => `<div class="row tap" data-a="editEvent" data-id="${e.id}">${badge("calendar")}<div class="grow"><div class="title strong">${esc(e.title || (EVENT_TYPES.find((t) => t[0] === e.type) || [0, "Event"])[1])} <span class="pill ${e.type === "game" ? "blue" : ""}">${e.type === "game" ? "Game" : e.type === "practice" ? "Practice" : "Event"}</span></div><div class="detail">${whenText(e.date)}${e.time ? " · " + clockText(e.time) : ""}${e.place ? " · " + esc(e.place) : ""}</div></div><span class="chev">›</span></div>`).join("") || '<div class="empty">Add Rens practices and games. Today will show what is coming, and the day before a game gets a light session.</div>'}</div>
   <p class="small">Scheduled events count toward the weekly 10-hour limit until you log the real minutes for that day.</p>`;
 }
 function eventBanner() {
@@ -115,14 +107,13 @@ function formEvent(id) {
       { k: "time", label: "Start time", type: "time", value: e.time },
       { k: "place", label: "Place", value: e.place, ph: "Gym or court" },
       { k: "minutes", label: "Minutes (counts toward the weekly limit)", type: "number", value: e.minutes, ph: "90" },
-      { k: "repeat", label: "Repeats", type: "select", value: e.repeat || "", opts: [["", "Does not repeat"], ["weekly", "Every week on this day"]] },
     ],
     required: ["date"],
     save(f) {
       S.events ||= [];
       let o = S.events.find((x) => x.id === id);
       if (!o) { o = { id: uid("e") }; S.events.push(o); }
-      Object.assign(o, { type: f.type, title: f.title, date: f.date, time: f.time, place: f.place, minutes: num(f.minutes), repeat: f.repeat || undefined });
+      Object.assign(o, { type: f.type, title: f.title, date: f.date, time: f.time, place: f.place, minutes: num(f.minutes) });
     },
     del: id ? () => { S.events = S.events.filter((x) => x.id !== id); } : null,
     delLabel: "Delete event",
@@ -509,12 +500,10 @@ const SNAP_KEY = "tristan-snapshots";
 const readSnaps = () => { try { return JSON.parse(localStorage.getItem(SNAP_KEY)) || []; } catch (e) { return []; } };
 function writeSnaps(list) { try { localStorage.setItem(SNAP_KEY, JSON.stringify(list.slice(-8))); } catch (e) {} }
 const snapPlan = () => JSON.parse(JSON.stringify({ days: S.days, videos: S.videos.map((v) => ({ ...v })), links: S.links, notes: S.notes, rewards: S.rewards }));
-function takeSnapshot(label, withEvents) {
+function takeSnapshot(label) {
   const list = readSnaps(), today = dateKey(new Date());
   if (!label && list.some((x) => x.date === today && !x.label)) return;
-  const plan = snapPlan();
-  if (withEvents) plan.events = JSON.parse(JSON.stringify(S.events || []));
-  list.push({ id: uid("s"), date: today, label: label || "", plan });
+  list.push({ id: uid("s"), date: today, label: label || "", plan: snapPlan() });
   writeSnaps(list);
 }
 function formRestore() {
@@ -1128,7 +1117,7 @@ function formFilmNote(id) {
 /* ---------- game day routine ---------- */
 function gameDayCard() {
   const today = dateKey(new Date());
-  const ev = eventsOn(today).find((x) => x.type === "game");
+  const ev = (S.events || []).find((x) => x.type === "game" && x.date === today);
   const game = (S.games || []).find((g) => g.date === today);
   if (!ev && !game) return "";
   const pre = ((S.logs[today] || {}).pre) || {};
@@ -1186,40 +1175,4 @@ Object.assign(EXTRA_ACTIONS, {
   preToggle: (d) => { const lg = logOf(dateKey(new Date())); lg.pre ||= {}; if (lg.pre[d.i]) delete lg.pre[d.i]; else lg.pre[d.i] = true; },
   leadDone: () => { const { l } = leadOf(); const w = (S.weekly[weekKeyNow()] ||= {}); w.lead = { i: l.i, done: !l.done }; if (w.lead.done) toast("Great leadership. +15 XP"); },
   leadNew: () => { const { l } = leadOf(); const w = (S.weekly[weekKeyNow()] ||= {}); w.lead = { i: (l.i + 1) % LEAD_PROMPTS.length, done: false }; },
-});
-
-
-/* ---------- fit the plan to his real week ---------- */
-const DAY_ORDER = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-function fitSummaryHtml() {
-  const evByDow = (dow) => WEEK_FIT.events.filter((x) => x.dow === dow);
-  const rows = DAY_ORDER.map((name, i) => {
-    const f = WEEK_FIT.days[name], mins = f.blocks.reduce((p, b) => p + b[2], 0), ev = evByDow(i);
-    return `<div class="row"><div class="grow"><div class="title strong">${name} <span class="detail" style="display:inline">${esc(f.theme)}</span></div><div class="detail">${ev.length ? "Team: " + ev.map((x) => esc(x.title) + " " + x.minutes + " min").join(", ") + ". " : ""}App: ${mins} min${f.blocks.length > 1 ? "" : " (optional)"}</div></div></div>`;
-  }).join("");
-  const team = WEEK_FIT.events.reduce((p, x) => p + x.minutes, 0);
-  const own = ["Tuesday", "Friday"].reduce((p, n) => p + WEEK_FIT.days[n].blocks.reduce((q, b) => q + b[2], 0), 0);
-  return `<p class="small">School comes first and he needs rest, so this plan keeps the full one-hour sessions to Tuesday and Friday, makes Monday a real rest day, and gives the busy days only tiny optional notes. It replaces the Monday to Sunday plan. Your progress, videos, links, notes and rewards are not touched. The team schedule gets Rens practice, skills training and the league game every week. The plan is saved first, so Restore an earlier version of the plan can undo it, schedule included.</p>
-    <div class="group">${rows}</div>
-    <p class="small">Organized basketball is about ${((team + own) / 60).toFixed(1)} hours a week, including the two one-hour sessions. The optional notes can add up to 30 minutes. Edit the game length in Week, Team schedule if it differs from ${WEEK_FIT.events.find((x) => x.type === "game").minutes} minutes.</p>
-    <button class="btn" data-a="fitApply">Fit the plan to his week</button>`;
-}
-function nextWeekdayDate(dow) { return dateKey(addDays(mondayOf(new Date()), dow)); }
-function applyFit() {
-  takeSnapshot("before fitting the week", true);
-  S.blockTitles ||= {};
-  S.days.forEach((d) => d.blocks.forEach((b) => { S.blockTitles[b.id] = b.title.toLowerCase(); }));
-  S.days.forEach((d) => {
-    const f = WEEK_FIT.days[d.name];
-    if (!f) return;
-    d.theme = f.theme; d.cue = f.cue;
-    d.blocks = f.blocks.map(([id, title, minutes, text]) => ({ id, title, minutes, text }));
-  });
-  S.events = (S.events || []).filter((x) => !x.fit);
-  WEEK_FIT.events.forEach((x) => S.events.push({ id: uid("e"), type: x.type, title: x.title, date: nextWeekdayDate(x.dow), time: "", place: "", minutes: x.minutes, repeat: "weekly", fit: true }));
-  ui.day = Math.min(ui.day, S.days.length - 1);
-}
-Object.assign(EXTRA_ACTIONS, {
-  fitOpen: () => openInfo("Fit the plan to his week", fitSummaryHtml()),
-  fitApply: () => { applyFit(); $("#modal").innerHTML = ""; toast("The plan now fits his week."); },
 });

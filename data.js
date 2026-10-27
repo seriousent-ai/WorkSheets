@@ -483,35 +483,31 @@ const SUGGESTED_VIDEOS = [
   {"id": "s-t31", "cat": "teamwork", "group": "Team offense and spacing", "code": "T31", "level": 3, "title": "Four Point Guard Rules for Attacking Zone Defense", "url": "https://coachad.com/articles/point-guard-attack-zone-defense/", "src": "CoachAD"},
   {"id": "s-o152", "cat": "offense", "group": "Advanced ball screens", "code": "O152", "level": 3, "title": "Pick and Roll Decision Making with C.J. McCollum", "url": "https://coachingtoolbox.net/pick-and-roll-decision-making-ft-c-j-mccollum-and-coach-chris", "src": "Coaching Toolbox", "note": "Read the screener's defender."},
   {"id": "s-o153", "cat": "offense", "group": "Pull-ups and step-backs", "code": "O153", "level": 3, "title": "Point Guard Shooting Drills: Off Ball Screens", "url": "https://hoopsking.com/blogs/default-blog/blogpoint-guard-shooting-drills-off-ball-screens", "src": "Hoops King"},
+  {"id": "s-d63", "cat": "defense", "group": "Closeouts and help", "code": "D63", "level": 2, "title": "The New Way to Teach Defensive Closeouts", "yt": "LVrOh4KLNyQ", "url": "https://www.youtube.com/watch?v=LVrOh4KLNyQ", "src": "YouTube"},
+  {"id": "s-d64", "cat": "defense", "group": "Closeouts and help", "code": "D64", "level": 3, "title": "How to Guard Anyone (Lockdown Defense Tips)", "yt": "rUngFjrnc9o", "url": "https://www.youtube.com/watch?v=rUngFjrnc9o", "src": "YouTube"},
+  {"id": "s-d65", "cat": "defense", "group": "Closeouts and help", "code": "D65", "level": 2, "title": "Basketball Defense: Closeouts", "yt": "PFY5mw-iYHo", "url": "https://www.youtube.com/watch?v=PFY5mw-iYHo", "src": "YouTube"},
+  {"id": "s-d66", "cat": "defense", "group": "Closeouts and help", "code": "D66", "level": 3, "title": "Master The Art Of Help Defense: Lockdown Drills", "yt": "aAG9Xbw1KLA", "url": "https://www.youtube.com/watch?v=aAG9Xbw1KLA", "src": "YouTube"},
+  {"id": "s-d67", "cat": "defense", "group": "Closeouts and help", "code": "D67", "level": 3, "title": "Closeout Defense with Dan Burke", "yt": "4RuYhzwnzDE", "url": "https://www.youtube.com/watch?v=4RuYhzwnzDE", "src": "YouTube", "note": "An NBA assistant coach."},
+  {"id": "s-d68", "cat": "defense", "group": "Defending bigger and quicker players", "code": "D68", "level": 3, "title": "How to Play Elite Defense as an Undersized Guard", "yt": "Ro6Ni3g9PZg", "url": "https://www.youtube.com/watch?v=Ro6Ni3g9PZg", "src": "YouTube"},
+  {"id": "s-d69", "cat": "defense", "group": "Defending bigger and quicker players", "code": "D69", "level": 2, "title": "How to Guard Bigger Players (Even If You're Undersized)", "yt": "p4ipGkMQ8OU", "url": "https://www.youtube.com/watch?v=p4ipGkMQ8OU", "src": "YouTube"},
+  {"id": "s-o154", "cat": "offense", "group": "Free throws under pressure", "code": "O154", "level": 3, "title": "Train Players to Make Free Throws Under Pressure", "yt": "3Y1Eebbq1U4", "url": "https://www.youtube.com/watch?v=3Y1Eebbq1U4", "src": "YouTube", "note": "The Win the Game drill."},
+  {"id": "s-o155", "cat": "offense", "group": "Free throws under pressure", "code": "O155", "level": 2, "title": "7 Best Free Throw Shooting Drills", "yt": "hXE4PpjSnkg", "url": "https://www.youtube.com/watch?v=hXE4PpjSnkg", "src": "YouTube"},
+  {"id": "s-o156", "cat": "offense", "group": "Free throws under pressure", "code": "O156", "level": 2, "title": "A Free Throw Routine to Make More Free Throws", "yt": "n3BYwfVRxlY", "url": "https://www.youtube.com/watch?v=n3BYwfVRxlY", "src": "YouTube"},
+  {"id": "s-o157", "cat": "offense", "group": "Free throws under pressure", "code": "O157", "level": 2, "title": "A Great Free Throw Drill for the End of Practice", "yt": "TXRGIMIFEls", "url": "https://www.youtube.com/watch?v=TXRGIMIFEls", "src": "YouTube"},
+  {"id": "s-o158", "cat": "offense", "group": "Free throws under pressure", "code": "O158", "level": 3, "title": "Finish the Game Pressure Free Throw Shooting Drill", "url": "https://coachingtoolbox.net/blog/finish-the-game-pressure-free-throw-shooting-drill", "src": "Coaching Toolbox", "note": "Done when tired."},
+  {"id": "s-o159", "cat": "offense", "group": "Free throws under pressure", "code": "O159", "level": 2, "title": "Free Throw Pressure Shooting Drill", "url": "https://shootingdrills.com/drills/free-throw-pressure-shooting-drill/", "src": "ShootingDrills.com", "note": "Streaks of 2, 3, 4 and 5 makes."},
+  {"id": "s-o160", "cat": "offense", "group": "Two-ball and advanced dribbling", "code": "O160", "level": 3, "title": "Full 2 Ball Dribbling Workout (Advanced)", "yt": "J2E4qVaU574", "url": "https://www.youtube.com/watch?v=J2E4qVaU574", "src": "YouTube"},
+  {"id": "s-o161", "cat": "offense", "group": "Two-ball and advanced dribbling", "code": "O161", "level": 2, "title": "Top 5 Two Ball Dribbling Drills", "yt": "znK1nTqRcHk", "url": "https://www.youtube.com/watch?v=znK1nTqRcHk", "src": "YouTube"},
+  {"id": "s-o162", "cat": "offense", "group": "Two-ball and advanced dribbling", "code": "O162", "level": 2, "title": "The Ultimate 5 Minute 2 Ball Dribbling Workout", "yt": "g2FaABi85nY", "url": "https://www.youtube.com/watch?v=g2FaABi85nY", "src": "YouTube"},
+  {"id": "s-o163", "cat": "offense", "group": "Two-ball and advanced dribbling", "code": "O163", "level": 3, "title": "Full Shifty Workout: Ball Handling Workout For Guards", "yt": "VLxSBheZjlo", "url": "https://www.youtube.com/watch?v=VLxSBheZjlo", "src": "YouTube"},
+  {"id": "s-o164", "cat": "offense", "group": "Two-ball and advanced dribbling", "code": "O164", "level": 3, "title": "Two Ball Dribbling and Ball Handling Drills", "url": "https://www.breakthroughbasketball.com/drills/twoballdribblingmoves", "src": "Breakthrough Basketball", "note": "High and low combinations."},
+  {"id": "s-o165", "cat": "offense", "group": "Two-ball and advanced dribbling", "code": "O165", "level": 3, "title": "Two-Ball Dribbling Routine", "url": "https://www.usab.com/videos/2021/04/two-ball-dribbling-routine", "src": "USA Basketball"},
+  {"id": "s-o166", "cat": "offense", "group": "Off-ball movement", "code": "O166", "level": 2, "title": "How To Move Without The Ball (Off-Ball Movement and Cuts)", "yt": "igT90HjVEsI", "url": "https://www.youtube.com/watch?v=igT90HjVEsI", "src": "YouTube"},
+  {"id": "s-o167", "cat": "offense", "group": "Off-ball movement", "code": "O167", "level": 3, "title": "The No.1 Drill That Unlocks Perfect Off The Ball Movement", "yt": "9cYsVCVGqcU", "url": "https://www.youtube.com/watch?v=9cYsVCVGqcU", "src": "YouTube", "note": "Four phases."},
+  {"id": "s-o168", "cat": "offense", "group": "Off-ball movement", "code": "O168", "level": 2, "title": "How to Move without the Ball", "yt": "MX9EobPQg18", "url": "https://www.youtube.com/watch?v=MX9EobPQg18", "src": "YouTube"},
+  {"id": "s-o169", "cat": "offense", "group": "Off-ball movement", "code": "O169", "level": 2, "title": "How to Move without the Ball and Get Open Shots", "url": "https://www.breakthroughbasketball.com/offense/cutting-moving-without-ball", "src": "Breakthrough Basketball"},
+  {"id": "s-p31", "cat": "pg", "group": "Film study", "code": "P31", "level": 3, "title": "How to Be an Elite Point Guard", "yt": "iDOxVSkPMLc", "url": "https://www.youtube.com/watch?v=iDOxVSkPMLc", "src": "YouTube", "note": "Darren Collison reviews film with young point guards."},
+  {"id": "s-p32", "cat": "pg", "group": "Film study", "code": "P32", "level": 2, "title": "Film Breakdown Part 1: Post-Game Analysis", "url": "https://betterbasketball.com/film-breakdown-part-1-post-game-analysis/", "src": "Better Basketball"},
+  {"id": "s-p33", "cat": "pg", "group": "Film study", "code": "P33", "level": 3, "title": "Point Guard Film Study: Coverage and Concepts", "url": "https://peaktraining.ai/basketball/point-guard/film-study", "src": "Peak Training", "note": "Name the coverage at the snap of the screen."},
+  {"id": "s-t32", "cat": "teamwork", "group": "Fast break", "code": "T32", "level": 3, "title": "Mastering the Fast Break: The 3-on-2 Transition Drill", "url": "https://www.vantasports.ai/drills/fast-break-3-on-2-transition-drill-basketball", "src": "Vanta Sports"},
 ];
-
-
-/* A week built around Tristan's real schedule: Rens practice Saturday and Sunday (2 hours each), skills training Sunday (1.5 hours)
-   and Thursday (1.5 hours), and the league game on Wednesday. School comes first and he needs rest, so Monday is a real rest day,
-   Tuesday and Friday are the full one-hour sessions, and the busy days only get tiny optional notes.
-   Applied from Guide, "Fit the plan to his real week". */
-const fitBlocks = (day, from) => DEFAULT_DATA.days[from].blocks.map((b, i) => [`${day}-${i}`, b.title, b.minutes, b.text]);
-const WEEK_FIT = {
-  days: {
-    Monday: { theme: "Rest day", cue: "No basketball today. Homework, family time, and bed on time.", blocks: [
-      ["monday-0", "Rest day: no basketball", 0, "Nothing from the app today. Rest his legs after a big weekend. Check this off when the day is done."]] },
-    Tuesday: { theme: "Create a passing lane", cue: "Homework first. Read the defender before choosing a receiver. The league game is tomorrow, so keep the pace controlled and get to bed early.", blocks: fitBlocks("tuesday", 1) },
-    Wednesday: { theme: "League game day", cue: "Warm up, drink water, and trust your training. Nothing extra today.", blocks: [
-      ["wednesday-0", "Pre-game touches (optional)", 5, "A few minutes of loose handle and 10 free throws. Pick one read to make in the game."]] },
-    Thursday: { theme: "Skills training day", cue: "Skills training is the work today. Homework, dinner and sleep come next.", blocks: [
-      ["thursday-0", "Film note (optional)", 5, "After skills training, write one thing you learned and one thing to fix in Film notes (Videos tab)."]] },
-    Friday: { theme: "Apply and measure", cue: "Homework first. Measure progress against his own baseline and choose one improvement for next week. Easy on the legs: a big weekend is coming.", blocks: fitBlocks("friday", 5) },
-    Saturday: { theme: "Rens practice day", cue: "Practice is the work today. Log how your body feels and one thing you improved.", blocks: [
-      ["saturday-5", "Cooldown and log", 5, COOLDOWN]] },
-    Sunday: { theme: "Practice and skills day", cue: "A big day on the court. Let Tristan answer first. School first, then one practical adjustment.", blocks: [
-      ["sunday-2", "Review the training log", 5, "Choose one skill and one leadership goal for next week."],
-      ["sunday-3", "Parent-player check-in", 10, "Relaxed check-in. Start with school: what is due this week. Then plan around team events, sleep, and recovery."]] }
-  },
-  events: [
-    { title: "Rens practice", type: "practice", dow: 5, minutes: 120 },
-    { title: "Rens practice", type: "practice", dow: 6, minutes: 120 },
-    { title: "Skills training", type: "other", dow: 6, minutes: 90 },
-    { title: "League game", type: "game", dow: 2, minutes: 60 },
-    { title: "Skills training", type: "other", dow: 3, minutes: 90 }
-  ]
-};
