@@ -401,6 +401,9 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
     await q.evaluate(() => { Prefs.parent = "Jalen"; Prefs.save(); });
     await q.reload(); await q.waitForSelector("#splash", { state: "detached" });
     ok((await q.locator(".ovr").count()) > 0, "Family view opens the progress overview");
+    await q.waitForTimeout(1500);
+    ok(!/not connected/i.test(await q.textContent(".ovr-sync")), "the opening progress overview knows the phone is connected");
+    ok(/Synced/.test(await q.textContent(".ovr-sync")), "the opening progress overview shows when it last synced");
     await q.click("[data-a=ovrClose]");
     ok((await q.textContent(".greet")).includes("Jalen"), "greets Jalen");
     ok((await q.textContent(".psum")).includes("session"), "Family view opens with a sessions-only summary");

@@ -217,6 +217,7 @@ const Sync = {
       this.err = "";
       this.setStatus("ok");
       if (changed) { saveLocal(); if (!ui.form) render(); }
+      else if (ui.overview && !ui.form) renderOverview();
     } catch (e) {
       this.err = this.explain(e);
       this.setStatus(navigator.onLine ? "error" : "offline");

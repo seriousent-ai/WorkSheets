@@ -1,6 +1,7 @@
 # Changes
 
 ## Phase 9
+- Fix: on a phone with Family view on, the progress overview that opens at launch said the phone was not connected until Refresh was tapped. The app now loads the family code before the first screen is drawn, and the overview updates itself when the first sync finishes.
 - Drill details have a "Make this harder" button with a harder version for each core drill, by day.
 - "Watch, then try it" (Videos tab): seven advanced videos each paired with a short drill (+15 XP).
 - Film notes (Videos tab): one thing seen and one thing to fix (+5 XP each).
