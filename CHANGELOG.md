@@ -1,6 +1,7 @@
 # Changes
 
 ## Phase 9
+- Fix: while the curriculum is on, the Week screen's goal said "of 6 sessions" while the progress overview said 2. Both now use the two step days.
 - Watched tracker: every playable library video has Mark watched, the Videos tab shows how many he has watched, and tutorial pills show a check mark. The player sheet has Mark watched and "Does not play or does not fit? Hide it". Watched marks sync and are cleared when starting from scratch. Family view phones cannot mark videos watched.
 - Restore old progress: after starting from scratch, Guide, Curriculum can bring back the old sessions, XP, badges and games (it turns the curriculum off and keeps a copy of the current state first). Works from the backup saved on that phone.
 - A step that comes back says why: "back because it was not finished last time", and on other days "Still waiting".

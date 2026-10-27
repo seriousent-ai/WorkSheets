@@ -312,6 +312,7 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
     ok(cu[0] === 1 && cu[1] === 0 && /Check-up 1/.test(cu[2]), "a check-up step has the ladder tests, and checking one off passes that rung");
     const pcs = await cp.evaluate(() => { Prefs.parent = "Dad"; const before = S.curr.step; ACTIONS.currSkip({}); const after = S.curr.step; ACTIONS.currBack({}); return [before, after, S.curr.step]; });
     ok(pcs[1] === pcs[0] + 1 && pcs[2] === pcs[0], "a parent can unlock or go back a step");
+    ok(await cp.evaluate(() => { ui.tab = "week"; render(); const t = document.querySelector(".hero .big").textContent; ui.tab = "today"; render(); return /of 2 sessions/.test(t); }), "while the curriculum is on, the Week goal is the two step days, not six sessions");
     const ex = await cp.evaluate(() => {
       Prefs.parent = "";
       S.games = [{ id: "g9", date: "2026-11-09", opp: "X", result: "W", pts: 5, ast: 1, tov: 1, stl: 0 }]; persist();

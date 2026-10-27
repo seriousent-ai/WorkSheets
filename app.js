@@ -634,7 +634,7 @@ function viewWeek() {
   const mon = mondayOf(new Date());
   const monKey = dateKey(mon);
   const n = sessionsInWeek(monKey);
-  const goal = S.days.length > 6 ? 6 : S.days.length;
+  const goal = weeklyGoal();
   const wk = S.weekly[monKey] || {};
   return `
   <h1 class="large">This Week</h1>
