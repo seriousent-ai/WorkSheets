@@ -37,7 +37,7 @@ const Sync = {
   },
   strip(o) { const c = { ...o }; delete c._ts; return JSON.stringify(c); },
   /* The plan is synced in separate pieces so an edit to a video on one phone cannot overwrite an edit to a note on another. */
-  PARTS: { videos: ["videos"], links: ["links"], notes: ["notes"], rewards: ["rewards"], profile: ["profile"], misc: ["note", "games", "events", "monthly", "badges", "goal", "sugHidden", "ladder", "levelUp", "watchTry", "filmNotes"] },
+  PARTS: { videos: ["videos"], links: ["links"], notes: ["notes"], rewards: ["rewards"], profile: ["profile"], misc: ["note", "games", "events", "monthly", "badges", "goal", "sugHidden", "ladder", "levelUp", "watchTry", "filmNotes", "blockTitles"] },
   planParts() {
     const out = {};
     for (const p in this.PARTS) { const o = {}; this.PARTS[p].forEach((k) => (o[k] = S[k])); out[p] = JSON.stringify(o); }
@@ -143,7 +143,7 @@ const Sync = {
       this.last.plan = this.hash(json);
       if (S.partTs && Object.keys(S.partTs).length) return false;
       if (ts <= (S.planTs || 0)) return false;
-      ["days", "videos", "links", "notes", "rewards", "profile", "note", "games", "events", "monthly", "badges", "goal", "sugHidden", "ladder", "levelUp", "watchTry", "filmNotes"].forEach((k) => { if (o[k] !== undefined) S[k] = o[k]; });
+      ["days", "videos", "links", "notes", "rewards", "profile", "note", "games", "events", "monthly", "badges", "goal", "sugHidden", "ladder", "levelUp", "watchTry", "filmNotes", "blockTitles"].forEach((k) => { if (o[k] !== undefined) S[k] = o[k]; });
       S.planTs = ts;
       return true;
     }

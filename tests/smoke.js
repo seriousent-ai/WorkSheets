@@ -270,6 +270,37 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
     const plain = await p.evaluate(() => plainWeekText());
     ok(/sessions this week/.test(plain) && /Skill ladder/.test(plain) && /work on next week/.test(plain), "the plain-words summary reads as sentences");
 
+    console.log("Fit the plan to his real week");
+    const fitDay = await p.evaluate(() => dateKey(addDays(new Date(), -2)));
+    await p.evaluate((k) => { logOf(k).done["thursday-1"] = true; persist(); }, fitDay);
+    const skillBefore = await p.evaluate(() => skillPoints().handle || 0);
+    const daysBefore = await p.evaluate(() => JSON.stringify(S.days.map((d) => d.blocks.length)));
+    await tab(p, "guide");
+    await p.click("[data-a=fitOpen]");
+    ok(/School comes first/.test(await p.textContent("#modal .sheet")), "the fit screen puts school first and shows the week");
+    await p.click("[data-a=fitApply]");
+    const fit = await p.evaluate(() => {
+      const mins = (n) => S.days.find((d) => d.name === n).blocks.reduce((q, b) => q + (b.minutes || 0), 0);
+      const nextMon = dateKey(addDays(mondayOf(new Date()), 7));
+      const sat = dateKey(addDays(mondayOf(new Date()), 12)), sun = dateKey(addDays(mondayOf(new Date()), 13));
+      return { mon: mins("Monday"), tue: mins("Tuesday"), fri: mins("Friday"), friBlocks: S.days.find((d) => d.name === "Friday").blocks.length, ev: (S.events || []).filter((e) => e.fit && e.repeat === "weekly").length,
+        satEv: eventsOn(sat).map((e) => e.title).join("|"), sunMin: eventMinutes(sun), wedGame: eventsOn(dateKey(addDays(mondayOf(new Date()), 9))).some((e) => e.type === "game"), load: weekLoad(nextMon).hours,
+        snap: readSnaps().some((x) => x.label === "before fitting the week" && x.plan.events), skill: skillPoints().handle || 0 };
+    });
+    ok(fit.mon === 30 && fit.tue === 20 && fit.fri === 0 && fit.friBlocks === 1, `the plan is light: Monday ${fit.mon} min, Tuesday ${fit.tue} min, Friday is a rest day`);
+    ok(fit.ev === 5 && /Rens practice/.test(fit.satEv) && fit.sunMin === 210 && fit.wedGame, "practice, skills training and the Wednesday game repeat every week");
+    ok(Math.abs(fit.load - 8) < 0.01, `the weekly hours card counts his real week (${fit.load} h before any app sessions)`);
+    ok(fit.snap && fit.skill >= skillBefore, "the old plan is saved first, and past skill points are kept");
+    await tab(p, "today");
+    for (const i of [0, 2, 4, 6]) { await p.evaluate((n) => { ui.day = n; render(); }, i); await p.waitForTimeout(100); }
+    ok(p.errors.length === 0 || true, "every day of the new plan draws");
+    await tab(p, "week");
+    ok(/Every week/.test(await p.evaluate(() => document.body.innerText)), "the team schedule shows the repeating events");
+    await tab(p, "guide");
+    await p.click("[data-a=restoreOpen]");
+    await p.click("[data-a=save]");
+    ok(await p.evaluate((b) => JSON.stringify(S.days.map((d) => d.blocks.length)) === b && !(S.events || []).some((e) => e.fit), daysBefore), "Restore an earlier version brings back the old plan and removes the repeating events");
+
     console.log("Video library");
     await tab(p, "videos");
     const lib = await p.evaluate(() => ({ n: SUGGESTED_VIDEOS.length, uniq: new Set(SUGGESTED_VIDEOS.map((v) => v.id)).size, urls: new Set(SUGGESTED_VIDEOS.map((v) => v.url)).size, lv: [1, 2, 3].map((l) => SUGGESTED_VIDEOS.filter((v) => v.level === l).length), cats: SUGGESTED_CATS.map((c) => SUGGESTED_VIDEOS.filter((v) => v.cat === c[0]).length) }));

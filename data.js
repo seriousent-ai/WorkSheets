@@ -484,3 +484,41 @@ const SUGGESTED_VIDEOS = [
   {"id": "s-o152", "cat": "offense", "group": "Advanced ball screens", "code": "O152", "level": 3, "title": "Pick and Roll Decision Making with C.J. McCollum", "url": "https://coachingtoolbox.net/pick-and-roll-decision-making-ft-c-j-mccollum-and-coach-chris", "src": "Coaching Toolbox", "note": "Read the screener's defender."},
   {"id": "s-o153", "cat": "offense", "group": "Pull-ups and step-backs", "code": "O153", "level": 3, "title": "Point Guard Shooting Drills: Off Ball Screens", "url": "https://hoopsking.com/blogs/default-blog/blogpoint-guard-shooting-drills-off-ball-screens", "src": "Hoops King"},
 ];
+
+
+/* A lighter week built around Tristan's real schedule: Rens practice Saturday and Sunday (2 hours each), skills training Sunday
+   (1.5 hours) and Thursday (1.5 hours), and the league game on Wednesday. School comes first and he needs rest, so the app asks for
+   little: two short sessions on the free days, tiny optional notes on busy days, and a real rest day on Friday.
+   Applied from Guide, "Fit the plan to his real week". */
+const WEEK_FIT = {
+  days: {
+    Monday: { theme: "Short and sharp", cue: "Homework first. Then 30 focused minutes, and stop on time.", blocks: [
+      ["monday-0", "Warm-up", 5, WARMUP],
+      ["monday-1", "Handle", 7, "2 min stationary control with both hands; 3 min walking and jogging with eyes up; 2 min changes of pace into controlled stops."],
+      ["monday-2", "Pass and decide", 8, "2 min chest and bounce passes; 2 min pivot-and-pass; 2 min one-hand push passes, equal time each hand; 2 min passes off the dribble. Aim at the receiver's ready hands."],
+      ["monday-3", "Shoot", 7, "2 min close-range form; 3 min catch-and-shoot from comfortable spots; 2 min free throws."],
+      ["monday-5", "Cooldown and log", 3, COOLDOWN]] },
+    Tuesday: { theme: "Skill check", cue: "The day before the league game. Homework first, measure, and get to bed early.", blocks: [
+      ["tuesday-0", "Warm-up", 4, WARMUP],
+      ["tuesday-3", "Shoot", 12, "Skill check: 10 passes with each hand at a target, then 25 attempts from five fixed spots and 10 free throws. Record the results in Log, Skill check. If time runs out, stop at 12 minutes and record the attempts."],
+      ["tuesday-5", "Cooldown and log", 4, COOLDOWN]] },
+    Wednesday: { theme: "League game day", cue: "Warm up, drink water, and trust your training. Nothing extra today.", blocks: [
+      ["wednesday-0", "Pre-game touches (optional)", 5, "A few minutes of loose handle and 10 free throws. Pick one read to make in the game."]] },
+    Thursday: { theme: "Skills training day", cue: "Skills training is the work today. Homework, dinner and sleep come next.", blocks: [
+      ["thursday-0", "Film note (optional)", 5, "After skills training, write one thing you learned and one thing to fix in Film notes (Videos tab)."]] },
+    Friday: { theme: "Rest day", cue: "No basketball today. Homework, family time, and bed on time.", blocks: [
+      ["friday-0", "Rest day: no basketball", 0, "Nothing from the app today. Rest his legs before a big weekend. Check this off when the day is done."]] },
+    Saturday: { theme: "Rens practice day", cue: "Practice is the work today. Log how your body feels and one thing you improved.", blocks: [
+      ["saturday-5", "Cooldown and log", 5, COOLDOWN]] },
+    Sunday: { theme: "Practice and skills day", cue: "A big day on the court. Let Tristan answer first. School first, then one practical adjustment.", blocks: [
+      ["sunday-2", "Review the training log", 5, "Choose one skill and one leadership goal for next week."],
+      ["sunday-3", "Parent-player check-in", 10, "Relaxed check-in. Start with school: what is due this week. Then plan around team events, sleep, and recovery."]] }
+  },
+  events: [
+    { title: "Rens practice", type: "practice", dow: 5, minutes: 120 },
+    { title: "Rens practice", type: "practice", dow: 6, minutes: 120 },
+    { title: "Skills training", type: "other", dow: 6, minutes: 90 },
+    { title: "League game", type: "game", dow: 2, minutes: 60 },
+    { title: "Skills training", type: "other", dow: 3, minutes: 90 }
+  ]
+};
