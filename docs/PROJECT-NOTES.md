@@ -190,3 +190,12 @@ Tristan is past intermediate and heading toward advanced, so this phase added le
 - Watching the videos, and whether each one embeds in the app.
 - Real-device checks on both phones (see `docs/REAL-DEVICE-CHECKLIST.md`), real Firebase rules testing, push notifications, App Check and dark or tinted Home Screen icons.
 - Ladder tests, harder drill versions and leadership prompts cannot be edited in the app yet. They live in `data.js`.
+
+
+### Curriculum (added after Phase 9)
+- `curriculum.js` holds `CURR_START` (2026-11-03), `CURR_DAYS` (Tuesday and Friday), `WEEK_FIT` (the plan around his real schedule: Rens practice Saturday and Sunday, skills training Sunday and Thursday, league game Wednesday) and `CURRICULUM` (29 steps: 4 cycle weeks x 6 sessions + a check-up each, then a finish line).
+- State: `S.curr = { on, step, date, finished }` and `S.progressFrom`, both in the synced `misc` piece. On Tristan's phone `currTick()` runs at launch and when the app returns to the foreground. If the last step day's log is complete the step advances; otherwise the same step is placed again on the new step day. Phones in Family view never advance the step.
+- The step is written into that weekday's entry in `S.days` (block ids `c<step>-<n>`), so the Today screen, guided session and XP work as before. Blocks marked `optional` (videos) do not count toward completion. A block's `act` field links it to the skill ladder (`ladder:<skill>:<rung>`) or Watch, then try it (`wt:<id>`).
+- Only today's work can be checked off, and nothing before `CURR_START`.
+- Start from scratch (`startCurriculum()`): snapshot (with events), a full backup in `tristan-backup-before-restart`, progress and games cleared, `progressFrom` set, weekday plan and repeating events applied. `pruneBefore()` and the sync apply step drop anything dated before `progressFrom`.
+- Repeating events: `repeat: "weekly"` on an event, expanded by `eventsOn(date)` and `occurrences()`.

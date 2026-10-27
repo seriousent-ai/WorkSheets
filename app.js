@@ -18,7 +18,7 @@ function load() {
   try { s = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
   if (!s || !Array.isArray(s.days)) s = JSON.parse(JSON.stringify(DEFAULT_DATA));
   s.logs ||= {}; s.weekly ||= {}; s.videos ||= []; s.links ||= []; s.notes ||= [];
-  s.games ||= []; s.events ||= []; s.badges ||= []; s.monthly ||= null; s.goal ||= null; s.sugHidden ||= []; s.ladder ||= {}; s.levelUp ||= {}; s.watchTry ||= {}; s.filmNotes ||= [];
+  s.games ||= []; s.events ||= []; s.badges ||= []; s.monthly ||= null; s.goal ||= null; s.sugHidden ||= []; s.ladder ||= {}; s.levelUp ||= {}; s.blockTitles ||= {}; s.watchTry ||= {}; s.filmNotes ||= [];
   if (s.profile && /\| Intermediate \|/.test(s.profile.subtitle || "")) s.profile.subtitle = s.profile.subtitle.replace("| Intermediate |", "| Advanced |");
   s.rewards ||= JSON.parse(JSON.stringify(DEFAULT_DATA.rewards));
   s.planTs ||= 0;
@@ -145,7 +145,7 @@ function xpTotal() {
 const SKILLS = [["handle", "Ball handling", "ball", /handl/], ["pass", "Passing and reads", "pass", /pass/], ["shoot", "Shooting", "hoop", /shoot/], ["finish", "Finishing and defense", "bolt", /finish|defen/], ["iq", "Court IQ", "eye", /film|discuss|review|check-in|decision/]];
 const SK_LV = [0, 30, 80, 150, 250, 400, 600];
 function skillPoints() {
-  const titles = {}, pts = {};
+  const titles = { ...(S.blockTitles || {}) }, pts = {};
   S.days.forEach((d) => d.blocks.forEach((b) => (titles[b.id] = b.title.toLowerCase())));
   for (const k in S.logs) for (const id in S.logs[k].done || {}) {
     const sk = SKILLS.find((s) => s[3].test(titles[id] || ""));
@@ -207,7 +207,7 @@ function achievements() {
     ["bolt", "Big week", "Finish 6 sessions in one week.", weeks.some((n) => n >= 6)],
     ["trend", "Two-week streak", "4+ sessions two weeks in a row.", streak >= 2],
     ["trophy", "Four-week streak", "Complete a full development cycle.", streak >= 4],
-    ["chart", "Skill check logged", "Record a Saturday skill check.", skill],
+    ["chart", "Skill check logged", "Record a Weekly skill check.", skill],
   ];
 }
 
@@ -344,6 +344,7 @@ function scheduleReminder() {
 /* ---------- four-week cycle ---------- */
 const CYCLE = [["Learn the drills and record a baseline.", "Keep passing distances and shooting spots the same every time."], ["Repeat the same work with better accuracy, balance and eyes-up control.", "Same drills, cleaner."], ["If control is steady, add movement or light defensive pressure.", "Raise only one difficulty at a time."], ["Add live reads and compare the same baseline measures.", "Review the results with your coach."]];
 function cycleInfo() {
+  if (currOn() && S.curr.date) return { n: currStepObj().cw, diff: 0, base: dateKey(mondayOf(new Date())) };
   const thisMon = mondayOf(new Date());
   const diff = Math.round((thisMon - parseKey(S.profile.cycleStart)) / (7 * 864e5));
   return { n: ((diff % 4) + 4) % 4 + 1, diff, base: dateKey(addDays(thisMon, -7 * (((diff % 4) + 4) % 4))) };
@@ -560,6 +561,7 @@ function viewToday() {
   <h1 class="greet">${greet}, ${esc(Prefs.parent ? firstName(Prefs.parent) : firstName(S.profile.name))}</h1>
   <p class="sub tight">${Prefs.parent ? esc("Family view. You are following " + firstName(S.profile.name) + "'s training.") : esc(msg)}</p>
   ${syncLine()}
+  ${currCard()}
   ${parentSummary()}
   ${firstWeekCard()}
   ${noteCard()}
@@ -747,7 +749,7 @@ function trendsHtml() {
   const bw = 28, gap = 10, H = 78;
   const bars = wk.map((x, i) => { const h = Math.round((x.xp / top) * H); const xx = i * (bw + gap) + 6; return `<g><rect class="bar ${x.now ? "now" : ""}" x="${xx}" y="${14 + H - h}" width="${bw}" height="${Math.max(h, x.xp ? 2 : 0)}" rx="5"/><text class="bv" x="${xx + bw / 2}" y="${10 + H - h}" text-anchor="middle">${x.xp || ""}</text><text class="bl" x="${xx + bw / 2}" y="108" text-anchor="middle">${x.mon.getMonth() + 1}/${x.mon.getDate()}</text></g>`; }).join("");
   return `<h2 class="section">Trends</h2>
-  <div class="group">${rows || '<div class="empty">Record a Saturday skill check to see your trends here.</div>'}</div>
+  <div class="group">${rows || '<div class="empty">Record a Weekly skill check to see your trends here.</div>'}</div>
   ${wk.some((x) => x.xp) ? `<div class="group chartcard"><div class="title strong">XP each week</div><svg class="xpchart" viewBox="0 0 320 114" role="img" aria-label="XP earned in each of the last 8 weeks">${bars}</svg></div>` : ""}`;
 }
 function reportData() {
@@ -757,7 +759,7 @@ function reportData() {
   let sessions = 0, xp = 0;
   for (let i = 0; i < 7; i++) { const l = S.logs[dateKey(addDays(mon, i))]; if (l) { if (l.complete) sessions++; xp += xpOfLog(l); } }
   xp += (w.right || w.shoot ? 25 : 0) + (w.improved || w.adjust ? 15 : 0) + (w.challenge && w.challenge.done ? 25 : 0);
-  return { mon, wk, w, sessions, xp, goal: Math.min(6, S.days.length), hours: weekLoad(wk).hours, plain: ui.weekOffset === 0 ? plainWeekText() : "" };
+  return { mon, wk, w, sessions, xp, goal: weeklyGoal(), hours: weekLoad(wk).hours, plain: ui.weekOffset === 0 ? plainWeekText() : "" };
 }
 function reportText(r) {
   const w = r.w, sk = [];
@@ -794,7 +796,7 @@ async function reportImage(r) {
   card(550, 450, r.xp, "XP earned");
   const w = r.w, rows = [["Passes, right / left", w.right !== undefined && w.right !== "" ? `${w.right} / ${w.left ?? "-"} of 10` : ""], ["Shots made", w.shoot ? `${w.shoot} of 25` : ""], ["Free throws", w.ft ? `${w.ft} of 10` : ""], ["Lost balls", w.lost || ""], ["Good reads", w.good || ""]].filter((x) => x[1] !== "");
   let y = 770;
-  t("Saturday skill check", 70, y, 40, "#ffffff"); y += 30;
+  t("Weekly skill check", 70, y, 40, "#ffffff"); y += 30;
   if (!rows.length) { y += 50; t("No skill check recorded this week", 70, y, 32, "rgba(255,255,255,.6)", 500); }
   rows.forEach(([l, v]) => { y += 62; t(l, 70, y, 34, "rgba(255,255,255,.8)", 500); t(String(v), 1010, y, 36, "#ffffff", 700, "right"); });
   if (w.adjust) { t("Next week's one adjustment", 70, 1150, 30, "#ffb340", 600); g.font = "500 34px -apple-system, Helvetica, Arial, sans-serif"; g.fillStyle = "#fff"; g.textAlign = "left"; let line = "", yy = 1200; for (const word of w.adjust.split(" ")) { if (g.measureText(line + word).width > 940) { g.fillText(line, 70, yy); yy += 46; line = ""; } line += word + " "; } g.fillText(line, 70, yy); }
@@ -840,7 +842,7 @@ function viewLog() {
     <div class="row"><div class="grow"><div class="detail">${esc(firstName(S.profile.name))}'s goal</div><div class="title">${esc(w.goal) || "Tap Edit to set one"}</div></div></div>
     <div class="row"><div class="grow"><div class="detail">Weekly challenge</div><div class="title">${w.challenge ? esc(w.challenge.text) + (w.challenge.done ? " (done)" : "") : "None chosen"}</div></div></div></div>
   <h2 class="section">Daily log</h2><div class="group">${rows}</div>
-  <h2 class="section">Saturday skill check <button data-a="editSkill">Edit</button></h2>
+  <h2 class="section">Weekly skill check <button data-a="editSkill">Edit</button></h2>
   <div class="group">
     <div class="row"><div class="grow">On-target passes (10 each hand)</div><div class="detail">R ${val("right")} · L ${val("left")}${pb("right")}</div></div>
     <div class="row"><div class="grow">Shooting (5 per spot)</div><div class="detail">${val("shoot", " / 25")}${pb("shoot")}</div></div>
@@ -912,6 +914,7 @@ function viewGuide() {
     <div class="row tap" data-a="share"><div class="grow">Send backup (AirDrop, Messages)</div><span class="chev">›</span></div>
     <div class="row tap" data-a="export"><div class="grow">Export backup</div><span class="chev">›</span></div>
     <div class="row tap" data-a="import"><div class="grow">Import backup</div><span class="chev">›</span></div>
+    <div class="row tap" data-a="currOpen"><div class="grow"><div class="title strong">Curriculum</div><div class="detail">${currOn() ? esc("Step " + currStepObj().n + " of " + CURRICULUM.length + ": " + currStepObj().name) : "Start the 29-step curriculum from scratch"}</div></div><span class="chev">›</span></div>
     <div class="row tap" data-a="restoreOpen"><div class="grow">Restore an earlier version of the plan</div><span class="chev">›</span></div>
     <div class="row tap" data-a="reset"><div class="grow" style="color:var(--red-text)">Reset to original plan</div></div></div>
   <p class="small">Everything is saved on this device. Uploaded video clips stay on this device and are not part of the backup file. Each device keeps its own copy. To move progress or changes between devices, use Send backup on one and Import backup on the other. Install: in Safari tap Share, then Add to Home Screen.</p>`;
@@ -1033,7 +1036,7 @@ function overviewHtml() {
   const mon = mondayOf(new Date()), wk = dateKey(mon);
   const total = completeDates().length, lv = levelInfo(total), xp = xpTotal(), { r, ovr } = ratings();
   const days = S.days.slice(0, 7).map((d, i) => { const date = dateKey(addDays(mon, i)); const l = S.logs[date] || { done: {} }; return { d, i, date, l, c: d.blocks.filter((b) => l.done && l.done[b.id]).length }; });
-  const sessions = days.filter((x) => x.l.complete).length, goal = Math.min(6, S.days.length);
+  const sessions = days.filter((x) => x.l.complete).length, goal = weeklyGoal();
   const load = weekLoad(wk);
   const sleeps = days.map((x) => x.l.sleep).filter(Boolean), avgSleep = sleeps.length ? Math.round((sleeps.reduce((p, q) => p + q, 0) / sleeps.length) * 10) / 10 : null;
   const sore = days.filter((x) => x.l.body === 3).length;
@@ -1441,7 +1444,7 @@ function xpPop(text) {
   setTimeout(() => s.remove(), 1100);
 }
 function skillPointsOn(date) {
-  const titles = {}, pts = {};
+  const titles = { ...(S.blockTitles || {}) }, pts = {};
   S.days.forEach((d) => d.blocks.forEach((b) => (titles[b.id] = b.title.toLowerCase())));
   for (const id in (S.logs[date] || {}).done || {}) {
     const sk = SKILLS.find((s) => s[3].test(titles[id] || ""));
@@ -1467,6 +1470,7 @@ function buildSummary(date, crossed) {
   };
 }
 function toggleBlock(id) {
+  if (!currCanToggle()) return;
   const day = S.days[ui.day];
   const lg = logOf(dateOf(ui.day));
   const wasComplete = !!lg.complete;
@@ -1474,7 +1478,10 @@ function toggleBlock(id) {
   lg.done[id] = !lg.done[id];
   ui.fresh = lg.done[id] ? id : null;
   if (!lg.done[id]) delete lg.done[id];
-  lg.complete = day.blocks.length > 0 && day.blocks.every((b) => lg.done[b.id]);
+  const req = day.blocks.filter((b) => !b.optional);
+  lg.complete = req.length > 0 && req.every((b) => lg.done[b.id]);
+  const blk = day.blocks.find((b) => b.id === id);
+  if (blk && blk.act) currAct(blk.act, !!lg.done[id]);
   const gain = xpTotal() - before;
   if (lg.done[id]) Sfx.swish();
   if (gain > 0) {
@@ -1640,7 +1647,7 @@ const ACTIONS = {
   wkNext: () => { if (ui.weekOffset < 0) ui.weekOffset++; },
   editLogDay: (d) => formLogDay(d.date),
   editWeekGoals: () => weekForm("Weekly goals", [["priority", "Coach's priority", "textarea"], ["goal", "My goal", "textarea"]]),
-  editSkill: () => weekForm("Saturday skill check", [["right", "Right-hand passes on target (of 10)", "number"], ["left", "Left-hand passes on target (of 10)", "number"], ["shoot", "Shots made (of 25)", "number"], ["ft", "Free throws made (of 10)", "number"], ["lost", "Balls lost on cone course", "number"], ["good", "Good game reads", "number"]]),
+  editSkill: () => weekForm("Weekly skill check", [["right", "Right-hand passes on target (of 10)", "number"], ["left", "Left-hand passes on target (of 10)", "number"], ["shoot", "Shots made (of 25)", "number"], ["ft", "Free throws made (of 10)", "number"], ["lost", "Balls lost on cone course", "number"], ["good", "Good game reads", "number"]]),
   editReflect: () => weekForm("Weekly reflection", [["improved", "What improved?"], ["hard", "What was difficult?"], ["fun", "What was fun?"], ["adjust", "Next week's one adjustment"], ["hours", "Organized basketball hours", "number"], ["rest", "Physical rest day"]]),
   editProfile: formProfile,
   addReward: () => formReward(),
@@ -1734,6 +1741,7 @@ if (coachParam) {
   takeSnapshot();
   checkTz();
   if (Prefs.parent) ui.overview = true;
+  if (currTick()) persist();
   render();
   scheduleReminder();
   Sync.start();

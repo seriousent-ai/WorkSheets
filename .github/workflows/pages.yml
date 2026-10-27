@@ -21,7 +21,7 @@ jobs:
       - uses: actions/configure-pages@v5
       - run: |
           mkdir _site
-          cp -r index.html app.js data.js styles.css sw.js manifest.webmanifest icons firebase-config.js sync.js extras.js vendor _site/
+          cp -r index.html app.js data.js curriculum.js styles.css sw.js manifest.webmanifest icons firebase-config.js sync.js extras.js vendor _site/
           sed -i "s/training-plan-v[0-9]*/training-plan-${GITHUB_SHA::8}/" _site/sw.js
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -11,8 +11,9 @@ let failed = 0;
 const ok = (cond, label) => { console.log((cond ? "  ok   " : "  FAIL ") + label); if (!cond) failed++; };
 const phone = { ...devices["iPhone 14 Pro"], viewport: { width: 440, height: 956 }, serviceWorkers: "block" };
 
-async function boot(browser, url, scheme = "light") {
+async function boot(browser, url, scheme = "light", time) {
   const ctx = await browser.newContext({ ...phone, colorScheme: scheme });
+  if (time) await ctx.clock.setFixedTime(time);
   // The tests never reach the real YouTube; a blank page stands in for the player.
   await ctx.route(/^https:\/\/(www\.)?youtube\.com\//, (r) => r.fulfill({ status: 200, contentType: "text/html", body: "<!doctype html><title>player</title>" }));
   const page = await ctx.newPage();
@@ -269,6 +270,48 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
     await p.evaluate(() => { delete S.weekly[weekKeyNow()].lead; if (!Object.keys(S.weekly[weekKeyNow()]).length) delete S.weekly[weekKeyNow()]; render(); });
     const plain = await p.evaluate(() => plainWeekText());
     ok(/sessions this week/.test(plain) && /Skill ladder/.test(plain) && /work on next week/.test(plain), "the plain-words summary reads as sentences");
+
+    console.log("Curriculum: start from scratch, strict order, missed steps repeat");
+    const cur = await boot(browser, url, "light", new Date("2026-10-30T16:00:00"));
+    const cp = cur.page;
+    await finishWelcome(cp).catch(() => {});
+    const goDay = async (iso) => { await cur.ctx.clock.setFixedTime(new Date(iso)); await cp.reload(); await cp.waitForSelector("#splash", { state: "detached" }); };
+    const doStep = () => cp.evaluate(() => { const d = S.days[(new Date().getDay() + 6) % 7]; ui.day = (new Date().getDay() + 6) % 7; d.blocks.filter((b) => !b.optional).forEach((b) => toggleBlock(b.id)); persist(); return JSON.stringify(S.logs[dateKey(new Date())].complete); });
+    await cp.evaluate(() => { S.games = [{ id: "g0", date: "2026-10-20", opp: "Old", result: "W", pts: 9, ast: 3, tov: 1, stl: 1 }]; logOf("2026-10-27").done["monday-0"] = true; S.ladder = { shoot: 2 }; persist(); });
+    await tab(cp, "guide");
+    await cp.click("[data-a=currOpen]");
+    ok(/School comes first/.test(await cp.textContent("#modal .sheet")) && /November 3/.test(await cp.textContent("#modal .sheet")), "the start screen puts school first and names the start day");
+    await cp.click("[data-a=currStart]");
+    const st0 = await cp.evaluate(() => ({ on: !!S.curr.on, step: S.curr.step, games: S.games.length, logs: Object.keys(S.logs).length, ladder: JSON.stringify(S.ladder), from: S.progressFrom, ev: (S.events || []).filter((e) => e.fit).length, snap: readSnaps().some((x) => x.label === "before starting over"), backup: !!localStorage.getItem("tristan-backup-before-restart"), mon: S.days[0].blocks.length + ":" + S.days[0].blocks[0].minutes }));
+    ok(st0.on && st0.step === 0 && st0.games === 0 && st0.logs === 0 && st0.ladder === "{}" && st0.from === "2026-11-03", "starting over clears progress and games and sets the start date");
+    ok(st0.ev === 5 && st0.snap && st0.backup && st0.mon === "1:0", "the real schedule is added, Monday is a rest day, and a backup is saved first");
+    await tab(cp, "today");
+    ok(/Starts .*November 3/.test(await cp.evaluate(() => document.body.innerText)), "before the start day the Today screen says when it starts");
+    await cp.evaluate(() => { ui.day = (new Date().getDay() + 6) % 7; toggleBlock(S.days[ui.day].blocks[0].id); });
+    ok(await cp.evaluate(() => Object.values(S.logs).every((l) => !Object.keys(l.done || {}).length)), "nothing can be checked off before the start day");
+    await goDay("2026-11-03T16:00:00");
+    const s1 = await cp.evaluate(() => ({ step: S.curr.step, date: S.curr.date, ids: S.days[1].blocks.map((b) => b.id).join(","), opt: S.days[1].blocks.filter((b) => b.optional).length }));
+    ok(s1.step === 0 && s1.date === "2026-11-03" && /^c1-0,c1-1/.test(s1.ids) && s1.opt === 1, "on the first Tuesday step 1 appears, with its video block marked optional");
+    ok((await doStep()) === "true", "finishing the required blocks completes the step without the optional video");
+    await cp.evaluate(() => { ui.day = 2; toggleBlock(S.days[2].blocks[0].id); });
+    ok(await cp.evaluate(() => !S.logs[dateKey(addDays(mondayOf(new Date()), 2))]), "work on another day cannot be checked off");
+    await goDay("2026-11-06T16:00:00");
+    ok(await cp.evaluate(() => S.curr.step === 1 && S.days[4].blocks[0].id === "c2-0"), "a finished step is followed by step 2 on Friday");
+    await goDay("2026-11-10T16:00:00");
+    ok(await cp.evaluate(() => S.curr.step === 1 && S.curr.date === "2026-11-10" && S.days[1].blocks[0].id === "c2-0" && !(S.logs["2026-11-10"] && S.logs["2026-11-10"].complete)), "a step that was not finished comes back on the next step day");
+    ok((await doStep()) === "true", "he finishes the repeated step");
+    await goDay("2026-11-13T16:00:00");
+    ok(await cp.evaluate(() => S.curr.step === 2), "now step 3 opens");
+    await cp.evaluate(() => { S.curr.step = 6; S.curr.date = ""; persist(); });
+    await goDay("2026-11-17T16:00:00");
+    const cu = await cp.evaluate(() => { ui.day = 1; const r0 = S.days[1].blocks.find((b) => /-r0$/.test(b.id)); toggleBlock(r0.id); const on = S.ladder.handle; toggleBlock(r0.id); return [on, S.ladder.handle || 0, S.days[1].theme]; });
+    ok(cu[0] === 1 && cu[1] === 0 && /Check-up 1/.test(cu[2]), "a check-up step has the ladder tests, and checking one off passes that rung");
+    const pcs = await cp.evaluate(() => { Prefs.parent = "Dad"; const before = S.curr.step; ACTIONS.currSkip({}); const after = S.curr.step; ACTIONS.currBack({}); return [before, after, S.curr.step]; });
+    ok(pcs[1] === pcs[0] + 1 && pcs[2] === pcs[0], "a parent can unlock or go back a step");
+    const prune = await cp.evaluate(() => { S.logs["2026-10-01"] = { done: { a: true } }; S.weekly["2026-10-26"] = { goal: "x" }; pruneBefore("2026-11-03"); return [Object.keys(S.logs).some((k) => k < "2026-11-03"), !!S.weekly["2026-10-26"]]; });
+    ok(!prune[0] && !prune[1], "progress dated before the start is dropped, so old progress cannot come back");
+    ok(cp.errors.length === 0, "no page errors in the curriculum flow " + cp.errors.join(";"));
+    await cur.ctx.close();
 
     console.log("Video library");
     await tab(p, "videos");
