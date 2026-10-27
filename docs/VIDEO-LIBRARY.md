@@ -6,7 +6,7 @@ This file records the suggested videos and the written content added in Phase 9.
 
 **Levels:** 2 Intermediate, 3 Advanced (no Basics). The app shows only Advanced by default (Level switch under Watch non-stop). Levels were set from titles and my judgement, not from watching.
 
-Totals: 223 entries (Basics undefined, Intermediate 126, Advanced 97); 188 play in the app, 35 open in the browser.
+Totals: 259 entries (Intermediate 138, Advanced 121); 217 play in the app, 42 open in the browser.
 
 ## Offense
 
@@ -55,6 +55,8 @@ Totals: 223 entries (Basics undefined, Intermediate 126, Advanced 97); 188 play 
 - O60 (Intermediate) [How To Never Miss A Layup](https://www.youtube.com/watch?v=3jj9l2oqcxA) - YouTube. Floaters, reverse layups and euro steps.
 - O61 (Intermediate) [Master the Euro Step](https://www.youtube.com/watch?v=MDbS4QF71Iw) - YouTube
 - O62 (Intermediate) [Layup Drill: Finishing Under Pressure](https://www.youtube.com/shorts/sB3Pljfqy9U) - YouTube. A short video.
+- O182 (Intermediate) [Stop Missing Left Hand Layups With This Drill](https://www.youtube.com/watch?v=uvZF4ynbYDE) - YouTube
+- O183 (Intermediate) [Finishing Drills To Improve Your Reverse Layups](https://www.youtube.com/watch?v=1MPEeY7WFnw) - YouTube
 
 ### Pick and roll and screens
 
@@ -95,6 +97,9 @@ Totals: 223 entries (Basics undefined, Intermediate 126, Advanced 97); 188 play 
 - O112 (Advanced) [Chris Paul Pick & Roll Readings Breakdown](https://www.youtube.com/watch?v=qUqvYc773qY) - YouTube. Film study of a great point guard.
 - O138 (Advanced) [Shoot, Drive, or Pass? How to Read the Pick-and-Roll Like a Real Point Guard](https://www.hoopcollege.com/post/shoot-drive-or-pass-how-to-read-the-pick-and-roll-like-a-real-point-guard) - Hoop College. Read the screener's defender first.
 - O152 (Advanced) [Pick and Roll Decision Making with C.J. McCollum](https://coachingtoolbox.net/pick-and-roll-decision-making-ft-c-j-mccollum-and-coach-chris) - Coaching Toolbox. Read the screener's defender.
+- O177 (Advanced) [Reading Help Defense in the Pick and Roll](https://www.youtube.com/watch?v=U1JwIdZSVik) - YouTube
+- O178 (Advanced) [How to Counter When the Defense Goes Under the Ball Screen: Use the Twist](https://www.youtube.com/watch?v=-FMOCg7Ve2w) - YouTube
+- O179 (Advanced) [Ball Screen Read Drill: Over vs. Under Decisions](https://www.youtube.com/watch?v=JOnA2ePbfo0) - YouTube
 
 ### Advanced scoring and pace
 
@@ -104,6 +109,9 @@ Totals: 223 entries (Basics undefined, Intermediate 126, Advanced 97); 188 play 
 - O116 (Advanced) [5 Drills To Master The Pull-up Jumpshot](https://www.youtube.com/watch?v=glny6njDcbE) - YouTube
 - O117 (Advanced) [Step & Snap Back Pull Ups (IMG Academy, 3 of 8)](https://www.youtube.com/watch?v=1U45tau_6DY) - YouTube
 - O118 (Advanced) [How To Finish Through Contact](https://www.youtube.com/watch?v=cnRQ5Bxa1yM) - YouTube
+- O180 (Advanced) [The Best Drills to Develop Elite Change of Pace as a Guard](https://www.youtube.com/watch?v=zR0gjo7Y-Yk) - YouTube
+- O181 (Intermediate) [5 Change of Pace Secrets (With Drills)](https://www.youtube.com/watch?v=WBQ9SJSo2Ok) - YouTube
+- O184 (Advanced) [5 Drills For Guards: Wichita Attack Series with Jim Huber](https://www.youtube.com/watch?v=_dPinKTvEQo) - YouTube
 
 ### Advanced full workouts
 
@@ -113,6 +121,12 @@ Totals: 223 entries (Basics undefined, Intermediate 126, Advanced 97); 188 play 
 - O122 (Advanced) [Jump Rope x Ball Handling Workout for Elite Skills and Athleticism](https://www.youtube.com/watch?v=NkZMqNTcAe8) - YouTube
 - O123 (Advanced) [Daily Grind: Elite Ball Handling and Form Shooting Routine](https://www.youtube.com/watch?v=j4k53HYx_D0) - YouTube
 - O124 (Advanced) [Shooting and Ball Handling Workouts for Serious Players (17 drills)](https://www.breakthroughbasketball.com/drills/shooting-ballhandling-workout) - Breakthrough Basketball. Includes speed layups off dribble moves.
+- O185 (Advanced) [Full Elite Guard Basketball Workout (Finishing and Shooting)](https://www.youtube.com/watch?v=42woLJwvA7A) - YouTube
+- O186 (Advanced) [Building Elite Point Guards: Full College Workout with Coleman Ayers](https://www.youtube.com/watch?v=Wqw-yP7TK0s) - YouTube
+- O187 (Advanced) [Elite Guard Workout ft. D1 Transfer Jason Drake](https://www.youtube.com/watch?v=Mqi_G5Z1uL0) - YouTube
+- O188 (Advanced) [How Every High Level PG Should Train: 23 NBA Point Guard Drills](https://www.youtube.com/watch?v=0uDgOuDjbcE) - YouTube
+- O189 (Advanced) [Become an Elite Scoring Guard Workout](https://www.youtube.com/watch?v=7Q-HMpQsgJI) - YouTube
+- O190 (Intermediate) [Full Guard Workout For Basketball Players (By Yourself)](https://www.youtube.com/watch?v=3AKCf4xbu2k) - YouTube
 
 ### Advanced web guides and drills
 
@@ -145,6 +159,8 @@ Totals: 223 entries (Basics undefined, Intermediate 126, Advanced 97); 188 play 
 - O143 (Intermediate) [How to Perfect the Pull-up Jumper](https://www.youtube.com/watch?v=5cf-BjKnurM) - YouTube. One-dribble pull-up breakdown.
 - O144 (Intermediate) [How To: Master the Pull-Up Jumper](https://www.youtube.com/watch?v=591jEsHBA1w) - YouTube
 - O153 (Advanced) [Point Guard Shooting Drills: Off Ball Screens](https://hoopsking.com/blogs/default-blog/blogpoint-guard-shooting-drills-off-ball-screens) - Hoops King
+- O171 (Advanced) [Shooting Off The Dribble: 30 Point Drill](https://www.breakthroughbasketball.com/play.asp?id=8275) - Breakthrough Basketball. Three-pointer after one dribble, pull-ups and free throws.
+- O172 (Advanced) [Quick Release: Advanced Shooting off the Dribble Drill](https://www.breakthroughbasketball.com/training/dribble-quick-shot) - Breakthrough Basketball. A combo move, then shoot right away.
 
 ### Floaters and finishing
 
@@ -180,6 +196,17 @@ Totals: 223 entries (Basics undefined, Intermediate 126, Advanced 97); 188 play 
 - O167 (Advanced) [The No.1 Drill That Unlocks Perfect Off The Ball Movement](https://www.youtube.com/watch?v=9cYsVCVGqcU) - YouTube. Four phases.
 - O168 (Intermediate) [How to Move without the Ball](https://www.youtube.com/watch?v=MX9EobPQg18) - YouTube
 - O169 (Intermediate) [How to Move without the Ball and Get Open Shots](https://www.breakthroughbasketball.com/offense/cutting-moving-without-ball) - Breakthrough Basketball
+
+### Finishing and euro steps
+
+- O170 (Advanced) [Euro Step Tutorial: Basic to Advanced (Pump Fake, Dribble Jab, Bump)](https://www.youtube.com/watch?v=eHuggtdRLHU) - YouTube. ILoveBasketballTV. Includes finishing through contact.
+
+### Advanced passing
+
+- O173 (Advanced) [Eric Musselman Pocket Passing Drill](https://coachingtoolbox.net/eric-musselman-pocket-passing-drill) - Coaching Toolbox. A college head coach shows the drill.
+- O174 (Advanced) [The Hook Pass: Unstoppable Point Guards](https://pgcbasketball.com/blog/the-hook-pass-unstoppable-point-guards/) - PGC Basketball. Snap the ball down with the arm extended over the defender.
+- O175 (Advanced) [2 on 2 Drive and Kick (Steve Clifford)](https://www.youtube.com/watch?v=c7aOHMgwbqw) - YouTube
+- O176 (Intermediate) [Drive and Kick Shooting with Coach Tony Miller](https://www.youtube.com/watch?v=QSbyKMl7u1U) - YouTube
 
 ## Defense
 
@@ -241,6 +268,8 @@ Totals: 223 entries (Basics undefined, Intermediate 126, Advanced 97); 188 play 
 - D58 (Advanced) [NBA Defense: How to ICE the Pick And Roll](https://www.youtube.com/watch?v=te4svk4vm1I) - YouTube
 - D59 (Advanced) [How to Defend the Pick-and-Roll with Kendrick Perkins](https://www.youtube.com/watch?v=D3wM0e6DIAg) - YouTube. A short clip.
 - D60 (Advanced) [Defending Middle Pick and Rolls](https://betterbasketball.com/defending-middle-pick-rolls/) - Better Basketball. The big levels off the screen.
+- D71 (Advanced) [Defending Ball Screens: 6 Ways To Shut Them Down](https://www.youtube.com/watch?v=IEwYGeUvGG0) - YouTube
+- D72 (Intermediate) [How To Defend Ball Screens](https://www.youtube.com/watch?v=fpCAf1XJ7UI) - YouTube
 
 ### Advanced defensive footwork
 
@@ -259,6 +288,10 @@ Totals: 223 entries (Basics undefined, Intermediate 126, Advanced 97); 188 play 
 
 - D68 (Advanced) [How to Play Elite Defense as an Undersized Guard](https://www.youtube.com/watch?v=Ro6Ni3g9PZg) - YouTube
 - D69 (Intermediate) [How to Guard Bigger Players (Even If You're Undersized)](https://www.youtube.com/watch?v=p4ipGkMQ8OU) - YouTube
+
+### On-ball defense
+
+- D70 (Intermediate) [Full Court 1 on 1 Contain Drill](https://www.breakthroughbasketball.com/issue062923.html) - Breakthrough Basketball. Keep the ball in the outer thirds of the court.
 
 ## Teamwork
 
@@ -301,6 +334,7 @@ Totals: 223 entries (Basics undefined, Intermediate 126, Advanced 97); 188 play 
 ### Fast break
 
 - T32 (Advanced) [Mastering the Fast Break: The 3-on-2 Transition Drill](https://www.vantasports.ai/drills/fast-break-3-on-2-transition-drill-basketball) - Vanta Sports
+- T33 (Advanced) [3 on 2, 2 on 1 Transition Drill with Steve Nash](https://www.breakthroughbasketball.com/drills/3on2on1-SteveNash) - Breakthrough Basketball. Dribble until a defender commits, then pass.
 
 ## Point guard
 
@@ -312,6 +346,12 @@ Totals: 223 entries (Basics undefined, Intermediate 126, Advanced 97); 188 play 
 - P5 (Advanced) [3 Elite Guard Drills Every Player and Coach Needs](https://www.youtube.com/watch?v=0d0LdBygnEo) - YouTube. Some may be advanced.
 - P6 (Intermediate) [How Great Guards Handle Intense Pressure](https://www.youtube.com/watch?v=HMZPUFhDkN4) - YouTube. More advanced. Watch with a parent or coach first.
 - P7 (Intermediate) [I Studied the Best Point Guards](https://www.youtube.com/watch?v=8QKTtMerPbs) - YouTube
+- P38 (Intermediate) [How to Play Point Guard the Right Way](https://www.youtube.com/watch?v=zVmbjQ66Wnc) - YouTube. Coach Matt. Driving, finishing and ball screens.
+- P39 (Advanced) [Dribble Drive Motion Offense: Training Your Point Guard](https://www.youtube.com/watch?v=igm6F9k4vtA) - YouTube
+- P40 (Intermediate) [How to Become an Elite Point Guard: Drills for Point Guards](https://www.youtube.com/watch?v=q6TWqhKHHX0) - YouTube
+- P41 (Intermediate) [How To Train Like a Point Guard: Elite Basketball Training](https://www.youtube.com/watch?v=GiRW1znBLyQ) - YouTube
+- P43 (Advanced) [Drew Hanlen: NBA Skills Coach](https://www.youtube.com/watch?v=tOCFdG_7ntU) - YouTube
+- P44 (Advanced) [Ganon Baker (playlist)](https://www.youtube.com/playlist?list=PLkbZLMYuAQ9tjFvS97Drs1PrxLpLChqXi) - YouTube. Playlist.
 
 ### Court vision and basketball IQ
 
@@ -326,6 +366,11 @@ Totals: 223 entries (Basics undefined, Intermediate 126, Advanced 97); 188 play 
 - P17 (Intermediate) [3 Ways To Level Up Your Basketball IQ](https://www.youtube.com/watch?v=DZ5QWZyNvD8) - YouTube
 - P19 (Intermediate) [Decision Making Basketball Drill](https://www.youtube.com/shorts/6hqiGRbP-jM) - YouTube. A short video.
 - P20 (Intermediate) [How to Make Your Training Actually Show Up in Games](https://www.youtube.com/watch?v=FloGIOB39iU) - YouTube
+- P34 (Advanced) [Decision Making Progression](https://coachingtoolbox.net/decision-making-progression.html) - Coaching Toolbox. Includes a 2-on-1 decision drill.
+- P35 (Advanced) [How to Actually Read the Defense (Step by Step)](https://www.youtube.com/watch?v=PaUKMDmj3fU) - YouTube
+- P36 (Intermediate) [The 5 Levels of Basketball IQ, Explained](https://www.youtube.com/watch?v=M1sMMjY00ig) - YouTube
+- P37 (Advanced) [Draymond Green's Basketball IQ Takes Away the Raptors' End-of-Game Play](https://www.youtube.com/watch?v=Nop8k5N5Tho) - YouTube. Film of one defensive read.
+- P42 (Intermediate) [Expert Tips for Decision Making and Player Development](https://www.youtube.com/watch?v=9NssH1hp62Y) - YouTube
 
 ### Advanced passing
 
