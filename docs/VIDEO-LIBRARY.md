@@ -6,7 +6,7 @@ This file records the suggested videos and the written content added in Phase 9.
 
 **Levels:** 2 Intermediate, 3 Advanced (no Basics). The app shows only Advanced by default (Level switch under Watch non-stop). Levels were set from titles and my judgement, not from watching.
 
-Totals: 223 entries (Basics undefined, Intermediate 126, Advanced 97); 188 play in the app, 35 open in the browser.
+Totals: 231 entries (Intermediate 127, Advanced 104); 189 play in the app, 42 open in the browser.
 
 ## Offense
 
@@ -145,6 +145,8 @@ Totals: 223 entries (Basics undefined, Intermediate 126, Advanced 97); 188 play 
 - O143 (Intermediate) [How to Perfect the Pull-up Jumper](https://www.youtube.com/watch?v=5cf-BjKnurM) - YouTube. One-dribble pull-up breakdown.
 - O144 (Intermediate) [How To: Master the Pull-Up Jumper](https://www.youtube.com/watch?v=591jEsHBA1w) - YouTube
 - O153 (Advanced) [Point Guard Shooting Drills: Off Ball Screens](https://hoopsking.com/blogs/default-blog/blogpoint-guard-shooting-drills-off-ball-screens) - Hoops King
+- O171 (Advanced) [Shooting Off The Dribble: 30 Point Drill](https://www.breakthroughbasketball.com/play.asp?id=8275) - Breakthrough Basketball. Three-pointer after one dribble, pull-ups and free throws.
+- O172 (Advanced) [Quick Release: Advanced Shooting off the Dribble Drill](https://www.breakthroughbasketball.com/training/dribble-quick-shot) - Breakthrough Basketball. A combo move, then shoot right away.
 
 ### Floaters and finishing
 
@@ -180,6 +182,15 @@ Totals: 223 entries (Basics undefined, Intermediate 126, Advanced 97); 188 play 
 - O167 (Advanced) [The No.1 Drill That Unlocks Perfect Off The Ball Movement](https://www.youtube.com/watch?v=9cYsVCVGqcU) - YouTube. Four phases.
 - O168 (Intermediate) [How to Move without the Ball](https://www.youtube.com/watch?v=MX9EobPQg18) - YouTube
 - O169 (Intermediate) [How to Move without the Ball and Get Open Shots](https://www.breakthroughbasketball.com/offense/cutting-moving-without-ball) - Breakthrough Basketball
+
+### Finishing and euro steps
+
+- O170 (Advanced) [Euro Step Tutorial: Basic to Advanced (Pump Fake, Dribble Jab, Bump)](https://www.youtube.com/watch?v=eHuggtdRLHU) - YouTube. ILoveBasketballTV. Includes finishing through contact.
+
+### Advanced passing
+
+- O173 (Advanced) [Eric Musselman Pocket Passing Drill](https://coachingtoolbox.net/eric-musselman-pocket-passing-drill) - Coaching Toolbox. A college head coach shows the drill.
+- O174 (Advanced) [The Hook Pass: Unstoppable Point Guards](https://pgcbasketball.com/blog/the-hook-pass-unstoppable-point-guards/) - PGC Basketball. Snap the ball down with the arm extended over the defender.
 
 ## Defense
 
@@ -260,6 +271,10 @@ Totals: 223 entries (Basics undefined, Intermediate 126, Advanced 97); 188 play 
 - D68 (Advanced) [How to Play Elite Defense as an Undersized Guard](https://www.youtube.com/watch?v=Ro6Ni3g9PZg) - YouTube
 - D69 (Intermediate) [How to Guard Bigger Players (Even If You're Undersized)](https://www.youtube.com/watch?v=p4ipGkMQ8OU) - YouTube
 
+### On-ball defense
+
+- D70 (Intermediate) [Full Court 1 on 1 Contain Drill](https://www.breakthroughbasketball.com/issue062923.html) - Breakthrough Basketball. Keep the ball in the outer thirds of the court.
+
 ## Teamwork
 
 ### Communication and team culture
@@ -301,6 +316,7 @@ Totals: 223 entries (Basics undefined, Intermediate 126, Advanced 97); 188 play 
 ### Fast break
 
 - T32 (Advanced) [Mastering the Fast Break: The 3-on-2 Transition Drill](https://www.vantasports.ai/drills/fast-break-3-on-2-transition-drill-basketball) - Vanta Sports
+- T33 (Advanced) [3 on 2, 2 on 1 Transition Drill with Steve Nash](https://www.breakthroughbasketball.com/drills/3on2on1-SteveNash) - Breakthrough Basketball. Dribble until a defender commits, then pass.
 
 ## Point guard
 
@@ -326,6 +342,7 @@ Totals: 223 entries (Basics undefined, Intermediate 126, Advanced 97); 188 play 
 - P17 (Intermediate) [3 Ways To Level Up Your Basketball IQ](https://www.youtube.com/watch?v=DZ5QWZyNvD8) - YouTube
 - P19 (Intermediate) [Decision Making Basketball Drill](https://www.youtube.com/shorts/6hqiGRbP-jM) - YouTube. A short video.
 - P20 (Intermediate) [How to Make Your Training Actually Show Up in Games](https://www.youtube.com/watch?v=FloGIOB39iU) - YouTube
+- P34 (Advanced) [Decision Making Progression](https://coachingtoolbox.net/decision-making-progression.html) - Coaching Toolbox. Includes a 2-on-1 decision drill.
 
 ### Advanced passing
 
