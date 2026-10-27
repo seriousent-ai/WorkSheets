@@ -1,6 +1,7 @@
 # Changes
 
 ## Phase 9
+- 17 more YouTube entries (248 in all, 114 Advanced): drive and kick and reading help defense, ball screen reads and counters, defending ball screens, change of pace, reading the defense, point guard film and decision videos, reverse and weak-hand finishing, and a guard drills series.
 - 8 more advanced entries (231 in all): euro step finishing, shooting off the dribble, pocket and hook passing, 3-on-2 and 2-on-1 decisions (Steve Nash), a 1-on-1 contain defense drill and a decision-making progression. One is a YouTube video; the rest are web pages that open in the browser.
 - Watch non-stop: a new "All topics" chip plays a shuffled mix of every topic (up to 60 videos), for the car, the bus or the sofa.
 - Curriculum (Guide): 29 fixed steps run on Tuesday and Friday: the six themed sessions for each of the four cycle weeks, a check-up after each, and a finish line. He cannot move to the next step until the current one is finished, however long that takes. A step that is not finished comes back on the next step day. Videos are encouraged but optional. Check-ups hold the skill ladder tests, and checking one off passes that rung. A parent can unlock or go back a step in Family view.
