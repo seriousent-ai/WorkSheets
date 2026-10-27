@@ -968,8 +968,8 @@ const LEVEL_NAME = { 1: "Basics", 2: "Intermediate", 3: "Advanced" };
 const sugVisible = () => sugList().filter((v) => !(S.sugHidden || []).includes(v.id) && (v.level || 2) >= (Prefs.libLevel || 3));
 const sugYouTube = (cat) => sugVisible().filter((v) => v.yt && (!cat || v.cat === cat));
 function watchSection() {
-  const chips = SUGGESTED_CATS.map(([k, label]) => `<button class="chip" data-a="watchAll" data-c="${k}">${esc(label)} <small>${sugYouTube(k).length}</small></button>`).join("");
-  return `<h2 class="section">Watch non-stop</h2><div class="group"><div class="row"><div class="grow"><div class="title strong">Play a whole topic back to back</div><div class="detail">Tap a topic. The videos play one after another.</div>
+  const chips = [["", "All topics"], ...SUGGESTED_CATS].map(([k, label]) => `<button class="chip" data-a="watchAll" data-c="${k}">${esc(label)} <small>${sugYouTube(k || "").length}</small></button>`).join("");
+  return `<h2 class="section">Watch non-stop</h2><div class="group"><div class="row"><div class="grow"><div class="title strong">Play a whole topic back to back</div><div class="detail">Tap a topic, or All topics to play a mix of everything. The videos play one after another.</div>
     <div class="chips wrapchips" role="group" aria-label="Topics">${chips}</div></div></div>
     <div class="row"><div class="grow"><div class="title strong">Level</div><div class="detail">Basics and intermediate are hidden by default.</div>
     <div class="chips wrapchips" role="group" aria-label="Level">${LIB_LEVELS.map(([n, l]) => `<button class="chip ${(Prefs.libLevel || 3) === n ? "on" : ""}" aria-pressed="${(Prefs.libLevel || 3) === n}" data-a="setLevel" data-n="${n}">${l}</button>`).join("")}</div></div></div>
@@ -1006,10 +1006,10 @@ Object.assign(EXTRA_ACTIONS, {
   watchAll: (d) => {
     let items = sugYouTube(d.c);
     if (!items.length) { toast("No videos in that topic."); return; }
-    if (Prefs.shuffle) items = shuffled(items);
+    if (Prefs.shuffle || !d.c) items = shuffled(items);
     items = items.slice(0, 60);
     const ids = items.map((v) => v.yt);
-    const label = (SUGGESTED_CATS.find((c) => c[0] === d.c) || [0, "Videos"])[1];
+    const label = (SUGGESTED_CATS.find((c) => c[0] === d.c) || [0, "All topics"])[1];
     const src = `https://www.youtube.com/embed/${ids[0]}?playlist=${ids.slice(1).join(",")}&playsinline=1&rel=0&autoplay=1`;
     playerSheet(label + ", non-stop", src, `<p class="small">Playing ${items.length} videos one after another. Use the player's next button to skip.</p><ol class="playlist">${items.map((v) => `<li>${esc(v.title)}</li>`).join("")}</ol>`);
   },
