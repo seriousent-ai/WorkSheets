@@ -72,17 +72,25 @@ function formGame(id) {
 
 /* ---------- team schedule ---------- */
 const EVENT_TYPES = [["practice", "Team practice", 90], ["game", "Game", 60], ["other", "Other", 60]];
-const eventsSorted = () => [...(S.events || [])].sort((a, b) => ((a.date + (a.time || "")) < (b.date + (b.time || "")) ? -1 : 1));
-const upcomingEvents = (n) => eventsSorted().filter((e) => daysUntil(e.date) >= 0).slice(0, n);
+const eventSort = (a, b) => ((a.date + (a.time || "")) < (b.date + (b.time || "")) ? -1 : 1);
+/* A weekly event repeats on the same weekday from its start date (or until its end date). */
+const eventsOn = (ds) => (S.events || []).filter((e) => e.date === ds || (e.repeat === "weekly" && ds >= e.date && (!e.until || ds <= e.until) && Math.round((parseKey(ds) - parseKey(e.date)) / 864e5) % 7 === 0));
+function occurrences(span = 42) {
+  const out = [], last = dateKey(addDays(new Date(), span));
+  for (let i = 0; i <= span; i++) { const ds = dateKey(addDays(new Date(), i)); eventsOn(ds).forEach((e) => out.push({ ...e, date: ds })); }
+  (S.events || []).forEach((e) => { if (e.repeat !== "weekly" && e.date > last) out.push(e); });
+  return out.sort(eventSort);
+}
+const upcomingEvents = (n) => occurrences().slice(0, n);
 function eventMinutes(ds) {
   const l = S.logs[ds];
   if (l && l.team) return 0;
-  return (S.events || []).filter((e) => e.date === ds).reduce((p, e) => p + (Number(e.minutes) || (EVENT_TYPES.find((t) => t[0] === e.type) || [0, 0, 60])[2]), 0);
+  return eventsOn(ds).reduce((p, e) => p + (Number(e.minutes) || (EVENT_TYPES.find((t) => t[0] === e.type) || [0, 0, 60])[2]), 0);
 }
 function scheduleHtml() {
   const list = upcomingEvents(8);
   return `<h2 class="section">Team schedule <button data-a="addEvent">Add</button></h2>
-  <div class="group">${list.map((e) => `<div class="row tap" data-a="editEvent" data-id="${e.id}">${badge("calendar")}<div class="grow"><div class="title strong">${esc(e.title || (EVENT_TYPES.find((t) => t[0] === e.type) || [0, "Event"])[1])} <span class="pill ${e.type === "game" ? "blue" : ""}">${e.type === "game" ? "Game" : e.type === "practice" ? "Practice" : "Event"}</span></div><div class="detail">${whenText(e.date)}${e.time ? " · " + clockText(e.time) : ""}${e.place ? " · " + esc(e.place) : ""}</div></div><span class="chev">›</span></div>`).join("") || '<div class="empty">Add Rens practices and games. Today will show what is coming, and the day before a game gets a light session.</div>'}</div>
+  <div class="group">${list.map((e) => `<div class="row tap" data-a="editEvent" data-id="${e.id}">${badge("calendar")}<div class="grow"><div class="title strong">${esc(e.title || (EVENT_TYPES.find((t) => t[0] === e.type) || [0, "Event"])[1])} <span class="pill ${e.type === "game" ? "blue" : ""}">${e.type === "game" ? "Game" : e.type === "practice" ? "Practice" : "Event"}</span>${e.repeat === "weekly" ? ' <span class="pill">Every week</span>' : ""}</div><div class="detail">${whenText(e.date)}${e.time ? " · " + clockText(e.time) : ""}${e.place ? " · " + esc(e.place) : ""}</div></div><span class="chev">›</span></div>`).join("") || '<div class="empty">Add Rens practices and games. Today will show what is coming, and the day before a game gets a light session.</div>'}</div>
   <p class="small">Scheduled events count toward the weekly 10-hour limit until you log the real minutes for that day.</p>`;
 }
 function eventBanner() {
@@ -91,7 +99,7 @@ function eventBanner() {
   const d = daysUntil(nx.date);
   const name = nx.title || (nx.type === "game" ? "Game" : "Team practice");
   let tip = "";
-  if (nx.type === "game" && d === 1) tip = "Game tomorrow. Keep today light: handle and shooting only, about 35 minutes, and get to bed early.";
+  if (nx.type === "game" && d === 1) tip = currOn() ? "Game tomorrow. Keep the pace controlled today and get to bed early." : "Game tomorrow. Keep today light: handle and shooting only, about 35 minutes, and get to bed early.";
   else if (nx.type === "game" && d === 0) tip = "Game day. Warm up, drink water, and trust your training.";
   else if (nx.type === "practice" && d === 0) tip = "Team practice replaces today's individual session.";
   return `<div class="evt ${nx.type}"><b>${badge("calendar", "xs")} ${esc(name)}</b><span>${whenText(nx.date)}${nx.time ? " at " + clockText(nx.time) : ""}${nx.place ? " · " + esc(nx.place) : ""}</span>${tip ? `<p>${esc(tip)}</p>` : ""}</div>`;
@@ -107,13 +115,14 @@ function formEvent(id) {
       { k: "time", label: "Start time", type: "time", value: e.time },
       { k: "place", label: "Place", value: e.place, ph: "Gym or court" },
       { k: "minutes", label: "Minutes (counts toward the weekly limit)", type: "number", value: e.minutes, ph: "90" },
+      { k: "repeat", label: "Repeats", type: "select", value: e.repeat || "", opts: [["", "Does not repeat"], ["weekly", "Every week on this day"]] },
     ],
     required: ["date"],
     save(f) {
       S.events ||= [];
       let o = S.events.find((x) => x.id === id);
       if (!o) { o = { id: uid("e") }; S.events.push(o); }
-      Object.assign(o, { type: f.type, title: f.title, date: f.date, time: f.time, place: f.place, minutes: num(f.minutes) });
+      Object.assign(o, { type: f.type, title: f.title, date: f.date, time: f.time, place: f.place, minutes: num(f.minutes), repeat: f.repeat || undefined });
     },
     del: id ? () => { S.events = S.events.filter((x) => x.id !== id); } : null,
     delLabel: "Delete event",
@@ -360,7 +369,7 @@ const Coach = {
     const st = gameStats();
     return {
       name: firstName(S.profile.name), team: S.profile.team, league: S.profile.league, level: lv.cur[1], sessions: total, streak: weekStreak(),
-      week: { done: sessionsInWeek(wk), goal: Math.min(6, S.days.length) }, weeks, ovr,
+      week: { done: sessionsInWeek(wk), goal: weeklyGoal() }, weeks, ovr,
       skills: SKILLS.map(([k, name]) => [name, r[k]]),
       priority: (S.weekly[wk] || {}).priority || S.profile.priority || "",
       games: st.g.slice(-5).map((x) => ({ date: x.date, opp: x.opp || "", pts: x.pts, ast: x.ast, tov: x.tov })), ratio: st.n ? Math.round(st.ratio * 10) / 10 : null,
@@ -500,10 +509,12 @@ const SNAP_KEY = "tristan-snapshots";
 const readSnaps = () => { try { return JSON.parse(localStorage.getItem(SNAP_KEY)) || []; } catch (e) { return []; } };
 function writeSnaps(list) { try { localStorage.setItem(SNAP_KEY, JSON.stringify(list.slice(-8))); } catch (e) {} }
 const snapPlan = () => JSON.parse(JSON.stringify({ days: S.days, videos: S.videos.map((v) => ({ ...v })), links: S.links, notes: S.notes, rewards: S.rewards }));
-function takeSnapshot(label) {
+function takeSnapshot(label, withEvents) {
   const list = readSnaps(), today = dateKey(new Date());
   if (!label && list.some((x) => x.date === today && !x.label)) return;
-  list.push({ id: uid("s"), date: today, label: label || "", plan: snapPlan() });
+  const plan = snapPlan();
+  if (withEvents) plan.events = JSON.parse(JSON.stringify(S.events || []));
+  list.push({ id: uid("s"), date: today, label: label || "", plan });
   writeSnaps(list);
 }
 function formRestore() {
@@ -560,6 +571,7 @@ function weekNeeded(monKey) {
   const mon = parseKey(monKey);
   let off = 0;
   for (let i = 0; i < 7; i++) { const l = S.logs[dateKey(addDays(mon, i))]; if (l && l.off) off++; }
+  if (currOn()) return Math.max(1, CURR_DAYS.length - Math.min(1, off));
   return Math.max(1, 4 - Math.min(3, off));
 }
 
@@ -1117,7 +1129,7 @@ function formFilmNote(id) {
 /* ---------- game day routine ---------- */
 function gameDayCard() {
   const today = dateKey(new Date());
-  const ev = (S.events || []).find((x) => x.type === "game" && x.date === today);
+  const ev = eventsOn(today).find((x) => x.type === "game");
   const game = (S.games || []).find((g) => g.date === today);
   if (!ev && !game) return "";
   const pre = ((S.logs[today] || {}).pre) || {};
@@ -1144,7 +1156,7 @@ function plainWeekText() {
   const first = firstName(S.profile.name);
   const mon = mondayOf(new Date());
   const logs = Array.from({ length: 7 }, (_, i) => S.logs[dateKey(addDays(mon, i))]).filter(Boolean);
-  const n = logs.filter((l) => l.complete).length, goal = Math.min(6, S.days.length);
+  const n = logs.filter((l) => l.complete).length, goal = weeklyGoal();
   const out = [];
   out.push(`${first} finished ${n} of ${goal} sessions this week${n >= goal - 1 && n > 0 ? ", a strong week" : n === 0 ? ", so nothing yet" : ""}.`);
   const sl = logs.map((l) => l.sleep).filter(Boolean);
@@ -1176,3 +1188,131 @@ Object.assign(EXTRA_ACTIONS, {
   leadDone: () => { const { l } = leadOf(); const w = (S.weekly[weekKeyNow()] ||= {}); w.lead = { i: l.i, done: !l.done }; if (w.lead.done) toast("Great leadership. +15 XP"); },
   leadNew: () => { const { l } = leadOf(); const w = (S.weekly[weekKeyNow()] ||= {}); w.lead = { i: (l.i + 1) % LEAD_PROMPTS.length, done: false }; },
 });
+
+
+/* ---------- fit the plan to his real week ---------- */
+const DAY_ORDER = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+function fitSummaryHtml() {
+  const evByDow = (dow) => WEEK_FIT.events.filter((x) => x.dow === dow);
+  const rows = DAY_ORDER.map((name, i) => {
+    const f = WEEK_FIT.days[name], mins = f.blocks.reduce((p, b) => p + b[2], 0), ev = evByDow(i);
+    return `<div class="row"><div class="grow"><div class="title strong">${name} <span class="detail" style="display:inline">${esc(f.theme)}</span></div><div class="detail">${ev.length ? "Team: " + ev.map((x) => esc(x.title) + " " + x.minutes + " min").join(", ") + ". " : ""}App: ${mins} min${f.blocks.length > 1 ? "" : " (optional)"}</div></div></div>`;
+  }).join("");
+  const team = WEEK_FIT.events.reduce((p, x) => p + x.minutes, 0);
+  const own = ["Tuesday", "Friday"].reduce((p, n) => p + WEEK_FIT.days[n].blocks.reduce((q, b) => q + b[2], 0), 0);
+  return `<div class="group">${rows}</div>
+    <p class="small">Organized basketball is about ${((team + own) / 60).toFixed(1)} hours a week, including the two one-hour sessions. The optional notes can add up to 30 minutes. Edit the game length in Week, Team schedule if it differs from ${WEEK_FIT.events.find((x) => x.type === "game").minutes} minutes.</p>`;
+}
+function nextWeekdayDate(dow) { return dateKey(addDays(mondayOf(new Date()), dow)); }
+function applyFit(noSnap) {
+  if (!noSnap) takeSnapshot("before fitting the week", true);
+  S.blockTitles ||= {};
+  S.days.forEach((d) => d.blocks.forEach((b) => { S.blockTitles[b.id] = b.title.toLowerCase(); }));
+  S.days.forEach((d) => {
+    const f = WEEK_FIT.days[d.name];
+    if (!f) return;
+    d.theme = f.theme; d.cue = f.cue;
+    d.blocks = f.blocks.map(([id, title, minutes, text]) => ({ id, title, minutes, text }));
+  });
+  S.events = (S.events || []).filter((x) => !x.fit);
+  WEEK_FIT.events.forEach((x) => S.events.push({ id: uid("e"), type: x.type, title: x.title, date: nextWeekdayDate(x.dow), time: "", place: "", minutes: x.minutes, repeat: "weekly", fit: true }));
+  ui.day = Math.min(ui.day, S.days.length - 1);
+}
+/* ---------- the curriculum ---------- */
+const currOn = () => !!(S.curr && S.curr.on);
+const currStepObj = () => CURRICULUM[Math.min((S.curr && S.curr.step) || 0, CURRICULUM.length - 1)];
+const weeklyGoal = () => (currOn() ? CURR_DAYS.length : Math.min(6, S.days.length));
+const longDate = (ds) => parseKey(ds).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+function nextStepDay() {
+  for (let i = 1; i < 14; i++) { const ds = dateKey(addDays(new Date(), i)); if (ds >= CURR_START && CURR_DAYS.includes((parseKey(ds).getDay() + 6) % 7)) return ds; }
+  return null;
+}
+function placeStep(idx) {
+  const st = currStepObj(), d = S.days[idx];
+  if (!d) return;
+  d.theme = st.theme; d.cue = st.cue; d.videoIds = (st.videoIds || []).slice(); d.blocks = st.blocks.map((b) => ({ ...b }));
+  S.blockTitles ||= {};
+  d.blocks.forEach((b) => { S.blockTitles[b.id] = b.title.toLowerCase(); });
+}
+/* Runs when the app opens on Tristan's phone. A step moves on only if the last step day's session was finished. Otherwise the same step is shown again. */
+function currTick() {
+  const c = S.curr;
+  if (!c || !c.on || c.finished || Prefs.parent) return false;
+  const today = dateKey(new Date()), idx = (new Date().getDay() + 6) % 7;
+  if (today < CURR_START || !CURR_DAYS.includes(idx)) return false;
+  const st = currStepObj();
+  if (c.date === today) {
+    const d = S.days[idx];
+    if (d && !d.blocks.some((b) => b.id.startsWith("c" + st.n + "-"))) { placeStep(idx); return true; }
+    return false;
+  }
+  const last = c.date && S.logs[c.date];
+  if (last && last.complete) {
+    if (c.step < CURRICULUM.length - 1) c.step++;
+    else { c.finished = true; return true; }
+  }
+  c.date = today;
+  placeStep(idx);
+  return true;
+}
+function currCanToggle() {
+  if (!currOn()) return true;
+  if (dateKey(new Date()) < CURR_START) { toast("The curriculum starts " + longDate(CURR_START) + "."); return false; }
+  if (ui.day !== (new Date().getDay() + 6) % 7) { toast("Only today's work can be checked off."); return false; }
+  return true;
+}
+function currAct(act, on) {
+  const [kind, a, b] = act.split(":");
+  if (kind === "ladder") { S.ladder ||= {}; const r = +b, cur = ladderN(a); S.ladder[a] = on ? Math.max(cur, r) : Math.min(cur, r - 1); }
+  else if (kind === "wt") { S.watchTry ||= {}; if (on) S.watchTry[a] = dateKey(new Date()); else delete S.watchTry[a]; }
+}
+function currCard() {
+  if (!currOn()) return "";
+  const c = S.curr, st = currStepObj(), total = CURRICULUM.length;
+  const today = dateKey(new Date()), idx = (new Date().getDay() + 6) % 7;
+  const doneToday = c.date === today && S.logs[today] && S.logs[today].complete;
+  const stepsDone = c.finished ? total : c.step + (doneToday ? 1 : 0);
+  let head, line;
+  if (c.finished) { head = "Curriculum complete"; line = "He has finished all " + total + " steps."; }
+  else if (today < CURR_START) { head = "Starts " + longDate(CURR_START); line = "Step 1 is " + CURRICULUM[0].name + ". Until then, rest and school come first."; }
+  else if (CURR_DAYS.includes(idx)) { head = "Step " + st.n + " of " + total + ": " + st.name; line = doneToday ? "Done. The next step opens " + (nextStepDay() ? longDate(nextStepDay()) : "next time") + "." : "Finish all of it before moving on. If it is not finished today, it comes back next time."; }
+  else { head = "Step " + st.n + " of " + total + ": " + st.name; line = "Next step day: " + (nextStepDay() ? longDate(nextStepDay()) : "soon") + ". He moves on only when this step is finished."; }
+  return `<h2 class="section">Curriculum</h2><div class="group"><div class="row"><div class="grow"><div class="title strong">${esc(head)}</div><div class="detail">${esc(line)}</div><div class="progress" style="margin-top:8px"><i style="width:${Math.round((stepsDone / total) * 100)}%"></i></div><div class="detail">${stepsDone} of ${total} steps finished</div></div></div></div>`;
+}
+function pruneBefore(d) {
+  const wk = dateKey(mondayOf(parseKey(d)));
+  Object.keys(S.logs).forEach((k) => { if (k < d) delete S.logs[k]; });
+  Object.keys(S.weekly).forEach((k) => { if (k < wk) delete S.weekly[k]; });
+}
+function currStartHtml() {
+  return `<p class="small"><b>School comes first, and he needs rest.</b> <b>This starts everything from scratch.</b> On ${esc(longDate(CURR_START))} the first of ${CURRICULUM.length} steps appears. He does the steps in order and cannot move on until the current one is finished, however long that takes. A step he does not finish comes back on the next step day (Tuesday and Friday). Videos are encouraged but not required.</p>
+    <p class="small"><b>What is reset:</b> all training progress (sessions, XP, streak, badges, weekly records, the skill ladder, film notes, challenges, the season goal) and the game log. A backup of the old plan is saved first, and Restore an earlier version of the plan can bring the old plan and schedule back. <b>What is kept:</b> the profile, family sync, videos, links, notes and rewards.</p>
+    ${fitSummaryHtml()}
+    <button class="btn" data-a="currStart">Start from scratch</button>`;
+}
+function startCurriculum() {
+  takeSnapshot("before starting over", true);
+  try { localStorage.setItem("tristan-backup-before-restart", JSON.stringify({ at: Date.now(), state: S })); } catch (e) {}
+  applyFit(true);
+  S.logs = {}; S.weekly = {}; S.badges = []; S.ladder = {}; S.watchTry = {}; S.filmNotes = []; S.levelUp = {}; S.monthly = null; S.goal = null; S.games = [];
+  S.progressFrom = CURR_START;
+  S.profile.cycleStart = dateKey(mondayOf(parseKey(CURR_START)));
+  S.curr = { on: true, step: 0, date: "" };
+  try { localStorage.removeItem("tristan-milestones"); } catch (e) {}
+  currTick();
+}
+function currStatusHtml() {
+  const st = currStepObj(), done = S.curr.finished ? CURRICULUM.length : S.curr.step;
+  const parent = Prefs.parent ? `<p class="small">Parent controls. Use these only if something is stuck, such as a broken video link.</p>
+    <button class="btn gray" data-a="currSkip">Unlock the next step</button>
+    <button class="btn gray" data-a="currBack">Go back one step</button>` : `<p class="small">A parent can unlock a step from Family view if something gets stuck.</p>`;
+  return `<p>${S.curr.finished ? "All " + CURRICULUM.length + " steps are finished." : "He is on <b>step " + st.n + " of " + CURRICULUM.length + ": " + esc(st.name) + "</b>."} ${done} finished.</p>
+    <p class="small">He cannot move on until the current step is finished. A step that is not finished comes back on the next step day.</p>${parent}`;
+}
+Object.assign(EXTRA_ACTIONS, {
+  currOpen: () => openInfo("Curriculum", currOn() ? currStatusHtml() : currStartHtml()),
+  currStart: () => { startCurriculum(); $("#modal").innerHTML = ""; toast("Starting from scratch on " + longDate(CURR_START) + "."); },
+  currSkip: () => { if (!currOn()) return; if (S.curr.step < CURRICULUM.length - 1) S.curr.step++; else S.curr.finished = true; S.curr.date = ""; $("#modal").innerHTML = ""; toast("Next step unlocked."); },
+  currBack: () => { if (!currOn()) return; S.curr.step = Math.max(0, S.curr.step - 1); S.curr.finished = false; S.curr.date = ""; $("#modal").innerHTML = ""; toast("Moved back one step."); },
+});
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && typeof currTick === "function" && currTick()) { persist(); if (!ui.form) render(); } });
