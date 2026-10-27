@@ -6,7 +6,7 @@ This file records the suggested videos and the written content added in Phase 9.
 
 **Levels:** 2 Intermediate, 3 Advanced (no Basics). The app shows only Advanced by default (Level switch under Watch non-stop). Levels were set from titles and my judgement, not from watching.
 
-Totals: 274 entries (Intermediate 146, Advanced 128); 228 play in the app, 46 open in the browser.
+Totals: 289 entries (Intermediate 154, Advanced 135); 239 play in the app, 50 open in the browser.
 
 ## Offense
 
@@ -61,6 +61,10 @@ Totals: 274 entries (Intermediate 146, Advanced 128); 228 play in the app, 46 op
 - O62 (Intermediate) [Layup Drill: Finishing Under Pressure](https://www.youtube.com/shorts/sB3Pljfqy9U) - YouTube. A short video.
 - O182 (Intermediate) [Stop Missing Left Hand Layups With This Drill](https://www.youtube.com/watch?v=uvZF4ynbYDE) - YouTube
 - O183 (Intermediate) [Finishing Drills To Improve Your Reverse Layups](https://www.youtube.com/watch?v=1MPEeY7WFnw) - YouTube
+- O203 (Advanced) [3 Moves To Finish Through Contact](https://www.youtube.com/watch?v=ujG00ywWO_A) - YouTube. Breakthrough Basketball, Jim Huber.
+- O204 (Advanced) [The Best Layup For Small Guards (Coach Nick, BBallBreakdown)](https://www.youtube.com/watch?v=tfHCf1luxbw) - YouTube
+- O205 (Intermediate) [Basketball Drill for Better Layups: Play Off Two Feet](https://www.youtube.com/watch?v=YzSXr6uNNVQ) - YouTube
+- O206 (Advanced) [Combo Moves and Hop Step to a Layup Finish Off Two Feet](https://www.youtube.com/watch?v=dPJwFgQ_igU) - YouTube
 
 ### Pick and roll and screens
 
@@ -169,6 +173,8 @@ Totals: 274 entries (Intermediate 146, Advanced 128); 228 play in the app, 46 op
 - O172 (Advanced) [Quick Release: Advanced Shooting off the Dribble Drill](https://www.breakthroughbasketball.com/training/dribble-quick-shot) - Breakthrough Basketball. A combo move, then shoot right away.
 - O198 (Advanced) [How to Do Step Backs](https://www.levelupbasket.com/basketball-drills/shooting-drills/step-backs) - Level Up Basketball. One or two hard dribbles, then plant and push off.
 - O199 (Advanced) [Steph Curry Shooting Drill: 3-Shot Movement Workout](https://www.levelupbasket.com/basketball-drills/shooting-drills/steph-curry-3-shots-drill) - Level Up Basketball
+- O207 (Intermediate) [Basketball Hesitation Pull-Up Workout](https://www.levelupbasket.com/basketball-workouts/basketball-hesitation-pull-up-workout) - Level Up Basketball
+- O208 (Advanced) [Basketball Two-Ball Pull-Up Workout](https://www.levelupbasket.com/basketball-workouts/basketball-two-ball-pull-up-workout) - Level Up Basketball
 
 ### Floaters and finishing
 
@@ -215,6 +221,7 @@ Totals: 274 entries (Intermediate 146, Advanced 128); 228 play in the app, 46 op
 - O174 (Advanced) [The Hook Pass: Unstoppable Point Guards](https://pgcbasketball.com/blog/the-hook-pass-unstoppable-point-guards/) - PGC Basketball. Snap the ball down with the arm extended over the defender.
 - O175 (Advanced) [2 on 2 Drive and Kick (Steve Clifford)](https://www.youtube.com/watch?v=c7aOHMgwbqw) - YouTube
 - O176 (Intermediate) [Drive and Kick Shooting with Coach Tony Miller](https://www.youtube.com/watch?v=QSbyKMl7u1U) - YouTube
+- O202 (Advanced) [If You're a Point Guard, You Need This Passing Drill](https://www.youtube.com/watch?v=aq4LZtOoaZk) - YouTube. It is about reads, not flash.
 
 ### Triple threat and fakes
 
@@ -337,6 +344,8 @@ Totals: 274 entries (Intermediate 146, Advanced 128); 228 play in the app, 46 op
 - T24 (Intermediate) [How to Break a Full Court or Half Court Press](https://www.youtube.com/watch?v=D6IL1yNMIFg) - YouTube
 - T25 (Intermediate) [Top 3 Tips How To Beat A Press Defense](https://www.youtube.com/watch?v=nuiPMdlILIA) - YouTube
 - T27 (Advanced) [3 Press Break Strategies That Punish Full-Court Pressure](https://www.breakthroughbasketball.com/offense/press-break-offense) - Breakthrough Basketball
+- T36 (Intermediate) [Full Court Press Breaker Drill](https://www.breakthroughbasketball.com/drills/full-court-press-breaker-drill) - Breakthrough Basketball. The defense adds players as the offense improves.
+- T37 (Advanced) [Mastering the 5v5 Full Court Press Break](https://www.vantasports.ai/drills/basketball-5v5-full-court-press-break-drill) - Vanta Sports. A 2-2-1 press with the inbounder starting the break.
 
 ### Advanced web guides and drills
 
@@ -411,6 +420,12 @@ Totals: 274 entries (Intermediate 146, Advanced 128); 228 play in the app, 46 op
 ### Mindset
 
 - P30 (Intermediate) [Increase Your Mental Toughness](https://pgcbasketball.com/blog/increase-your-mental-toughness/) - PGC Basketball
+- P46 (Intermediate) [4 Pregame Visualizations to Try](https://www.youtube.com/watch?v=htyGT0UHF_A) - YouTube
+- P47 (Intermediate) [This 10-Minute Visualization Will Change How You Play](https://www.youtube.com/watch?v=8IKCp3K_rvg) - YouTube. A guided session.
+- P48 (Intermediate) [Mental Shooting Visualization for Basketball Players](https://www.youtube.com/watch?v=-zyxiEt4J14) - YouTube
+- P49 (Intermediate) [How to Mentally Prepare for a Basketball Game (5 Step Routine)](https://www.youtube.com/watch?v=h60xkWd42cg) - YouTube
+- P50 (Intermediate) [How to Use Visualization Before a Game](https://www.youtube.com/watch?v=oa6o2LkcR5k) - YouTube
+- P51 (Advanced) [My Full Pre-Game Mental and Physical Preparation Routine](https://www.youtube.com/watch?v=3Sp5I5NZTMg) - YouTube. Dre Baldwin.
 
 ### Film study
 
