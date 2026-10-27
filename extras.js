@@ -1198,10 +1198,10 @@ function fitSummaryHtml() {
     return `<div class="row"><div class="grow"><div class="title strong">${name} <span class="detail" style="display:inline">${esc(f.theme)}</span></div><div class="detail">${ev.length ? "Team: " + ev.map((x) => esc(x.title) + " " + x.minutes + " min").join(", ") + ". " : ""}App: ${mins} min${f.blocks.length > 1 ? "" : " (optional)"}</div></div></div>`;
   }).join("");
   const team = WEEK_FIT.events.reduce((p, x) => p + x.minutes, 0);
-  const own = ["Monday", "Tuesday"].reduce((p, n) => p + WEEK_FIT.days[n].blocks.reduce((q, b) => q + b[2], 0), 0);
-  return `<p class="small">School comes first and he needs rest, so this plan is light. It replaces the Monday to Sunday plan with two short sessions on his free days, tiny optional notes on busy days, and a real rest day on Friday. Your progress, videos, links, notes and rewards are not touched. The team schedule gets Rens practice, skills training and the league game every week. The plan is saved first, so Restore an earlier version of the plan can undo it, schedule included.</p>
+  const own = ["Tuesday", "Friday"].reduce((p, n) => p + WEEK_FIT.days[n].blocks.reduce((q, b) => q + b[2], 0), 0);
+  return `<p class="small">School comes first and he needs rest, so this plan keeps the full one-hour sessions to Tuesday and Friday, makes Monday a real rest day, and gives the busy days only tiny optional notes. It replaces the Monday to Sunday plan. Your progress, videos, links, notes and rewards are not touched. The team schedule gets Rens practice, skills training and the league game every week. The plan is saved first, so Restore an earlier version of the plan can undo it, schedule included.</p>
     <div class="group">${rows}</div>
-    <p class="small">Organized basketball is about ${((team + own) / 60).toFixed(1)} hours a week, including the two short sessions. Edit the game length in Week, Team schedule if it differs from ${WEEK_FIT.events.find((x) => x.type === "game").minutes} minutes.</p>
+    <p class="small">Organized basketball is about ${((team + own) / 60).toFixed(1)} hours a week, including the two one-hour sessions. The optional notes can add up to 30 minutes. Edit the game length in Week, Team schedule if it differs from ${WEEK_FIT.events.find((x) => x.type === "game").minutes} minutes.</p>
     <button class="btn" data-a="fitApply">Fit the plan to his week</button>`;
 }
 function nextWeekdayDate(dow) { return dateKey(addDays(mondayOf(new Date()), dow)); }

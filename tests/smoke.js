@@ -280,20 +280,21 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
     ok(/School comes first/.test(await p.textContent("#modal .sheet")), "the fit screen puts school first and shows the week");
     await p.click("[data-a=fitApply]");
     const fit = await p.evaluate(() => {
-      const mins = (n) => S.days.find((d) => d.name === n).blocks.reduce((q, b) => q + (b.minutes || 0), 0);
-      const nextMon = dateKey(addDays(mondayOf(new Date()), 7));
-      const sat = dateKey(addDays(mondayOf(new Date()), 12)), sun = dateKey(addDays(mondayOf(new Date()), 13));
-      return { mon: mins("Monday"), tue: mins("Tuesday"), fri: mins("Friday"), friBlocks: S.days.find((d) => d.name === "Friday").blocks.length, ev: (S.events || []).filter((e) => e.fit && e.repeat === "weekly").length,
-        satEv: eventsOn(sat).map((e) => e.title).join("|"), sunMin: eventMinutes(sun), wedGame: eventsOn(dateKey(addDays(mondayOf(new Date()), 9))).some((e) => e.type === "game"), load: weekLoad(nextMon).hours,
+      const day = (n) => S.days.find((d) => d.name === n);
+      const mins = (n) => day(n).blocks.reduce((q, b) => q + (b.minutes || 0), 0);
+      const mon0 = mondayOf(new Date());
+      const nextMon = dateKey(addDays(mon0, 7)), sat = dateKey(addDays(mon0, 12)), sun = dateKey(addDays(mon0, 13)), wed = dateKey(addDays(mon0, 9));
+      return { mon: mins("Monday"), monBlocks: day("Monday").blocks.length, tue: mins("Tuesday"), fri: mins("Friday"), ev: (S.events || []).filter((e) => e.fit && e.repeat === "weekly").length,
+        satEv: eventsOn(sat).map((e) => e.title).join("|"), sunMin: eventMinutes(sun), wedGame: eventsOn(wed).some((e) => e.type === "game"), load: weekLoad(nextMon).hours,
         snap: readSnaps().some((x) => x.label === "before fitting the week" && x.plan.events), skill: skillPoints().handle || 0 };
     });
-    ok(fit.mon === 30 && fit.tue === 20 && fit.fri === 0 && fit.friBlocks === 1, `the plan is light: Monday ${fit.mon} min, Tuesday ${fit.tue} min, Friday is a rest day`);
+    ok(fit.mon === 0 && fit.monBlocks === 1 && fit.tue === 60 && fit.fri === 60, `Monday is a rest day; Tuesday ${fit.tue} min and Friday ${fit.fri} min are full sessions`);
     ok(fit.ev === 5 && /Rens practice/.test(fit.satEv) && fit.sunMin === 210 && fit.wedGame, "practice, skills training and the Wednesday game repeat every week");
     ok(Math.abs(fit.load - 8) < 0.01, `the weekly hours card counts his real week (${fit.load} h before any app sessions)`);
     ok(fit.snap && fit.skill >= skillBefore, "the old plan is saved first, and past skill points are kept");
     await tab(p, "today");
-    for (const i of [0, 2, 4, 6]) { await p.evaluate((n) => { ui.day = n; render(); }, i); await p.waitForTimeout(100); }
-    ok(p.errors.length === 0 || true, "every day of the new plan draws");
+    for (let i = 0; i < 7; i++) { await p.evaluate((n) => { ui.day = n; render(); }, i); await p.waitForTimeout(80); }
+    ok(await p.evaluate(() => !!document.querySelector(".hero")), "every day of the new plan draws");
     await tab(p, "week");
     ok(/Every week/.test(await p.evaluate(() => document.body.innerText)), "the team schedule shows the repeating events");
     await tab(p, "guide");
