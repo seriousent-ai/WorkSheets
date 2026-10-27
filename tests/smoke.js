@@ -349,7 +349,6 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
     await p.click("[data-a=close]");
     const seenId = await p.evaluate(() => sugYouTube()[0].id);
     const seenBefore = await p.evaluate(() => document.querySelector("[data-seen-count]").textContent);
-    await p.click("details[data-lib=offense] summary").catch(() => {});
     await p.evaluate((id) => { ACTIONS.sugSeen({ id }); persist(); render(); }, seenId);
     ok(await p.evaluate((id) => isSeen(SUGGESTED_VIDEOS.find((v) => v.id === id)) && /^1 of \d+ videos/.test(document.querySelector("[data-seen-count]").textContent), seenId), "marking a video watched updates the Watched counter (" + seenBefore.slice(0, 12) + " before)");
     await p.evaluate((id) => { ACTIONS.sugSeen({ id }); persist(); render(); }, seenId);
