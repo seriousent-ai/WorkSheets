@@ -966,10 +966,12 @@ const inLibrary = (v) => S.videos.some((x) => x.url === v.url || (v.yt && x.url 
 const LIB_LEVELS = [[1, "All levels"], [2, "Intermediate and up"], [3, "Advanced only"]];
 const LEVEL_NAME = { 1: "Basics", 2: "Intermediate", 3: "Advanced" };
 const sugVisible = () => sugList().filter((v) => !(S.sugHidden || []).includes(v.id) && (v.level || 2) >= (Prefs.libLevel || 3));
+const isSeen = (v) => !!(S.libSeen || {})[v.id];
 const sugYouTube = (cat) => sugVisible().filter((v) => v.yt && (!cat || v.cat === cat));
 function watchSection() {
   const chips = [["", "All topics"], ...SUGGESTED_CATS].map(([k, label]) => `<button class="chip" data-a="watchAll" data-c="${k}">${esc(label)} <small>${sugYouTube(k || "").length}</small></button>`).join("");
-  return `<h2 class="section">Watch non-stop</h2><div class="group"><div class="row"><div class="grow"><div class="title strong">Play a whole topic back to back</div><div class="detail">Tap a topic, or All topics to play a mix of everything. The videos play one after another.</div>
+  const playable = sugYouTube(), seen = playable.filter(isSeen).length;
+  return `<h2 class="section">Watch non-stop</h2><div class="group"><div class="row"><div class="grow"><div class="title strong">Watched</div><div class="detail" data-seen-count>${seen} of ${playable.length} videos you can play. Videos are optional. Tap Mark watched on the ones he has seen.</div><div class="progress" style="margin-top:8px"><i style="width:${playable.length ? Math.round((seen / playable.length) * 100) : 0}%"></i></div></div></div><div class="row"><div class="grow"><div class="title strong">Play a whole topic back to back</div><div class="detail">Tap a topic, or All topics to play a mix of everything. The videos play one after another.</div>
     <div class="chips wrapchips" role="group" aria-label="Topics">${chips}</div></div></div>
     <div class="row"><div class="grow"><div class="title strong">Level</div><div class="detail">Basics and intermediate are hidden by default.</div>
     <div class="chips wrapchips" role="group" aria-label="Level">${LIB_LEVELS.map(([n, l]) => `<button class="chip ${(Prefs.libLevel || 3) === n ? "on" : ""}" aria-pressed="${(Prefs.libLevel || 3) === n}" data-a="setLevel" data-n="${n}">${l}</button>`).join("")}</div></div></div>
@@ -987,7 +989,7 @@ function librarySection() {
       body = groups.map((g) => `<h3 class="libgroup">${esc(g)}</h3><div class="group">${items.filter((v) => v.group === g).map((v) => {
         const added = inLibrary(v);
         const play = v.yt || v.list ? `<button class="pill blue" data-a="sugPlay" data-id="${v.id}">Play</button>` : `<a class="pill blue" href="${esc(v.url)}" target="_blank" rel="noopener">Open ↗</a>`;
-        return `<div class="row"><div class="grow"><div class="title strong">${esc(v.title)}</div><div class="detail">${esc(LEVEL_NAME[v.level || 2])} · ${esc(v.src)}${v.note ? " · " + esc(v.note) : ""}</div><div class="pills">${play}${added ? '<span class="pill green">In your videos</span>' : `<button class="pill" data-a="sugAdd" data-id="${v.id}">Add to my videos</button>`}<button class="pill" data-a="sugHide" data-id="${v.id}">Hide</button></div></div></div>`;
+        return `<div class="row"><div class="grow"><div class="title strong">${esc(v.title)}</div><div class="detail">${esc(LEVEL_NAME[v.level || 2])} · ${esc(v.src)}${v.note ? " · " + esc(v.note) : ""}</div><div class="pills">${play}${added ? '<span class="pill green">In your videos</span>' : `<button class="pill" data-a="sugAdd" data-id="${v.id}">Add to my videos</button>`}${v.yt || v.list ? `<button class="pill ${isSeen(v) ? "green" : ""}" data-a="sugSeen" data-id="${v.id}" aria-pressed="${isSeen(v)}">${isSeen(v) ? "Watched ✓" : "Mark watched"}</button>` : ""}<button class="pill" data-a="sugHide" data-id="${v.id}">Hide</button></div></div></div>`;
       }).join("")}</div>`).join("");
     }
     return `<details class="fold" data-lib="${k}" ${open ? "open" : ""}><summary>${esc(label)} <small>${items.length} videos</small></summary>${body}</details>`;
@@ -1017,7 +1019,8 @@ Object.assign(EXTRA_ACTIONS, {
     const v = sugList().find((x) => x.id === d.id);
     if (!v) return;
     const src = v.list ? `https://www.youtube.com/embed/videoseries?list=${v.list}&playsinline=1&rel=0&autoplay=1` : `https://www.youtube.com/embed/${v.yt}?playsinline=1&rel=0&autoplay=1`;
-    playerSheet(v.title, src, `<p class="small"><a href="${esc(v.url)}" target="_blank" rel="noopener">Open on YouTube ↗</a> if it does not play here.</p>`);
+    playerSheet(v.title, src, `<p class="small"><a href="${esc(v.url)}" target="_blank" rel="noopener">Open on YouTube ↗</a> if it does not play here.</p>
+      <div class="pills"><button class="pill ${isSeen(v) ? "green" : "blue"}" data-a="sugSeen" data-id="${v.id}" data-close="1">${isSeen(v) ? "Watched ✓" : "Mark watched"}</button><button class="pill" data-a="sugHideClose" data-id="${v.id}">Does not play or does not fit? Hide it</button></div>`);
   },
   sugAdd: (d) => {
     const v = sugList().find((x) => x.id === d.id);
@@ -1025,6 +1028,12 @@ Object.assign(EXTRA_ACTIONS, {
     S.videos.push({ id: uid("v"), code: v.code, title: v.title, url: v.url, note: v.src + (v.note ? ". " + v.note : "") });
     toast("Added to your videos.");
   },
+  sugSeen: (d) => {
+    S.libSeen ||= {};
+    if (S.libSeen[d.id]) delete S.libSeen[d.id]; else { S.libSeen[d.id] = dateKey(new Date()); toast("Marked watched."); }
+    if (d.close) $("#modal").innerHTML = "";
+  },
+  sugHideClose: (d) => { S.sugHidden ||= []; if (!S.sugHidden.includes(d.id)) S.sugHidden.push(d.id); $("#modal").innerHTML = ""; toast("Hidden. Show it again from the Videos tab."); },
   sugHide: (d) => { S.sugHidden ||= []; if (!S.sugHidden.includes(d.id)) S.sugHidden.push(d.id); },
   sugUnhide: () => { S.sugHidden = []; },
   ytPaste: async () => {
@@ -1045,6 +1054,7 @@ Object.assign(EXTRA_ACTIONS, {
 
 /* ---------- skill ladder ---------- */
 const LADDER_XP = 30;
+const ladderText = (k, i) => (S.ladderEdit || {})[k + ":" + (i + 1)] || (typeof LADDER !== "undefined" && LADDER[k] ? LADDER[k][i] : "") || "";
 const ladderN = (k) => Math.min(5, Math.max(0, Number((S.ladder || {})[k]) || 0));
 function bonusXp() {
   if (typeof LADDER === "undefined") return 0;
@@ -1053,7 +1063,7 @@ function bonusXp() {
 function ladderHtml() {
   if (typeof LADDER === "undefined") return "";
   const rows = SKILLS.map(([k, name, ic]) => {
-    const n = ladderN(k), steps = LADDER[k] || [];
+    const n = ladderN(k), steps = (LADDER[k] || []).map((_, i) => ladderText(k, i));
     const dots = steps.map((_, i) => `<i class="${i < n ? "on" : ""}"></i>`).join("");
     const body = n >= steps.length
       ? `<div class="detail">Top rung reached. Keep it sharp.</div>`
@@ -1139,16 +1149,17 @@ function gameDayCard() {
 }
 
 /* ---------- leadership goal ---------- */
+const leadAll = () => LEAD_PROMPTS.concat(S.leadExtra || []);
 function leadOf() {
   const wk = weekKeyNow();
   const w = S.weekly[wk] || {};
-  const defI = Math.floor(mondayOf(new Date()).getTime() / 6048e5) % LEAD_PROMPTS.length;
+  const defI = Math.floor(mondayOf(new Date()).getTime() / 6048e5) % leadAll().length;
   const l = w.lead || { i: defI, done: false };
-  return { w, l: { i: l.i % LEAD_PROMPTS.length, done: !!l.done } };
+  return { w, l: { i: l.i % leadAll().length, done: !!l.done } };
 }
 function leadHtml() {
   const { l } = leadOf();
-  return `<h2 class="section">Leadership this week</h2><div class="group"><div class="row"><div class="grow"><div class="title strong">${esc(LEAD_PROMPTS[l.i])}</div><div class="detail">A point guard leads too. Try this in every practice and game this week.</div><div class="pills"><button class="pill ${l.done ? "green" : "blue"}" data-a="leadDone" aria-pressed="${l.done}">${l.done ? "Done, tap to undo" : "I did it (+15 XP)"}</button><button class="pill" data-a="leadNew">Another goal</button></div></div></div></div>`;
+  return `<h2 class="section">Leadership this week</h2><div class="group"><div class="row"><div class="grow"><div class="title strong">${esc(leadAll()[l.i])}</div><div class="detail">A point guard leads too. Try this in every practice and game this week.</div><div class="pills"><button class="pill ${l.done ? "green" : "blue"}" data-a="leadDone" aria-pressed="${l.done}">${l.done ? "Done, tap to undo" : "I did it (+15 XP)"}</button><button class="pill" data-a="leadNew">Another goal</button></div></div></div></div>`;
 }
 
 /* ---------- plain-English week ---------- */
@@ -1159,6 +1170,7 @@ function plainWeekText() {
   const n = logs.filter((l) => l.complete).length, goal = weeklyGoal();
   const out = [];
   out.push(`${first} finished ${n} of ${goal} sessions this week${n >= goal - 1 && n > 0 ? ", a strong week" : n === 0 ? ", so nothing yet" : ""}.`);
+  if (currOn()) out.push(S.curr.finished ? "The curriculum is finished." : `Curriculum: on step ${currStepObj().n} of ${CURRICULUM.length} (${currDone()} finished).`);
   const sl = logs.map((l) => l.sleep).filter(Boolean);
   if (sl.length) { const av = Math.round((sl.reduce((p, q) => p + q, 0) / sl.length) * 10) / 10; out.push(`Sleep averaged ${av} hours${av < 9 ? ", under the 9 to 12 hours he needs" : ", which is healthy"}.`); }
   const cur = shotAgg("4w"), prev = shotAgg("prev");
@@ -1171,7 +1183,7 @@ function plainWeekText() {
   const low = SKILLS.slice().sort((p, q) => ladderN(p[0]) - ladderN(q[0]))[0];
   out.push(`Skill ladder: ${rungs} of ${SKILLS.length * 5} rungs passed.`);
   const { l } = leadOf();
-  out.push(`Leadership goal: ${LEAD_PROMPTS[l.i].toLowerCase()} (${l.done ? "done" : "not yet"}).`);
+  out.push(`Leadership goal: ${leadAll()[l.i].toLowerCase()} (${l.done ? "done" : "not yet"}).`);
   const next = mv.length && mv[mv.length - 1][1] < 0 ? `shooting from the ${mv[mv.length - 1][0].toLowerCase()}` : low && ladderN(low[0]) < 5 ? low[1].toLowerCase() : "keeping the habits going";
   out.push(`Good thing to work on next week: ${next}.`);
   return out.join(" ");
@@ -1186,7 +1198,7 @@ Object.assign(EXTRA_ACTIONS, {
   addFilmNote: () => formFilmNote(), editFilmNote: (d) => formFilmNote(d.id),
   preToggle: (d) => { const lg = logOf(dateKey(new Date())); lg.pre ||= {}; if (lg.pre[d.i]) delete lg.pre[d.i]; else lg.pre[d.i] = true; },
   leadDone: () => { const { l } = leadOf(); const w = (S.weekly[weekKeyNow()] ||= {}); w.lead = { i: l.i, done: !l.done }; if (w.lead.done) toast("Great leadership. +15 XP"); },
-  leadNew: () => { const { l } = leadOf(); const w = (S.weekly[weekKeyNow()] ||= {}); w.lead = { i: (l.i + 1) % LEAD_PROMPTS.length, done: false }; },
+  leadNew: () => { const { l } = leadOf(); const w = (S.weekly[weekKeyNow()] ||= {}); w.lead = { i: (l.i + 1) % leadAll().length, done: false }; },
 });
 
 
@@ -1232,7 +1244,11 @@ function placeStep(idx) {
   if (!d) return;
   d.theme = st.theme; d.cue = st.cue; d.videoIds = (st.videoIds || []).slice(); d.blocks = st.blocks.map((b) => ({ ...b }));
   S.blockTitles ||= {};
-  d.blocks.forEach((b) => { S.blockTitles[b.id] = b.title.toLowerCase(); });
+  d.blocks.forEach((b) => {
+    S.blockTitles[b.id] = b.title.toLowerCase();
+    const m = b.act && b.act.match(/^ladder:(\w+):(\d)$/), e = m && (S.ladderEdit || {})[m[1] + ":" + m[2]];
+    if (e) b.text = `Rung ${m[2]} of 5. ${e} Check this off only when he has passed it.`;
+  });
 }
 /* Runs when the app opens on Tristan's phone. A step moves on only if the last step day's session was finished. Otherwise the same step is shown again. */
 function currTick() {
@@ -1250,7 +1266,8 @@ function currTick() {
   if (last && last.complete) {
     if (c.step < CURRICULUM.length - 1) c.step++;
     else { c.finished = true; return true; }
-  }
+    c.carried = false;
+  } else c.carried = !!c.date;
   c.date = today;
   placeStep(idx);
   return true;
@@ -1266,17 +1283,22 @@ function currAct(act, on) {
   if (kind === "ladder") { S.ladder ||= {}; const r = +b, cur = ladderN(a); S.ladder[a] = on ? Math.max(cur, r) : Math.min(cur, r - 1); }
   else if (kind === "wt") { S.watchTry ||= {}; if (on) S.watchTry[a] = dateKey(new Date()); else delete S.watchTry[a]; }
 }
+function currDone() {
+  const c = S.curr, today = dateKey(new Date());
+  return c.finished ? CURRICULUM.length : c.step + (c.date === today && S.logs[today] && S.logs[today].complete ? 1 : 0);
+}
 function currCard() {
   if (!currOn()) return "";
   const c = S.curr, st = currStepObj(), total = CURRICULUM.length;
   const today = dateKey(new Date()), idx = (new Date().getDay() + 6) % 7;
   const doneToday = c.date === today && S.logs[today] && S.logs[today].complete;
-  const stepsDone = c.finished ? total : c.step + (doneToday ? 1 : 0);
+  const stepsDone = currDone();
+  const waiting = !!(c.date && c.date < today && !(S.logs[c.date] && S.logs[c.date].complete));
   let head, line;
   if (c.finished) { head = "Curriculum complete"; line = "He has finished all " + total + " steps."; }
   else if (today < CURR_START) { head = "Starts " + longDate(CURR_START); line = "Step 1 is " + CURRICULUM[0].name + ". Until then, rest and school come first."; }
-  else if (CURR_DAYS.includes(idx)) { head = "Step " + st.n + " of " + total + ": " + st.name; line = doneToday ? "Done. The next step opens " + (nextStepDay() ? longDate(nextStepDay()) : "next time") + "." : "Finish all of it before moving on. If it is not finished today, it comes back next time."; }
-  else { head = "Step " + st.n + " of " + total + ": " + st.name; line = "Next step day: " + (nextStepDay() ? longDate(nextStepDay()) : "soon") + ". He moves on only when this step is finished."; }
+  else if (CURR_DAYS.includes(idx)) { head = "Step " + st.n + " of " + total + ": " + st.name; line = doneToday ? "Done. The next step opens " + (nextStepDay() ? longDate(nextStepDay()) : "next time") + "." : c.carried ? "This step is back because it was not finished last time. Finish all of it before moving on." : "Finish all of it before moving on. If it is not finished today, it comes back next time."; }
+  else { head = "Step " + st.n + " of " + total + ": " + st.name; line = (waiting ? "Still waiting: last time's step was not finished, so it comes back " : "Next step day: ") + (nextStepDay() ? longDate(nextStepDay()) : "soon") + ". He moves on only when this step is finished."; }
   return `<h2 class="section">Curriculum</h2><div class="group"><div class="row"><div class="grow"><div class="title strong">${esc(head)}</div><div class="detail">${esc(line)}</div><div class="progress" style="margin-top:8px"><i style="width:${Math.round((stepsDone / total) * 100)}%"></i></div><div class="detail">${stepsDone} of ${total} steps finished</div></div></div></div>`;
 }
 function pruneBefore(d) {
@@ -1287,14 +1309,15 @@ function pruneBefore(d) {
 function currStartHtml() {
   return `<p class="small"><b>School comes first, and he needs rest.</b> <b>This starts everything from scratch.</b> On ${esc(longDate(CURR_START))} the first of ${CURRICULUM.length} steps appears. He does the steps in order and cannot move on until the current one is finished, however long that takes. A step he does not finish comes back on the next step day (Tuesday and Friday). Videos are encouraged but not required.</p>
     <p class="small"><b>What is reset:</b> all training progress (sessions, XP, streak, badges, weekly records, the skill ladder, film notes, challenges, the season goal) and the game log. A backup of the old plan is saved first, and Restore an earlier version of the plan can bring the old plan and schedule back. <b>What is kept:</b> the profile, family sync, videos, links, notes and rewards.</p>
+    ${readinessHtml()}
     ${fitSummaryHtml()}
-    <button class="btn" data-a="currStart">Start from scratch</button>`;
+    <button class="btn" data-a="currStart">Start from scratch</button>${backupHtml()}`;
 }
 function startCurriculum() {
   takeSnapshot("before starting over", true);
   try { localStorage.setItem("tristan-backup-before-restart", JSON.stringify({ at: Date.now(), state: S })); } catch (e) {}
   applyFit(true);
-  S.logs = {}; S.weekly = {}; S.badges = []; S.ladder = {}; S.watchTry = {}; S.filmNotes = []; S.levelUp = {}; S.monthly = null; S.goal = null; S.games = [];
+  S.logs = {}; S.weekly = {}; S.badges = []; S.ladder = {}; S.watchTry = {}; S.filmNotes = []; S.levelUp = {}; S.monthly = null; S.goal = null; S.games = []; S.libSeen = {};
   S.progressFrom = CURR_START;
   S.profile.cycleStart = dateKey(mondayOf(parseKey(CURR_START)));
   S.curr = { on: true, step: 0, date: "" };
@@ -1307,7 +1330,7 @@ function currStatusHtml() {
     <button class="btn gray" data-a="currSkip">Unlock the next step</button>
     <button class="btn gray" data-a="currBack">Go back one step</button>` : `<p class="small">A parent can unlock a step from Family view if something gets stuck.</p>`;
   return `<p>${S.curr.finished ? "All " + CURRICULUM.length + " steps are finished." : "He is on <b>step " + st.n + " of " + CURRICULUM.length + ": " + esc(st.name) + "</b>."} ${done} finished.</p>
-    <p class="small">He cannot move on until the current step is finished. A step that is not finished comes back on the next step day.</p>${parent}`;
+    <p class="small">He cannot move on until the current step is finished. A step that is not finished comes back on the next step day.</p>${parent}${backupHtml()}`;
 }
 Object.assign(EXTRA_ACTIONS, {
   currOpen: () => openInfo("Curriculum", currOn() ? currStatusHtml() : currStartHtml()),
@@ -1323,5 +1346,71 @@ function tutHtml(b) {
   if (!b || !b.tut || !b.tut.length) return "";
   const items = b.tut.map((id) => sugList().find((v) => v.yt === id)).filter(Boolean);
   if (!items.length) return "";
-  return `<div class="detail cycnote"><b>How to do it (videos):</b></div><div class="pills">${items.map((v) => `<button class="pill blue" data-a="sugPlay" data-id="${v.id}">${esc(v.title.length > 40 ? v.title.slice(0, 38) + "…" : v.title)}</button>`).join("")}</div>`;
+  return `<div class="detail cycnote"><b>How to do it (videos):</b></div><div class="pills">${items.map((v) => `<button class="pill blue" data-a="sugPlay" data-id="${v.id}">${isSeen(v) ? "✓ " : ""}${esc(v.title.length > 40 ? v.title.slice(0, 38) + "…" : v.title)}</button>`).join("")}</div>`;
 }
+
+
+/* ---------- ready to start, restore old progress, planned hours ---------- */
+const BACKUP_KEY = "tristan-backup-before-restart";
+function readBackup() { try { const b = JSON.parse(localStorage.getItem(BACKUP_KEY)); return b && b.state ? b : null; } catch (e) { return null; } }
+function readinessHtml() {
+  const days = Math.ceil((parseKey(CURR_START) - parseKey(dateKey(new Date()))) / 864e5);
+  const row = (ok, text) => `<div class="row"><div class="grow"><div class="detail"><b>${ok ? "Ready" : "Check"}:</b> ${esc(text)}</div></div></div>`;
+  return `<h3 class="libgroup">Before pressing Start</h3><div class="group">
+    ${row(!!Sync.code, Sync.code ? "Family sync is on" + (Sync.lastOk ? ", last synced " + ago(Sync.lastOk) + "." : ".") : "Family sync is off. Turn it on in Guide first so a parent can see his progress.")}
+    ${row(true, "Both phones should be on the newest version. In Guide, tap Check for an update on each one.")}
+    ${row(true, days > 0 ? "It starts in " + days + (days === 1 ? " day" : " days") + ", on " + longDate(CURR_START) + "." : "The start day is here.")}
+    ${row(true, "Press Start on Tristan's phone only. Family view phones follow along and never move the step.")}
+  </div>`;
+}
+function backupHtml() {
+  const b = readBackup();
+  if (!b) return "";
+  return `<h3 class="libgroup">Old progress</h3><p class="small">His progress from before starting over was saved on this phone on ${esc(longDate(dateKey(new Date(b.at))))}. Restoring brings back the old sessions, XP, badges and games, and turns the curriculum off. A copy of what you have now is saved first.</p>
+    <button class="btn gray" data-a="currRestoreAsk">Restore old progress</button>`;
+}
+function restoreOldProgress() {
+  const b = readBackup();
+  if (!b) return false;
+  try { localStorage.setItem("tristan-backup-before-restore", JSON.stringify({ at: Date.now(), state: S })); } catch (e) {}
+  const old = JSON.parse(JSON.stringify(b.state));
+  Object.keys(S).forEach((k) => delete S[k]);
+  Object.assign(S, old);
+  S.curr = { on: false, step: 0, date: "", finished: false };
+  S.progressFrom = "";
+  S.libSeen ||= {}; S.leadExtra ||= []; S.ladderEdit ||= {};
+  try { localStorage.removeItem("tristan-milestones"); } catch (e) {}
+  return true;
+}
+function plannedLoad(monKey) {
+  const mon = parseKey(monKey);
+  let team = 0, own = 0;
+  for (let i = 0; i < 7; i++) team += eventMinutes(dateKey(addDays(mon, i)));
+  if (currOn()) CURR_DAYS.forEach((i) => { const d = S.days[i]; if (d) own += d.blocks.filter((b) => !b.optional).reduce((p, b) => p + (Number(b.minutes) || 0), 0); });
+  else S.days.forEach((d, i) => { if (i < 6) own += d.blocks.reduce((p, b) => p + (Number(b.minutes) || 0), 0); });
+  return { team: team / 60, own: own / 60, hours: (team + own) / 60 };
+}
+Object.assign(EXTRA_ACTIONS, {
+  currRestoreAsk: () => openInfo("Restore old progress?", `<p>This brings back the sessions, XP, badges, games and plan from before he started over, and turns the curriculum off. What you have now is saved first, so nothing is lost.</p><button class="btn red" data-a="currRestoreDo">Yes, restore old progress</button><button class="btn gray" data-a="close">Cancel</button>`),
+  currRestoreDo: () => { if (restoreOldProgress()) { $("#modal").innerHTML = ""; toast("Old progress restored."); } else toast("No saved progress found on this phone."); },
+});
+
+/* ---------- customize goals and tests ---------- */
+function formLeadAdd() {
+  openForm({ title: "Add a leadership goal", fields: [{ k: "text", label: "The goal", value: "", ph: "Talk to a teammate who is down after a mistake" }], required: ["text"], save(v) { (S.leadExtra ||= []).push(v.text); toast("Added to the leadership goals."); } });
+}
+function formLadderEdit() {
+  const opts = SKILLS.flatMap(([k, name]) => (LADDER[k] || []).map((_, i) => [k + ":" + (i + 1), name + ", rung " + (i + 1)]));
+  openForm({
+    title: "Reword a ladder test",
+    fields: [{ k: "which", label: "Which test", type: "select", value: opts[0][0], opts }, { k: "text", label: "New wording (leave empty to put the original back)", type: "textarea", value: "" }],
+    save(v) { S.ladderEdit ||= {}; if (v.text) S.ladderEdit[v.which] = v.text; else delete S.ladderEdit[v.which]; toast(v.text ? "Test reworded." : "Original test restored."); },
+  });
+}
+Object.assign(EXTRA_ACTIONS, {
+  customOpen: () => openInfo("Customize", `<p class="small">Add your own leadership goals, or reword a skill ladder test. A reworded test shows in the Skill ladder and in future curriculum steps. A step already on screen keeps its wording until it comes back.</p>
+    <button class="btn" data-a="leadAdd">Add a leadership goal</button><button class="btn gray" data-a="ladderEdit">Reword a ladder test</button>
+    <p class="small">Leadership goals added so far: ${(S.leadExtra || []).length}. Ladder tests reworded: ${Object.keys(S.ladderEdit || {}).length}.</p>`),
+  leadAdd: () => formLeadAdd(),
+  ladderEdit: () => formLadderEdit(),
+});

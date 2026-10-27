@@ -302,6 +302,7 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
     ok(await cp.evaluate(() => S.curr.step === 1 && S.days[4].blocks[0].id === "c2-0"), "a finished step is followed by step 2 on Friday");
     await goDay("2026-11-10T16:00:00");
     ok(await cp.evaluate(() => S.curr.step === 1 && S.curr.date === "2026-11-10" && S.days[1].blocks[0].id === "c2-0" && !(S.logs["2026-11-10"] && S.logs["2026-11-10"].complete)), "a step that was not finished comes back on the next step day");
+    ok(await cp.evaluate(() => S.curr.carried === true && /back because it was not finished last time/.test(currCard())), "a repeated step says why it is back");
     ok((await doStep()) === "true", "he finishes the repeated step");
     await goDay("2026-11-13T16:00:00");
     ok(await cp.evaluate(() => S.curr.step === 2), "now step 3 opens");
@@ -311,6 +312,18 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
     ok(cu[0] === 1 && cu[1] === 0 && /Check-up 1/.test(cu[2]), "a check-up step has the ladder tests, and checking one off passes that rung");
     const pcs = await cp.evaluate(() => { Prefs.parent = "Dad"; const before = S.curr.step; ACTIONS.currSkip({}); const after = S.curr.step; ACTIONS.currBack({}); return [before, after, S.curr.step]; });
     ok(pcs[1] === pcs[0] + 1 && pcs[2] === pcs[0], "a parent can unlock or go back a step");
+    ok(await cp.evaluate(() => { ui.tab = "week"; render(); const t = document.querySelector(".hero .big").textContent; ui.tab = "today"; render(); return /of 2 sessions/.test(t); }), "while the curriculum is on, the Week goal is the two step days, not six sessions");
+    const ex = await cp.evaluate(() => {
+      Prefs.parent = "";
+      S.games = [{ id: "g9", date: "2026-11-09", opp: "X", result: "W", pts: 5, ast: 1, tov: 1, stl: 0 }]; persist();
+      const planned = plannedLoad(weekKeyNow()), card = hoursCard(weekKeyNow(), false), plain = plainWeekText(), ready = readinessHtml();
+      const had = !!readBackup(), rest = restoreOldProgress();
+      return { planned: planned.hours, cardHas: /Planned this week/.test(card), plain: /Curriculum: on step/.test(plain), ready: /Before pressing Start/.test(ready) && /Family sync/.test(ready), had, rest, on: !!(S.curr && S.curr.on), from: S.progressFrom, games: S.games.length, savedCopy: !!localStorage.getItem("tristan-backup-before-restore") };
+    });
+    ok(ex.planned >= 9 && ex.cardHas, "the hours card shows the planned week (team time plus his two sessions)");
+    ok(ex.plain, "the plain-words week includes the curriculum step");
+    ok(ex.ready, "the start screen has a before-you-start checklist");
+    ok(ex.had && ex.rest && !ex.on && ex.from === "" && ex.games === 1 && ex.savedCopy, "old progress can be restored, which turns the curriculum off and keeps a copy of the current state");
     const prune = await cp.evaluate(() => { S.logs["2026-10-01"] = { done: { a: true } }; S.weekly["2026-10-26"] = { goal: "x" }; pruneBefore("2026-11-03"); return [Object.keys(S.logs).some((k) => k < "2026-11-03"), !!S.weekly["2026-10-26"]]; });
     ok(!prune[0] && !prune[1], "progress dated before the start is dropped, so old progress cannot come back");
     ok(cp.errors.length === 0, "no page errors in the curriculum flow " + cp.errors.join(";"));
@@ -334,6 +347,23 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
     const src = await p.evaluate(() => document.querySelector(".ytwrap iframe").src);
     ok(/youtube\.com\/embed\/[\w-]{11}\?playlist=[\w-]{11},/.test(src), "a topic plays non-stop as one playlist");
     await p.click("[data-a=close]");
+    const seenId = await p.evaluate(() => sugYouTube()[0].id);
+    const seenBefore = await p.evaluate(() => document.querySelector("[data-seen-count]").textContent);
+    await p.evaluate((id) => { ACTIONS.sugSeen({ id }); persist(); render(); }, seenId);
+    ok(await p.evaluate((id) => isSeen(SUGGESTED_VIDEOS.find((v) => v.id === id)) && /^1 of \d+ videos/.test(document.querySelector("[data-seen-count]").textContent), seenId), "marking a video watched updates the Watched counter (" + seenBefore.slice(0, 12) + " before)");
+    await p.evaluate((id) => { ACTIONS.sugSeen({ id }); persist(); render(); }, seenId);
+    await p.evaluate((id) => { ACTIONS.sugPlay({ id }); }, seenId);
+    ok(await p.evaluate(() => !!document.querySelector("[data-a=sugHideClose]") && !!document.querySelector("[data-a=sugSeen]")), "the player sheet has Mark watched and Hide it");
+    await p.evaluate((id) => { ACTIONS.sugHideClose({ id }); persist(); render(); }, seenId);
+    ok(await p.evaluate((id) => S.sugHidden.includes(id) && !document.querySelector(".ytwrap"), seenId), "Hide it from the player removes the video and closes the sheet");
+    await p.evaluate(() => { ACTIONS.sugUnhide(); persist(); render(); });
+    const cust = await p.evaluate(() => {
+      S.ladderEdit = { "handle:1": "Custom test wording." }; S.leadExtra = ["Cheer for a teammate."];
+      const lt = ladderText("handle", 0), la = leadAll().length === LEAD_PROMPTS.length + 1;
+      CURRICULUM[0]; return { lt, la, html: /Custom test wording/.test(ladderHtml()) };
+    });
+    ok(cust.lt === "Custom test wording." && cust.la && cust.html, "reworded ladder tests and added leadership goals show up in the app");
+    await p.evaluate(() => { S.ladderEdit = {}; S.leadExtra = []; persist(); });
     await p.click("[data-a=watchAll][data-c='']");
     const allSrc = await p.evaluate(() => ({ src: document.querySelector(".ytwrap iframe").src, n: document.querySelectorAll(".playlist li").length, total: sugYouTube().length, def: sugYouTube("defense").length }));
     ok(/playlist=/.test(allSrc.src) && allSrc.n === Math.min(60, allSrc.total) && allSrc.total > allSrc.def, "the All topics chip plays a mix of every topic");

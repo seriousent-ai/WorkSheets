@@ -10,6 +10,10 @@ An installable web app (PWA) for Tristan's weekly basketball plan with the NY Re
 - **Guide**: profile, family sync (with QR code), Family view, coach link, text size, sounds and voice, plan history and restore, clips on this phone, version and diagnostics, a "Test this phone" list, backups and a coach spreadsheet.
 - Everything can be added, edited and deleted in the app. Data is stored on the device and can be shared between phones with a family code.
 
+## Curriculum
+
+Guide, Curriculum starts a 29-step curriculum from scratch (first step Tuesday, November 3, 2026). He does the steps in order and cannot move on until the current step is finished. Each block has tutorial videos, a Watched tracker shows how many he has seen, and Restore old progress can undo the start. See `docs/PROJECT-NOTES.md`.
+
 ## Family sync and Family view
 Create a family code in Guide on one phone and join from the others (type it, share it, or scan the QR code). A parent or sibling turns on **Family view** (Guide, This device) to put their own name on their phone, see progress first, and avoid logging anything for Tristan. The optional **coach link** shares a read-only summary with no sleep, body or private notes.
 
