@@ -334,6 +334,10 @@ const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
     const src = await p.evaluate(() => document.querySelector(".ytwrap iframe").src);
     ok(/youtube\.com\/embed\/[\w-]{11}\?playlist=[\w-]{11},/.test(src), "a topic plays non-stop as one playlist");
     await p.click("[data-a=close]");
+    await p.click("[data-a=watchAll][data-c='']");
+    const allSrc = await p.evaluate(() => ({ src: document.querySelector(".ytwrap iframe").src, n: document.querySelectorAll(".playlist li").length, total: sugYouTube().length, def: sugYouTube("defense").length }));
+    ok(/playlist=/.test(allSrc.src) && allSrc.n === Math.min(60, allSrc.total) && allSrc.total > allSrc.def, "the All topics chip plays a mix of every topic");
+    await p.click("[data-a=close]");
     const first = await p.evaluate(() => sugVisible().find((v) => v.yt && v.cat === "offense").id);
     await p.click(`[data-a=sugAdd][data-id='${first}']`);
     ok(await p.evaluate((id) => inLibrary(SUGGESTED_VIDEOS.find((v) => v.id === id)), first), "adding a suggestion puts it in my videos");

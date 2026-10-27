@@ -1,6 +1,7 @@
 # Changes
 
 ## Phase 9
+- Watch non-stop: a new "All topics" chip plays a shuffled mix of every topic (up to 60 videos), for the car, the bus or the sofa.
 - Curriculum (Guide): 29 fixed steps run on Tuesday and Friday: the six themed sessions for each of the four cycle weeks, a check-up after each, and a finish line. He cannot move to the next step until the current one is finished, however long that takes. A step that is not finished comes back on the next step day. Videos are encouraged but optional. Check-ups hold the skill ladder tests, and checking one off passes that rung. A parent can unlock or go back a step in Family view.
 - Start from scratch (Guide, Curriculum): a backup is saved, training progress and the game log are cleared, the real team schedule (Rens practice, skills training, Wednesday league game, repeating every week) is added, and Monday becomes a rest day. The start day is Tuesday, November 3. Progress dated before the start is ignored, so it cannot return from the server or another phone.
 - Team events can repeat every week.
