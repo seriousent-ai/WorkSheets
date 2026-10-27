@@ -1,6 +1,7 @@
 # Changes
 
 ## Phase 9
+- 27 more advanced entries (323 in all, 97 Advanced): closeouts and help defense, defending bigger players, free throws under pressure, two-ball dribbling, off-ball movement, point guard film study and a 3-on-2 transition drill.
 - Fix: on a phone with Family view on, the progress overview that opens at launch said the phone was not connected until Refresh was tapped. The app now loads the family code before the first screen is drawn, and the overview updates itself when the first sync finishes.
 - Drill details have a "Make this harder" button with a harder version for each core drill, by day.
 - "Watch, then try it" (Videos tab): seven advanced videos each paired with a short drill (+15 XP).
