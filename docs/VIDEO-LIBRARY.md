@@ -6,7 +6,7 @@ This file records the suggested videos and the written content added in Phase 9.
 
 **Levels:** 2 Intermediate, 3 Advanced (no Basics). The app shows only Advanced by default (Level switch under Watch non-stop). Levels were set from titles and my judgement, not from watching.
 
-Totals: 321 entries (Intermediate 177, Advanced 144); 266 play in the app, 55 open in the browser.
+Totals: 324 entries (Intermediate 178, Advanced 146); 266 play in the app, 58 open in the browser.
 
 ## Offense
 
@@ -90,6 +90,7 @@ Totals: 321 entries (Intermediate 177, Advanced 144); 266 play in the app, 55 op
 - O86 (Intermediate) [Give and Go Team Basketball Drills](https://www.youtube.com/watch?v=njTCssKLmkY) - YouTube
 - O87 (Intermediate) [Give and Go Drill](https://www.youtube.com/watch?v=wH79CAnB9Vw) - YouTube
 - O94 (Intermediate) [3 Motion Offense Drills: Screening and Cutting](https://www.youtube.com/watch?v=WEBZhXX_ft0) - YouTube
+- O222 (Advanced) [5 Out Offense Video: NBA Concepts From The Warriors & Nuggets](https://www.breakthroughbasketball.com/coaching/five-out-nba-concepts) - Breakthrough Basketball
 
 ### Fast break
 
@@ -186,6 +187,8 @@ Totals: 321 entries (Intermediate 177, Advanced 144); 266 play in the app, 55 op
 - O212 (Intermediate) [How to Do the Hesi Pullup](https://www.youtube.com/watch?v=UNvSJmDsLCY) - YouTube. Believe Basketball.
 - O213 (Intermediate) [Improve Your Hesitation Pull-Up](https://www.youtube.com/watch?v=tIBBv-ZvNCs) - YouTube
 - O214 (Intermediate) [Between the Legs, Hesi and Pull Up Jumper](https://www.youtube.com/watch?v=5Vcphvsc8Xo) - YouTube
+- O223 (Advanced) [10 at 5: One-Dribble Pull-Up Shooting Drill (shot fake and jump stop)](https://fastmodelsports.com/library/basketball/fastdraw/133092/play-10-at-5) - FastModel Sports
+- O224 (Intermediate) [Three Drills to Improve Your Shot Off the Dribble (Coach Tony Miller)](https://blog.drdishbasketball.com/three-basketball-drills-to-improve-your-shot-off-the-dribble-with-coach-tony-miller) - Dr. Dish
 
 ### Floaters and finishing
 
