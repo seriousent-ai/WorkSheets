@@ -6,7 +6,7 @@ This file records the suggested videos and the written content added in Phase 9.
 
 **Levels:** 2 Intermediate, 3 Advanced (no Basics). The app shows only Advanced by default (Level switch under Watch non-stop). Levels were set from titles and my judgement, not from watching.
 
-Totals: 289 entries (Intermediate 154, Advanced 135); 239 play in the app, 50 open in the browser.
+Totals: 324 entries (Intermediate 178, Advanced 146); 266 play in the app, 58 open in the browser.
 
 ## Offense
 
@@ -43,6 +43,10 @@ Totals: 289 entries (Intermediate 154, Advanced 135); 239 play in the app, 50 op
 - O44 (Intermediate) [5 Must-Know Catch and Shoot Drills](https://www.youtube.com/watch?v=ecPyYg53Rw8) - YouTube
 - O45 (Intermediate) [Perfecting 3-Point Shots](https://www.youtube.com/watch?v=PdgeX_3pB0A) - YouTube
 - O46 (Intermediate) [How To Shoot Better 3 Point Shots (playlist)](https://www.youtube.com/playlist?list=PLO5DgInYakGbctZ-ePWfwM2-i3xfKuY1F) - YouTube. Playlist.
+- O218 (Intermediate) [Fix Your Shooting Form In 10 Minutes](https://www.youtube.com/watch?v=eYvo-afyy98) - YouTube
+- O219 (Intermediate) [Basketball Shooting Drill: The Balance Series with Coach Alan Stein](https://www.youtube.com/watch?v=_lbOIWvqP50) - YouTube
+- O220 (Intermediate) [5 Ways To Level Up Your Shooting Balance and Footwork](https://www.youtube.com/watch?v=PViRqlKkkck) - YouTube
+- O221 (Intermediate) [Fix Your Basketball Release (You Shoot Too Slow)](https://www.youtube.com/watch?v=nrsx13-HGJg) - YouTube
 
 ### Free throws
 
@@ -86,6 +90,7 @@ Totals: 289 entries (Intermediate 154, Advanced 135); 239 play in the app, 50 op
 - O86 (Intermediate) [Give and Go Team Basketball Drills](https://www.youtube.com/watch?v=njTCssKLmkY) - YouTube
 - O87 (Intermediate) [Give and Go Drill](https://www.youtube.com/watch?v=wH79CAnB9Vw) - YouTube
 - O94 (Intermediate) [3 Motion Offense Drills: Screening and Cutting](https://www.youtube.com/watch?v=WEBZhXX_ft0) - YouTube
+- O222 (Advanced) [5 Out Offense Video: NBA Concepts From The Warriors & Nuggets](https://www.breakthroughbasketball.com/coaching/five-out-nba-concepts) - Breakthrough Basketball
 
 ### Fast break
 
@@ -108,6 +113,9 @@ Totals: 289 entries (Intermediate 154, Advanced 135); 239 play in the app, 50 op
 - O177 (Advanced) [Reading Help Defense in the Pick and Roll](https://www.youtube.com/watch?v=U1JwIdZSVik) - YouTube
 - O178 (Advanced) [How to Counter When the Defense Goes Under the Ball Screen: Use the Twist](https://www.youtube.com/watch?v=-FMOCg7Ve2w) - YouTube
 - O179 (Advanced) [Ball Screen Read Drill: Over vs. Under Decisions](https://www.youtube.com/watch?v=JOnA2ePbfo0) - YouTube
+- O215 (Advanced) [Steve Nash Pick and Roll Passing Video Breakdown](https://coachingtoolbox.net/steve-nash-pick-and-roll-passing) - Coaching Toolbox. Patience, windows and pockets, reading the defense, freeing a teammate.
+- O216 (Advanced) [Attack ICE Ball Screen Defense by Screening Your Defender](https://www.youtube.com/watch?v=Rhv7JCDUsjE) - YouTube
+- O217 (Advanced) [How to Beat ICE Ball Screen Defense](https://www.youtube.com/watch?v=IsgOd8dfjOU) - YouTube. A compilation of ways to attack ICE.
 
 ### Advanced scoring and pace
 
@@ -175,6 +183,12 @@ Totals: 289 entries (Intermediate 154, Advanced 135); 239 play in the app, 50 op
 - O199 (Advanced) [Steph Curry Shooting Drill: 3-Shot Movement Workout](https://www.levelupbasket.com/basketball-drills/shooting-drills/steph-curry-3-shots-drill) - Level Up Basketball
 - O207 (Intermediate) [Basketball Hesitation Pull-Up Workout](https://www.levelupbasket.com/basketball-workouts/basketball-hesitation-pull-up-workout) - Level Up Basketball
 - O208 (Advanced) [Basketball Two-Ball Pull-Up Workout](https://www.levelupbasket.com/basketball-workouts/basketball-two-ball-pull-up-workout) - Level Up Basketball
+- O211 (Advanced) [Hesi Pull Up with Ryan Razooky](https://www.youtube.com/watch?v=Iy8Zv7pTPiE) - YouTube
+- O212 (Intermediate) [How to Do the Hesi Pullup](https://www.youtube.com/watch?v=UNvSJmDsLCY) - YouTube. Believe Basketball.
+- O213 (Intermediate) [Improve Your Hesitation Pull-Up](https://www.youtube.com/watch?v=tIBBv-ZvNCs) - YouTube
+- O214 (Intermediate) [Between the Legs, Hesi and Pull Up Jumper](https://www.youtube.com/watch?v=5Vcphvsc8Xo) - YouTube
+- O223 (Advanced) [10 at 5: One-Dribble Pull-Up Shooting Drill (shot fake and jump stop)](https://fastmodelsports.com/library/basketball/fastdraw/133092/play-10-at-5) - FastModel Sports
+- O224 (Intermediate) [Three Drills to Improve Your Shot Off the Dribble (Coach Tony Miller)](https://blog.drdishbasketball.com/three-basketball-drills-to-improve-your-shot-off-the-dribble-with-coach-tony-miller) - Dr. Dish
 
 ### Floaters and finishing
 
@@ -222,6 +236,8 @@ Totals: 289 entries (Intermediate 154, Advanced 135); 239 play in the app, 50 op
 - O175 (Advanced) [2 on 2 Drive and Kick (Steve Clifford)](https://www.youtube.com/watch?v=c7aOHMgwbqw) - YouTube
 - O176 (Intermediate) [Drive and Kick Shooting with Coach Tony Miller](https://www.youtube.com/watch?v=QSbyKMl7u1U) - YouTube
 - O202 (Advanced) [If You're a Point Guard, You Need This Passing Drill](https://www.youtube.com/watch?v=aq4LZtOoaZk) - YouTube. It is about reads, not flash.
+- O209 (Intermediate) [Skip Pass Drill](https://www.youtube.com/watch?v=yL6eTCaedd8) - YouTube
+- O210 (Intermediate) [Practicing the Skip Pass](https://www.youtube.com/watch?v=hijb6RY-dfM) - YouTube. Works against man and zone.
 
 ### Triple threat and fakes
 
@@ -292,6 +308,8 @@ Totals: 289 entries (Intermediate 154, Advanced 135); 239 play in the app, 50 op
 - D60 (Advanced) [Defending Middle Pick and Rolls](https://betterbasketball.com/defending-middle-pick-rolls/) - Better Basketball. The big levels off the screen.
 - D71 (Advanced) [Defending Ball Screens: 6 Ways To Shut Them Down](https://www.youtube.com/watch?v=IEwYGeUvGG0) - YouTube
 - D72 (Intermediate) [How To Defend Ball Screens](https://www.youtube.com/watch?v=fpCAf1XJ7UI) - YouTube
+- D77 (Advanced) [Ball Screen Defense: How to Ice Ball Screens](https://www.hooperuniversity.com/breakdowns/ball-screen-defense-how-to-ice-ball-screens) - Hooper University
+- D78 (Advanced) [How to Defend and Shut Down the Pick and Roll: 4 Types of Coverages](https://www.breakthroughbasketball.com/fundamentals/defending-pick-and-roll-coverages) - Breakthrough Basketball
 
 ### Advanced defensive footwork
 
@@ -305,6 +323,9 @@ Totals: 289 entries (Intermediate 154, Advanced 135); 239 play in the app, 50 op
 - D65 (Intermediate) [Basketball Defense: Closeouts](https://www.youtube.com/watch?v=PFY5mw-iYHo) - YouTube
 - D66 (Advanced) [Master The Art Of Help Defense: Lockdown Drills](https://www.youtube.com/watch?v=aAG9Xbw1KLA) - YouTube
 - D67 (Advanced) [Closeout Defense with Dan Burke](https://www.youtube.com/watch?v=4RuYhzwnzDE) - YouTube. An NBA assistant coach.
+- D74 (Advanced) [Help and Recover with Joe Abunassar of Impact Basketball](https://www.youtube.com/watch?v=IHA67P2d-Xc) - YouTube
+- D75 (Intermediate) [How To Play Deny and Help Recover Defense](https://www.youtube.com/watch?v=1IIXPKl3ORw) - YouTube
+- D76 (Intermediate) [Help Side Basketball Defense Drill](https://www.youtube.com/watch?v=8Azof4Cn9y8) - YouTube. Richard Hamilton and Kenny Smith.
 
 ### Defending bigger and quicker players
 
@@ -346,6 +367,9 @@ Totals: 289 entries (Intermediate 154, Advanced 135); 239 play in the app, 50 op
 - T27 (Advanced) [3 Press Break Strategies That Punish Full-Court Pressure](https://www.breakthroughbasketball.com/offense/press-break-offense) - Breakthrough Basketball
 - T36 (Intermediate) [Full Court Press Breaker Drill](https://www.breakthroughbasketball.com/drills/full-court-press-breaker-drill) - Breakthrough Basketball. The defense adds players as the offense improves.
 - T37 (Advanced) [Mastering the 5v5 Full Court Press Break](https://www.vantasports.ai/drills/basketball-5v5-full-court-press-break-drill) - Vanta Sports. A 2-2-1 press with the inbounder starting the break.
+- T38 (Advanced) [Break Any Full-Court Press with This Play and Concepts (Villanova Press Break)](https://www.youtube.com/watch?v=GHw9U6HtU2U) - YouTube
+- T39 (Intermediate) [Press Breaker Warmup for Basketball (Full Breakdown)](https://www.youtube.com/watch?v=ujZAoza5ycY) - YouTube
+- T40 (Intermediate) [How to Break a Full Court Press](https://www.youtube.com/watch?v=98RANhoiDJU) - YouTube. Man pressure that does not trap.
 
 ### Advanced web guides and drills
 
@@ -379,6 +403,9 @@ Totals: 289 entries (Intermediate 154, Advanced 135); 239 play in the app, 50 op
 - P43 (Advanced) [Drew Hanlen: NBA Skills Coach](https://www.youtube.com/watch?v=tOCFdG_7ntU) - YouTube
 - P44 (Advanced) [Ganon Baker (playlist)](https://www.youtube.com/playlist?list=PLkbZLMYuAQ9tjFvS97Drs1PrxLpLChqXi) - YouTube. Playlist.
 - P45 (Advanced) [Your Point Guard Will Love This Zone Offense](https://www.youtube.com/watch?v=p-QTCf4sE7g) - YouTube
+- P52 (Intermediate) [5 Weird Mistakes That Point Guards Make](https://www.youtube.com/watch?v=4LwElzvy4nE) - YouTube
+- P53 (Intermediate) [How To Be An Effective Point Guard](https://www.youtube.com/watch?v=9XfFTtCyRb0) - YouTube. Too many young point guards overpass and miss chances to create pressure.
+- P57 (Intermediate) [How To Handle Full Court Pressure: Point Guard Drills](https://www.online-basketball-drills.com/pointguarddrills1407) - Online Basketball Drills
 
 ### Court vision and basketball IQ
 
@@ -398,6 +425,9 @@ Totals: 289 entries (Intermediate 154, Advanced 135); 239 play in the app, 50 op
 - P36 (Intermediate) [The 5 Levels of Basketball IQ, Explained](https://www.youtube.com/watch?v=M1sMMjY00ig) - YouTube
 - P37 (Advanced) [Draymond Green's Basketball IQ Takes Away the Raptors' End-of-Game Play](https://www.youtube.com/watch?v=Nop8k5N5Tho) - YouTube. Film of one defensive read.
 - P42 (Intermediate) [Expert Tips for Decision Making and Player Development](https://www.youtube.com/watch?v=9NssH1hp62Y) - YouTube
+- P54 (Intermediate) [The Biggest Mistake Point Guards Make](https://www.youtube.com/shorts/HCnayCvwXvo) - YouTube. A short video.
+- P55 (Intermediate) [Point Guard Decision Making](https://www.youtube.com/shorts/_rSuLFSN_fQ) - YouTube. A short video. Scoring first opens up the offense.
+- P56 (Advanced) [How to Teach Guards to See the Floor, with 9 Practice Drills](https://www.breakthroughbasketball.com/coaching/see-floor) - Breakthrough Basketball. Live defended reps build decisions.
 
 ### Advanced passing
 
@@ -462,6 +492,11 @@ Totals: 289 entries (Intermediate 154, Advanced 135); 239 play in the app, 50 op
 - W18 (Intermediate) [Basketball Agility and Shooting Workout](https://www.youtube.com/watch?v=BLWPrJrPs-o) - YouTube
 - W19 (Intermediate) [Speed and Agility Basketball Workout](https://www.youtube.com/watch?v=lVwOemewsd0) - YouTube
 - W20 (Intermediate) [Best Basketball Speed and Agility Drills](https://www.youtube.com/watch?v=kKBKp7fmrr0) - YouTube
+- W21 (Intermediate) [Speed and Quickness Session: Acceleration and First Three Steps](https://www.youtube.com/watch?v=oOUQJA2WqqI) - YouTube
+- W22 (Intermediate) [Quickness, Explosiveness and First Step Speed Drills (Full Workout)](https://www.youtube.com/watch?v=CTfCIfWIbjg) - YouTube
+- W23 (Intermediate) [Best Speed Exercises For Basketball Athletes](https://www.youtube.com/watch?v=bbsYkonqPZs) - YouTube
+- W24 (Intermediate) [7 Speed and Agility Drills to Transform Your Defense and Reaction Time](https://www.youtube.com/watch?v=BHeufSq0z5k) - YouTube
+- W25 (Intermediate) [How to Increase Your Basketball Quickness](https://www.youtube.com/watch?v=45Z6Q38e8ZI) - YouTube
 
 ## Skill ladder tests
 
