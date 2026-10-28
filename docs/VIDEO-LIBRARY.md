@@ -6,7 +6,7 @@ This file records the suggested videos and the written content added in Phase 9.
 
 **Levels:** 2 Intermediate, 3 Advanced (no Basics). The app shows only Advanced by default (Level switch under Watch non-stop). Levels were set from titles and my judgement, not from watching.
 
-Totals: 289 entries (Intermediate 154, Advanced 135); 239 play in the app, 50 open in the browser.
+Totals: 301 entries (Intermediate 163, Advanced 138); 251 play in the app, 50 open in the browser.
 
 ## Offense
 
@@ -175,6 +175,10 @@ Totals: 289 entries (Intermediate 154, Advanced 135); 239 play in the app, 50 op
 - O199 (Advanced) [Steph Curry Shooting Drill: 3-Shot Movement Workout](https://www.levelupbasket.com/basketball-drills/shooting-drills/steph-curry-3-shots-drill) - Level Up Basketball
 - O207 (Intermediate) [Basketball Hesitation Pull-Up Workout](https://www.levelupbasket.com/basketball-workouts/basketball-hesitation-pull-up-workout) - Level Up Basketball
 - O208 (Advanced) [Basketball Two-Ball Pull-Up Workout](https://www.levelupbasket.com/basketball-workouts/basketball-two-ball-pull-up-workout) - Level Up Basketball
+- O211 (Advanced) [Hesi Pull Up with Ryan Razooky](https://www.youtube.com/watch?v=Iy8Zv7pTPiE) - YouTube
+- O212 (Intermediate) [How to Do the Hesi Pullup](https://www.youtube.com/watch?v=UNvSJmDsLCY) - YouTube. Believe Basketball.
+- O213 (Intermediate) [Improve Your Hesitation Pull-Up](https://www.youtube.com/watch?v=tIBBv-ZvNCs) - YouTube
+- O214 (Intermediate) [Between the Legs, Hesi and Pull Up Jumper](https://www.youtube.com/watch?v=5Vcphvsc8Xo) - YouTube
 
 ### Floaters and finishing
 
@@ -222,6 +226,8 @@ Totals: 289 entries (Intermediate 154, Advanced 135); 239 play in the app, 50 op
 - O175 (Advanced) [2 on 2 Drive and Kick (Steve Clifford)](https://www.youtube.com/watch?v=c7aOHMgwbqw) - YouTube
 - O176 (Intermediate) [Drive and Kick Shooting with Coach Tony Miller](https://www.youtube.com/watch?v=QSbyKMl7u1U) - YouTube
 - O202 (Advanced) [If You're a Point Guard, You Need This Passing Drill](https://www.youtube.com/watch?v=aq4LZtOoaZk) - YouTube. It is about reads, not flash.
+- O209 (Intermediate) [Skip Pass Drill](https://www.youtube.com/watch?v=yL6eTCaedd8) - YouTube
+- O210 (Intermediate) [Practicing the Skip Pass](https://www.youtube.com/watch?v=hijb6RY-dfM) - YouTube. Works against man and zone.
 
 ### Triple threat and fakes
 
@@ -305,6 +311,9 @@ Totals: 289 entries (Intermediate 154, Advanced 135); 239 play in the app, 50 op
 - D65 (Intermediate) [Basketball Defense: Closeouts](https://www.youtube.com/watch?v=PFY5mw-iYHo) - YouTube
 - D66 (Advanced) [Master The Art Of Help Defense: Lockdown Drills](https://www.youtube.com/watch?v=aAG9Xbw1KLA) - YouTube
 - D67 (Advanced) [Closeout Defense with Dan Burke](https://www.youtube.com/watch?v=4RuYhzwnzDE) - YouTube. An NBA assistant coach.
+- D74 (Advanced) [Help and Recover with Joe Abunassar of Impact Basketball](https://www.youtube.com/watch?v=IHA67P2d-Xc) - YouTube
+- D75 (Intermediate) [How To Play Deny and Help Recover Defense](https://www.youtube.com/watch?v=1IIXPKl3ORw) - YouTube
+- D76 (Intermediate) [Help Side Basketball Defense Drill](https://www.youtube.com/watch?v=8Azof4Cn9y8) - YouTube. Richard Hamilton and Kenny Smith.
 
 ### Defending bigger and quicker players
 
@@ -346,6 +355,9 @@ Totals: 289 entries (Intermediate 154, Advanced 135); 239 play in the app, 50 op
 - T27 (Advanced) [3 Press Break Strategies That Punish Full-Court Pressure](https://www.breakthroughbasketball.com/offense/press-break-offense) - Breakthrough Basketball
 - T36 (Intermediate) [Full Court Press Breaker Drill](https://www.breakthroughbasketball.com/drills/full-court-press-breaker-drill) - Breakthrough Basketball. The defense adds players as the offense improves.
 - T37 (Advanced) [Mastering the 5v5 Full Court Press Break](https://www.vantasports.ai/drills/basketball-5v5-full-court-press-break-drill) - Vanta Sports. A 2-2-1 press with the inbounder starting the break.
+- T38 (Advanced) [Break Any Full-Court Press with This Play and Concepts (Villanova Press Break)](https://www.youtube.com/watch?v=GHw9U6HtU2U) - YouTube
+- T39 (Intermediate) [Press Breaker Warmup for Basketball (Full Breakdown)](https://www.youtube.com/watch?v=ujZAoza5ycY) - YouTube
+- T40 (Intermediate) [How to Break a Full Court Press](https://www.youtube.com/watch?v=98RANhoiDJU) - YouTube. Man pressure that does not trap.
 
 ### Advanced web guides and drills
 
