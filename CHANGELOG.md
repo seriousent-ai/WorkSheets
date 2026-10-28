@@ -1,6 +1,7 @@
 # Changes
 
 ## Phase 9
+- 7 more point guard entries (308 in all, 140 Advanced): a Steve Nash pick-and-roll passing breakdown, a guide to teaching guards to see the floor, full-court pressure drills, and four videos on point guard mistakes and decisions (2 are short videos).
 - 12 more YouTube entries (301 in all, 138 Advanced): skip passes, help and recover defense, hesi pull-ups and press-break concepts (youth-only press videos were left out).
 - 15 more entries (289 in all, 135 Advanced): pre-game visualization and mental routines, a point guard passing drill, finishing through contact and off two feet, press-break drills and two Level Up pull-up workouts (4 of them web pages).
 - 15 more entries (274 in all, 128 Advanced): attacking a 2-3 zone, handling pressure and turnovers, triple threat jab and rip moves, defending the jab step, step-back drills and two more guard workouts (4 of them web pages).

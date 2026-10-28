@@ -6,7 +6,7 @@ This file records the suggested videos and the written content added in Phase 9.
 
 **Levels:** 2 Intermediate, 3 Advanced (no Basics). The app shows only Advanced by default (Level switch under Watch non-stop). Levels were set from titles and my judgement, not from watching.
 
-Totals: 301 entries (Intermediate 163, Advanced 138); 251 play in the app, 50 open in the browser.
+Totals: 308 entries (Intermediate 168, Advanced 140); 255 play in the app, 53 open in the browser.
 
 ## Offense
 
@@ -108,6 +108,7 @@ Totals: 301 entries (Intermediate 163, Advanced 138); 251 play in the app, 50 op
 - O177 (Advanced) [Reading Help Defense in the Pick and Roll](https://www.youtube.com/watch?v=U1JwIdZSVik) - YouTube
 - O178 (Advanced) [How to Counter When the Defense Goes Under the Ball Screen: Use the Twist](https://www.youtube.com/watch?v=-FMOCg7Ve2w) - YouTube
 - O179 (Advanced) [Ball Screen Read Drill: Over vs. Under Decisions](https://www.youtube.com/watch?v=JOnA2ePbfo0) - YouTube
+- O215 (Advanced) [Steve Nash Pick and Roll Passing Video Breakdown](https://coachingtoolbox.net/steve-nash-pick-and-roll-passing) - Coaching Toolbox. Patience, windows and pockets, reading the defense, freeing a teammate.
 
 ### Advanced scoring and pace
 
@@ -391,6 +392,9 @@ Totals: 301 entries (Intermediate 163, Advanced 138); 251 play in the app, 50 op
 - P43 (Advanced) [Drew Hanlen: NBA Skills Coach](https://www.youtube.com/watch?v=tOCFdG_7ntU) - YouTube
 - P44 (Advanced) [Ganon Baker (playlist)](https://www.youtube.com/playlist?list=PLkbZLMYuAQ9tjFvS97Drs1PrxLpLChqXi) - YouTube. Playlist.
 - P45 (Advanced) [Your Point Guard Will Love This Zone Offense](https://www.youtube.com/watch?v=p-QTCf4sE7g) - YouTube
+- P52 (Intermediate) [5 Weird Mistakes That Point Guards Make](https://www.youtube.com/watch?v=4LwElzvy4nE) - YouTube
+- P53 (Intermediate) [How To Be An Effective Point Guard](https://www.youtube.com/watch?v=9XfFTtCyRb0) - YouTube. Too many young point guards overpass and miss chances to create pressure.
+- P57 (Intermediate) [How To Handle Full Court Pressure: Point Guard Drills](https://www.online-basketball-drills.com/pointguarddrills1407) - Online Basketball Drills
 
 ### Court vision and basketball IQ
 
@@ -410,6 +414,9 @@ Totals: 301 entries (Intermediate 163, Advanced 138); 251 play in the app, 50 op
 - P36 (Intermediate) [The 5 Levels of Basketball IQ, Explained](https://www.youtube.com/watch?v=M1sMMjY00ig) - YouTube
 - P37 (Advanced) [Draymond Green's Basketball IQ Takes Away the Raptors' End-of-Game Play](https://www.youtube.com/watch?v=Nop8k5N5Tho) - YouTube. Film of one defensive read.
 - P42 (Intermediate) [Expert Tips for Decision Making and Player Development](https://www.youtube.com/watch?v=9NssH1hp62Y) - YouTube
+- P54 (Intermediate) [The Biggest Mistake Point Guards Make](https://www.youtube.com/shorts/HCnayCvwXvo) - YouTube. A short video.
+- P55 (Intermediate) [Point Guard Decision Making](https://www.youtube.com/shorts/_rSuLFSN_fQ) - YouTube. A short video. Scoring first opens up the offense.
+- P56 (Advanced) [How to Teach Guards to See the Floor, with 9 Practice Drills](https://www.breakthroughbasketball.com/coaching/see-floor) - Breakthrough Basketball. Live defended reps build decisions.
 
 ### Advanced passing
 
