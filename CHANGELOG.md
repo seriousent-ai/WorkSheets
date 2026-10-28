@@ -1,5 +1,8 @@
 # Changes
 
+
+## Cleanup
+- Removed the unused `tools/mac-cleanup.sh`. Project notes updated with where we stopped.
 ## Phase 9
 - 3 more web pages (324 in all): NBA 5-out concepts, the 10 at 5 one-dribble pull-up drill, and a shot-off-the-dribble drill set. The latest search found few new YouTube links, so only pages I could verify were added.
 - 13 more entries (321 in all, 144 Advanced): speed and first-step drills, attacking and defending ICE ball screens, ball screen coverages, shooting balance and release fixes (11 YouTube videos and 2 web pages).

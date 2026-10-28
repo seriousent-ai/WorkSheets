@@ -206,10 +206,12 @@ Tristan is past intermediate and heading toward advanced, so this phase added le
 - Titles and links came from searches and were never watched. A parent should skim the list and use Hide on anything that does not fit.
 
 ### Where we stopped (to continue later)
-- Merged and live on GitHub Pages: curriculum engine, real weekly schedule, start from scratch, cleaned library, tutorials. The simulator artifact is at version 24 (matches main). The game plan artifact (v19) and the screens gallery do not yet show the curriculum, schedule or tutorials.
-- Nothing has been started on Tristan's phone. To begin: update both phones (Guide, Check for an update), then once on Tristan's phone open Guide, Curriculum, Start from scratch. Step 1 appears Tuesday, November 3, 2026. The backup of old progress stays on his phone only and has no restore button.
-- Ideas not built yet: an "All topics" chip to play everything non-stop (call `watchAll` with category all); a "watched" tracker (`S.libSeen` with a Mark watched pill, a counter, synced in `misc`, cleared in `startCurriculum`); more search rounds for advanced videos for ages 12 and up; a restore button for the progress backup; a weekly-hours guardrail (about 8 hours of team practice plus two 1-hour sessions is roughly 10 hours); updating the game plan and gallery artifacts.
-- Not verified: the app on a real phone, whether each video embeds, and iPhone video stopping when the screen locks (web apps generally do not keep playing).
+- Merged and live on GitHub Pages (PRs #36 to #46): curriculum engine, real weekly schedule, start from scratch, tutorials, watched tracker, All topics chip, customize goals and tests, restore old progress, planned-hours card, required-block counts (the 70 min fix), and a 324-entry video library (ages 12 and up, Intermediate and Advanced only).
+- Artifacts (all private): simulator version 32 (matches main, 324 videos), game plan version 21 and screens gallery version 4 (both predate the last few features and the 324 count). Deleted on request: the old simulator copy, Device Simulator, its copy and Device Preview. Removed from the repo: `tools/mac-cleanup.sh`.
+- Nothing has been started on Tristan's phone. To begin: update both phones (Guide, Check for an update), then on Tristan's phone open Guide, Curriculum, Start from scratch. Step 1 appears Tuesday, November 3, 2026. The backup of old progress stays on his phone and can be restored from Guide.
+- Last video search round (pro hop, shooting off screens, 5-out motion, basketball IQ games, defensive footwork, shot fake plus pull-up) returned mostly written pages. YouTube is blocked in the build sandbox, so video ids I could not confirm were not added. Best way to add more: the owner sends YouTube links, or a search round with titles shown.
+- Ideas not built yet: a weekly-hours guardrail beyond the planned-hours line; refreshing the game plan and gallery artifacts; dark-mode and iPad polish listed in the game plan.
+- Not verified: the app on a real phone (see `docs/REAL-DEVICE-CHECKLIST.md`), whether each video embeds, and iPhone video stopping when the screen locks (web apps generally do not keep playing).
 - Rules for working here: merge only when the owner says "merge it"; both browser checks must pass first; no force pushes; reset the branch to main after each squash merge.
 
 
