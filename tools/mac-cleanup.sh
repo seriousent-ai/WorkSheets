@@ -21,6 +21,7 @@
 # Config: ~/.mac-cleanup.conf (optional, shell syntax), e.g.
 #   APP_DIRS="$HOME/Developer/app1:$HOME/Developer/app2:$HOME/Developer/app3:$HOME/Developer/app4"
 #   CLEAN_ROOTS="$HOME/Developer"        # extra places scanned for stale build artifacts
+#   KEEP_LOGS="homeos-* myservice*"      # log names (in ~/Library/Logs) never to remove; default: homeos-*
 #   RUNTIME_DAYS=90                      # opt-in: delete simulator runtimes unused this many days
 #                                        # (they are re-downloadable but several GB each)
 #
@@ -31,6 +32,7 @@ set -o pipefail
 
 DRY=0; AGGR=0; SUDO=0; DAYS=30; REPORT=0; INSTALL=0; SCHED_DAYS=0; SCHED_HOUR=22; FIND=0; LOGTO=0; NOTIFY=0; NO_NOTIFY=0
 APP_DIRS="${APP_DIRS:-}"; CLEAN_ROOTS="${CLEAN_ROOTS:-}"; RUNTIME_DAYS="${RUNTIME_DAYS:-}"
+KEEP_LOGS="${KEEP_LOGS-homeos-*}"   # ~/Library/Logs entries matching these globs are never removed
 CONF="$HOME/.mac-cleanup.conf"
 [ -f "$CONF" ] && . "$CONF"
 LABEL="com.user.mac-cleanup"
@@ -142,11 +144,15 @@ remove_tally() {
 
 # remove_contents <dir> [exclude-glob] — empties a directory but keeps it
 remove_contents() {
-  local d="$1" skip="$2" item
+  local d="$1" skip="$2" item base pat hit
   [ -d "$d" ] || return 0
   for item in "$d"/* "$d"/.[!.]*; do
     [ -e "$item" ] || continue
-    [ -n "$skip" ] && case "$(basename "$item")" in $skip) continue ;; esac
+    base="$(basename "$item")"; hit=0
+    set -f   # $skip holds globs separated by spaces; don't expand them against the current folder
+    for pat in $skip; do case "$base" in $pat) hit=1 ;; esac; done
+    set +f
+    [ "$hit" -eq 1 ] && continue
     remove "$item"
   done
 }
@@ -284,7 +290,7 @@ for app in Code "Code - Insiders" Cursor Windsurf; do
   done
 done
 remove_contents "$HOME/Library/Caches" "com.apple.*"
-remove_contents "$HOME/Library/Logs" "mac-*.log"   # keep our own logs (mac-cleanup.log, mac-health.log)
+remove_contents "$HOME/Library/Logs" "mac-*.log $KEEP_LOGS"   # keep our own logs and any KEEP_LOGS
 remove "$HOME/Library/Application Support/CrashReporter"
 
 # ---------------------------------------------------------------- Time Machine
