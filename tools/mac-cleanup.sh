@@ -307,14 +307,18 @@ else
 fi
 
 # macOS notification when a scheduled (--log) or --notify run finishes
-if [ "$DRY" -eq 0 ] && [ "$NO_NOTIFY" -eq 0 ] && { [ "$LOGTO" -eq 1 ] || [ "$NOTIFY" -eq 1 ]; } && have osascript; then
+HEALTH="$(dirname "$SELF")/mac-health.sh"
+# a scheduled run that has the health check sends one combined notification from it instead
+if [ "$DRY" -eq 0 ] && [ "$NO_NOTIFY" -eq 0 ] && { [ "$LOGTO" -eq 1 ] || [ "$NOTIFY" -eq 1 ]; } && have osascript && ! { [ "$LOGTO" -eq 1 ] && [ -f "$HEALTH" ]; }; then
   if [ "$TOTAL_KB" -lt 1024 ]; then MSG="Nothing much to clean this time."; else MSG="Removed about $(human "$TOTAL_KB") of rebuildable files."; fi
   osascript -e "display notification \"$MSG\" with title \"Mac cleanup finished\"" >/dev/null 2>&1
 fi
 
 # scheduled runs also do the read-only health check (report in ~/Library/Logs/mac-health.log)
-if [ "$DRY" -eq 0 ] && [ "$LOGTO" -eq 1 ] && [ -f "$(dirname "$SELF")/mac-health.sh" ]; then
-  /bin/bash "$(dirname "$SELF")/mac-health.sh" --log --notify >/dev/null 2>&1 || true
+if [ "$DRY" -eq 0 ] && [ "$LOGTO" -eq 1 ] && [ -f "$HEALTH" ]; then
+  if [ "$TOTAL_KB" -lt 1024 ]; then CLEANED_MSG="Nothing much to clean. "; else CLEANED_MSG="Removed $(human "$TOTAL_KB"). "; fi
+  if [ "$NO_NOTIFY" -eq 1 ]; then NOTIFY_ARG="--notify"; else NOTIFY_ARG="--summary-notify"; fi
+  /bin/bash "$HEALTH" --log "$NOTIFY_ARG" --cleaned "$CLEANED_MSG" >/dev/null 2>&1 || true
 fi
 
 # interactive runs only: scanning big folders is slow and pointless in the background

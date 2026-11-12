@@ -6,26 +6,31 @@
 #   ./tools/mac-health.sh --quick    skip the macOS update check (it needs the network and is slow)
 #   ./tools/mac-health.sh --log      append the report to ~/Library/Logs/mac-health.log
 #   ./tools/mac-health.sh --notify   show a macOS notification only when something needs attention
+#   ./tools/mac-health.sh --summary-notify [--cleaned "Removed 6.0 GB. "]
+#                                    always show one notification with the result (used after the scheduled cleanup)
 #
 # The scheduled cleanup (mac-cleanup.sh --log) runs this with --log --notify at the end.
 
 set -o pipefail
 
-QUICK=0; LOGTO=0; NOTIFY=0
+QUICK=0; LOGTO=0; NOTIFY=0; SUMMARY=0; CLEANED=""
+DISK_TXT=""; BAT_TXT=""; BK_TXT=""
 LOG="$HOME/Library/Logs/mac-health.log"
-DISK_MIN_PCT=15      # warn below this % free
-DISK_MIN_GB=50       # ...or below this many GB free
-UPTIME_MAX_DAYS=14   # warn if not restarted for this long
-BACKUP_MAX_DAYS=7    # warn if the last Time Machine backup is older
-BATTERY_MIN_PCT=80   # warn if maximum battery capacity drops below this
-BATTERY_MAX_CYCLES=900
+DISK_MIN_PCT="${DISK_MIN_PCT:-15}"      # warn below this % free
+DISK_MIN_GB="${DISK_MIN_GB:-50}"       # ...or below this many GB free
+UPTIME_MAX_DAYS="${UPTIME_MAX_DAYS:-14}"   # warn if not restarted for this long
+BACKUP_MAX_DAYS="${BACKUP_MAX_DAYS:-7}"    # warn if the last Time Machine backup is older
+BATTERY_MIN_PCT="${BATTERY_MIN_PCT:-80}"   # warn if maximum battery capacity drops below this
+BATTERY_MAX_CYCLES="${BATTERY_MAX_CYCLES:-900}"
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --quick) QUICK=1 ;;
     --log) LOGTO=1 ;;
     --notify) NOTIFY=1 ;;
-    -h|--help) sed -n '2,10p' "$0"; exit 0 ;;
+    --summary-notify) SUMMARY=1 ;;
+    --cleaned) shift; CLEANED="$1" ;;
+    -h|--help) sed -n '2,13p' "$0"; exit 0 ;;
     *) echo "Unknown option: $1" >&2; exit 2 ;;
   esac
   shift
@@ -55,7 +60,7 @@ read -r total avail <<EOF
 $(df -k "$DISK_PATH" | awk 'NR==2{print $2, $4}')
 EOF
 if [ -n "$total" ] && [ "$total" -gt 0 ]; then
-  pct=$((avail * 100 / total)); gb=$((avail / 1048576))
+  pct=$((avail * 100 / total)); gb=$((avail / 1048576)); DISK_TXT="${gb} GB free"
   if [ "$pct" -lt "$DISK_MIN_PCT" ] || [ "$gb" -lt "$DISK_MIN_GB" ]; then
     warn "Disk space" "${gb} GB free (${pct}%)" "disk space is low (${gb} GB free)"
   else
@@ -81,7 +86,7 @@ if have system_profiler; then
   cond=$(printf '%s\n' "$bat" | awk -F': ' '/Condition/{print $2; exit}')
   cap=$(printf '%s\n' "$bat" | awk -F': ' '/Maximum Capacity/{gsub(/%/,"",$2); print $2; exit}')
   if [ -n "$cycles$cond$cap" ]; then
-    detail="${cond:-n/a}, ${cap:-?}% capacity, ${cycles:-?} cycles"
+    detail="${cond:-n/a}, ${cap:-?}% capacity, ${cycles:-?} cycles"; BAT_TXT="battery ${cap:-?}%"
     if { [ -n "$cond" ] && [ "$cond" != "Normal" ]; } || { [ -n "$cap" ] && [ "$cap" -lt "$BATTERY_MIN_PCT" ]; } || { [ -n "$cycles" ] && [ "$cycles" -gt "$BATTERY_MAX_CYCLES" ]; }; then
       warn "Battery" "$detail" "battery is wearing out ($detail)"
     else
@@ -97,6 +102,7 @@ if [ -n "$tm" ]; then
   if [ -n "$last" ]; then
     ts=$(date -j -f "%Y-%m-%d %H:%M:%S" "$last" +%s 2>/dev/null || date -d "$last UTC" +%s 2>/dev/null)
     bdays=$(( (now - ts) / 86400 ))
+    if [ "$bdays" -eq 0 ]; then BK_TXT="backed up today"; else BK_TXT="last backup ${bdays}d ago"; fi
     if [ "$bdays" -gt "$BACKUP_MAX_DAYS" ]; then
       warn "Time Machine backup" "last backup ${bdays} days ago" "no Time Machine backup for ${bdays} days"
     else
@@ -153,7 +159,18 @@ else
   echo "  Result: $NWARN thing(s) need attention"
 fi
 
-if [ "$NOTIFY" -eq 1 ] && [ "$NWARN" -gt 0 ] && have osascript; then
+if [ "$SUMMARY" -eq 1 ] && have osascript; then
+  if [ "$NWARN" -eq 0 ]; then
+    facts=$(printf '%s' "$DISK_TXT, $BAT_TXT, $BK_TXT" | sed 's/^, //; s/, , /, /g; s/, $//')
+    msg="${CLEANED}All good${facts:+: $facts}."
+    title="Mac cleanup and health check"
+  else
+    msg="${CLEANED}$(printf '%s' "$WARNINGS" | sed 's/; $//' | awk '{print toupper(substr($0,1,1)) substr($0,2)}')"
+    title="Mac health: $NWARN thing(s) need attention"
+  fi
+  msg=$(printf '%s' "$msg" | sed 's/"/ /g')
+  osascript -e "display notification \"$msg\" with title \"$title\"" >/dev/null 2>&1
+elif [ "$NOTIFY" -eq 1 ] && [ "$NWARN" -gt 0 ] && have osascript; then
   msg=$(printf '%s' "$WARNINGS" | sed 's/; $//; s/"/ /g')
   osascript -e "display notification \"$msg\" with title \"Mac health: $NWARN thing(s) need attention\"" >/dev/null 2>&1
 fi
