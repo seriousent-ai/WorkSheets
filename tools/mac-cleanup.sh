@@ -2,11 +2,13 @@
 # mac-cleanup.sh — scheduled developer-machine cleanup for macOS.
 #
 # Usage:
-#   ./tools/mac-cleanup.sh                  run everything
+#   ./tools/mac-cleanup.sh                  light cleanup: only what is clearly rebuildable (see below)
 #   ./tools/mac-cleanup.sh --dry-run        show what would be removed + sizes, delete nothing
 #   ./tools/mac-cleanup.sh --find-apps      list project folders on this Mac (to fill in APP_DIRS)
-#   ./tools/mac-cleanup.sh --aggressive     also remove Xcode Archives, all simulator data, and
-#                                           ignore the staleness window for build dirs
+#   ./tools/mac-cleanup.sh --aggressive     manual deep clean: also Xcode DerivedData/DeviceSupport/caches, Archives,
+#                                           all simulator data, package-manager and app caches, Docker prune,
+#                                           old logs, and ignore the staleness window for build dirs
+#   ./tools/mac-cleanup.sh --force          scheduled (--log) runs only clean about once a month; --force cleans now
 #   ./tools/mac-cleanup.sh --with-sudo      also thin Time Machine local snapshots (asks for password)
 #   ./tools/mac-cleanup.sh --days N         build dirs (node_modules etc.) untouched for N days (default 30)
 #   ./tools/mac-cleanup.sh --log            append all output to ~/Library/Logs/mac-cleanup.log (used by the schedule)
@@ -25,12 +27,18 @@
 #   RUNTIME_DAYS=90                      # opt-in: delete simulator runtimes unused this many days
 #                                        # (they are re-downloadable but several GB each)
 #
-# Never touched: Documents, Desktop, Downloads, the Trash, Docker volumes, Xcode Archives (unless
-# --aggressive), source code, uncommitted work, anything outside the paths listed below.
+# Default (light) run: unavailable simulators, build output inside APP_DIRS, git gc, `brew cleanup`,
+# and build artifacts (node_modules, .next, ...) in projects untouched for 30+ days. It is skipped while
+# a build (xcodebuild/swift) is running. Scheduled runs clean at most every CLEAN_EVERY_DAYS (28) days;
+# the read-only health check still runs on every scheduled day.
+#
+# Never touched: Documents, Desktop, Downloads, the Trash, crash/diagnostic reports, Docker volumes,
+# Xcode Archives (unless --aggressive), source code, uncommitted work.
 
 set -o pipefail
 
-DRY=0; AGGR=0; SUDO=0; DAYS=30; REPORT=0; INSTALL=0; SCHED_DAYS=0; SCHED_HOUR=22; FIND=0; LOGTO=0; NOTIFY=0; NO_NOTIFY=0
+DRY=0; AGGR=0; SUDO=0; DAYS=30; REPORT=0; INSTALL=0; SCHED_DAYS=0; SCHED_HOUR=22; FIND=0; LOGTO=0; NOTIFY=0; NO_NOTIFY=0; FORCE=0
+CLEAN_EVERY_DAYS="${CLEAN_EVERY_DAYS:-28}"
 APP_DIRS="${APP_DIRS:-}"; CLEAN_ROOTS="${CLEAN_ROOTS:-}"; RUNTIME_DAYS="${RUNTIME_DAYS:-}"
 KEEP_LOGS="${KEEP_LOGS-homeos-*}"   # ~/Library/Logs entries matching these globs are never removed
 CONF="$HOME/.mac-cleanup.conf"
@@ -50,13 +58,14 @@ while [ $# -gt 0 ]; do
     --log) LOGTO=1 ;;
     --notify) NOTIFY=1 ;;
     --no-notify) NO_NOTIFY=1 ;;
+    --force) FORCE=1 ;;
     --days) shift; DAYS="${1:?--days needs a number}" ;;
     --at) shift; SCHED_HOUR="${1:?--at needs an hour 0-23, e.g. 22}" ;;
     --on) shift; SCHED_DAYS="${1:?--on needs weekday numbers, e.g. 1,3,5}" ;;
     --install-weekly|--install-schedule) INSTALL=1 ;;
     --uninstall-weekly|--uninstall-schedule)
       launchctl unload "$PLIST" 2>/dev/null; rm -f "$PLIST"; echo "Schedule removed."; exit 0 ;;
-    -h|--help) sed -n "2,28p" "$0"; exit 0 ;;
+    -h|--help) sed -n "2,34p" "$0"; exit 0 ;;
     *) echo "Unknown option: $1" >&2; exit 2 ;;
   esac
   shift
@@ -163,19 +172,38 @@ run() {
 }
 
 echo "mac-cleanup $(date '+%Y-%m-%d %H:%M')  dry-run=$DRY aggressive=$AGGR stale-days=$DAYS"
+HEALTH="$(dirname "$SELF")/mac-health.sh"
+STAMP="$HOME/.mac-cleanup/last-cleanup"
+# scheduled runs clean about once a month; the health check still runs every scheduled day
+if [ "$LOGTO" -eq 1 ] && [ "$DRY" -eq 0 ] && [ "$FORCE" -eq 0 ] && [ -f "$STAMP" ] &&
+   [ -n "$(find "$STAMP" -mtime -"$CLEAN_EVERY_DAYS" 2>/dev/null)" ]; then
+  echo "  last cleanup was less than $CLEAN_EVERY_DAYS days ago — cleanup skipped, health check only (use --force to clean now)"
+  if [ -f "$HEALTH" ]; then
+    if [ "$NO_NOTIFY" -eq 1 ]; then NOTIFY_ARG="--notify"; else NOTIFY_ARG="--summary-notify"; fi
+    /bin/bash "$HEALTH" --log "$NOTIFY_ARG" --cleaned "" >/dev/null 2>&1 || true
+  fi
+  exit 0
+fi
+BUSY=0
+{ pgrep -x xcodebuild || pgrep -x swift-frontend || pgrep -x swift-build; } >/dev/null 2>&1 && BUSY=1
 BEFORE=$(free_kb)
 
 # ---------------------------------------------------------------- Xcode + simulators
 say "Xcode and simulators"
-remove "$HOME/Library/Developer/Xcode/DerivedData"
-remove "$HOME/Library/Developer/Xcode/iOS DeviceSupport"
-remove "$HOME/Library/Developer/Xcode/watchOS DeviceSupport"
-remove "$HOME/Library/Developer/Xcode/tvOS DeviceSupport"
-remove "$HOME/Library/Developer/Xcode/UserData/Previews"
-remove "$HOME/Library/Developer/XCPGDevices"
-remove "$HOME/Library/Caches/com.apple.dt.Xcode"
-remove "$HOME/Library/Developer/CoreSimulator/Caches"
-remove "$HOME/Library/Logs/CoreSimulator"
+if [ "$AGGR" -eq 1 ]; then
+  # --aggressive only: forces Xcode to re-index and rebuild everything next time
+  remove "$HOME/Library/Developer/Xcode/DerivedData"
+  remove "$HOME/Library/Developer/Xcode/iOS DeviceSupport"
+  remove "$HOME/Library/Developer/Xcode/watchOS DeviceSupport"
+  remove "$HOME/Library/Developer/Xcode/tvOS DeviceSupport"
+  remove "$HOME/Library/Developer/Xcode/UserData/Previews"
+  remove "$HOME/Library/Developer/XCPGDevices"
+  remove "$HOME/Library/Caches/com.apple.dt.Xcode"
+  remove "$HOME/Library/Developer/CoreSimulator/Caches"
+  remove "$HOME/Library/Logs/CoreSimulator"
+else
+  echo "  DerivedData, DeviceSupport and Xcode caches kept (only --aggressive removes them)"
+fi
 if have xcrun; then
   run xcrun simctl delete unavailable
   # opt-in only: simulator OS images nobody has launched in N days (re-download: Xcode > Settings > Components)
@@ -188,6 +216,8 @@ say "Your apps (APP_DIRS): build output, tool caches, git garbage"
 if [ -z "$APP_DIRS" ]; then
   echo "  none configured yet. Run:  ./tools/mac-cleanup.sh --find-apps"
   echo "  then put the folders in $CONF as:  APP_DIRS=\"/path/one:/path/two\""
+elif [ "$BUSY" -eq 1 ]; then
+  echo "  a build is running (xcodebuild/swift) — skipped this time"
 else
   OLDIFS=$IFS; IFS=':'; set -- $APP_DIRS; IFS=$OLDIFS
   for app in "$@"; do
@@ -214,10 +244,8 @@ fi
 
 # ---------------------------------------------------------------- package managers
 say "Package-manager caches"
-if have brew; then
-  run brew autoremove
-  run brew cleanup --prune=all -s
-fi
+have brew && run brew cleanup   # only brew's own old downloads/versions; never autoremove
+if [ "$AGGR" -eq 1 ]; then
 have npm  && run npm cache clean --force
 have pnpm && run pnpm store prune
 have yarn && run yarn cache clean
@@ -241,10 +269,15 @@ have go && run go clean -cache -testcache -modcache
 remove "$HOME/.m2/repository"
 remove "$HOME/.composer/cache"
 remove "$HOME/.gem/cache" 2>/dev/null
+else
+  echo "  npm/pnpm/pip/gradle/cargo/go caches kept (only --aggressive clears them)"
+fi
 
 # ---------------------------------------------------------------- Docker
-say "Docker (dangling images, stopped containers, dangling build cache — your images and volumes are kept)"
-if have docker && docker info >/dev/null 2>&1; then
+say "Docker (--aggressive: dangling images, stopped containers, dangling build cache — your images and volumes are kept)"
+if [ "$AGGR" -ne 1 ]; then
+  echo "  skipped (only --aggressive prunes Docker)"
+elif have docker && docker info >/dev/null 2>&1; then
   run docker system prune -f
   run docker builder prune -f
 else
@@ -255,6 +288,7 @@ fi
 say "Stale build artifacts untouched for >${DAYS} days (node_modules, .next, target, Pods, venv caches)"
 ROOTS="${CLEAN_ROOTS:-$HOME/Developer:$HOME/Projects:$HOME/Code:$HOME/dev:$HOME/src:$HOME/repos:$HOME/work:$HOME/Sites:$HOME/Documents/GitHub}"
 [ -n "$APP_DIRS" ] && ROOTS="$ROOTS:$APP_DIRS"
+if [ "$BUSY" -eq 1 ]; then echo "  a build is running (xcodebuild/swift) — skipped this time"; ROOTS=""; fi
 OLDIFS=$IFS; IFS=':'; set -- $ROOTS; IFS=$OLDIFS
 SEEN=":"
 for root in "$@"; do
@@ -271,6 +305,8 @@ for root in "$@"; do
       -o -name .gradle \) -prune -mtime +"$DAYS" -print0 2>/dev/null |
   while IFS= read -r -d '' dir; do
     parent=$(dirname "$dir")
+    # a folder's own date says little: skip projects where any file nearby changed in the window
+    [ "$DAYS" -gt 0 ] && [ -n "$(find "$parent" -maxdepth 2 -type f -mtime -"$DAYS" -not -path "$dir/*" -print -quit 2>/dev/null)" ] && continue
     case "$(basename "$dir")" in
       target) [ -f "$parent/Cargo.toml" ] || continue ;;
       Pods)   [ -f "$parent/Podfile" ] || continue ;;
@@ -282,16 +318,19 @@ for root in "$@"; do
 done
 
 # ---------------------------------------------------------------- editor + app caches
-say "Editor and app caches"
-for app in Code "Code - Insiders" Cursor Windsurf; do
-  base="$HOME/Library/Application Support/$app"
-  for sub in Cache CachedData CachedExtensionVSIXs Code\ Cache GPUCache logs; do
-    remove "$base/$sub"
+say "Editor and app caches, old logs"
+if [ "$AGGR" -eq 1 ]; then
+  for app in Code "Code - Insiders" Cursor Windsurf; do
+    base="$HOME/Library/Application Support/$app"
+    for sub in Cache CachedData CachedExtensionVSIXs Code\ Cache GPUCache logs; do
+      remove "$base/$sub"
+    done
   done
-done
-remove_contents "$HOME/Library/Caches" "com.apple.*"
-remove_contents "$HOME/Library/Logs" "mac-*.log $KEEP_LOGS"   # keep our own logs and any KEEP_LOGS
-remove "$HOME/Library/Application Support/CrashReporter"
+  remove_contents "$HOME/Library/Caches" "com.apple.*"
+  remove_contents "$HOME/Library/Logs" "mac-*.log $KEEP_LOGS"   # keep our own logs and any KEEP_LOGS
+else
+  echo "  app caches and logs kept (only --aggressive removes them); crash and diagnostic reports are never removed"
+fi
 
 # ---------------------------------------------------------------- Time Machine
 if [ "$SUDO" -eq 1 ] && have tmutil; then
@@ -312,8 +351,9 @@ else
   echo "  Removed about $(human "$TOTAL_KB") directly.  Free space: $(human "$BEFORE") -> $(human "$AFTER")  (net $(human $((AFTER - BEFORE))))"
 fi
 
+[ "$DRY" -eq 0 ] && { mkdir -p "$(dirname "$STAMP")"; touch "$STAMP"; }
+
 # macOS notification when a scheduled (--log) or --notify run finishes
-HEALTH="$(dirname "$SELF")/mac-health.sh"
 # a scheduled run that has the health check sends one combined notification from it instead
 if [ "$DRY" -eq 0 ] && [ "$NO_NOTIFY" -eq 0 ] && { [ "$LOGTO" -eq 1 ] || [ "$NOTIFY" -eq 1 ]; } && have osascript && ! { [ "$LOGTO" -eq 1 ] && [ -f "$HEALTH" ]; }; then
   if [ "$TOTAL_KB" -lt 1024 ]; then MSG="Nothing much to clean this time."; else MSG="Removed about $(human "$TOTAL_KB") of rebuildable files."; fi

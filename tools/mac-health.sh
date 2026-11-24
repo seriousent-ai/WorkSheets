@@ -10,12 +10,18 @@
 #                                    always show one notification with the result (used after the scheduled cleanup)
 #
 # The scheduled cleanup (mac-cleanup.sh --log) runs this with --log --notify at the end.
+#
+# Optional settings in ~/.mac-cleanup.conf:
+#   HEALTH_IGNORE="filevault"     checks you decided to accept (shown as info, never a warning)
 
 set -o pipefail
 
 QUICK=0; LOGTO=0; NOTIFY=0; SUMMARY=0; CLEANED=""
 DISK_TXT=""; BAT_TXT=""; BK_TXT=""
 LOG="$HOME/Library/Logs/mac-health.log"
+HEALTH_IGNORE="${HEALTH_IGNORE:-}"
+[ -f "$HOME/.mac-cleanup.conf" ] && . "$HOME/.mac-cleanup.conf"
+SPOTLIGHT_MAX_CPU="${SPOTLIGHT_MAX_CPU:-80}"   # warn if Spotlight indexing uses more than this % CPU right now
 DISK_MIN_PCT="${DISK_MIN_PCT:-15}"      # warn below this % free
 DISK_MIN_GB="${DISK_MIN_GB:-50}"       # ...or below this many GB free
 UPTIME_MAX_DAYS="${UPTIME_MAX_DAYS:-14}"   # warn if not restarted for this long
@@ -133,19 +139,40 @@ if have fdesetup; then
   fv=$(fdesetup status 2>/dev/null | head -1)
   case "$fv" in
     *"is On"*) ok "FileVault" "on" ;;
-    *"is Off"*) warn "FileVault" "off" "FileVault disk encryption is off" ;;
+    *"is Off"*)
+      case " $HEALTH_IGNORE " in
+        *" filevault "*) info "FileVault" "off (accepted in HEALTH_IGNORE)" ;;
+        *) warn "FileVault" "off" "FileVault disk encryption is off" ;;
+      esac ;;
   esac
 fi
 
 # ---- kernel panics in the last 30 days
-panics=$(find /Library/Logs/DiagnosticReports -name '*.panic' -mtime -30 2>/dev/null | wc -l | tr -d ' ')
+panics=$(find /Library/Logs/DiagnosticReports \( -name '*.panic' -o -name 'Kernel*.ips' \) -mtime -30 2>/dev/null | wc -l | tr -d ' ')
 if [ "${panics:-0}" -gt 0 ]; then
   warn "Kernel panics" "$panics in the last 30 days" "$panics crash(es) of the whole system in 30 days"
 else
   ok "Kernel panics" "none in 30 days"
 fi
 
+# ---- app crashes and hangs in the last 7 days (the cleanup never deletes these reports)
+hangs=$(find "$HOME/Library/Logs/DiagnosticReports" \( -name '*.ips' -o -name '*.crash' -o -name '*.hang' -o -name '*.spin' \) -mtime -7 2>/dev/null | wc -l | tr -d ' ')
+[ -d "$HOME/Library/Logs/DiagnosticReports" ] && info "App crashes/hangs" "${hangs:-0} report(s) in the last 7 days"
+
+# ---- Spotlight indexing load
+spot=$(ps -axo pcpu=,comm= 2>/dev/null | awk '/\/(mds|mds_stores|mdworker_shared|mdworker|corespotlightd)$/{s+=$1} END{printf "%d", s}')
+if [ -n "$spot" ]; then
+  if [ "$spot" -gt "$SPOTLIGHT_MAX_CPU" ]; then
+    warn "Spotlight indexing" "${spot}% CPU right now" "Spotlight indexing is using ${spot}% CPU"
+  else
+    ok "Spotlight indexing" "${spot}% CPU right now"
+  fi
+fi
+
 # ---- memory (information only)
+mp=$(memory_pressure 2>/dev/null | sed -n 's/.*free percentage: \([0-9]*\)%.*/\1/p')
+[ -n "$mp" ] && info "Memory free" "${mp}%"
+
 swap=$(sysctl -n vm.swapusage 2>/dev/null | sed -n 's/.*used = \([0-9.]*[MG]\).*/\1/p')
 [ -n "$swap" ] && info "Swap in use" "$swap"
 top=$(ps -axo rss=,comm= 2>/dev/null | awk '{r=$1; $1=""; sub(/^ /,""); n=split($0,a,"/"); s[a[n]]+=r} END{for(k in s) printf "%d %s\n", s[k], k}' | sort -rn | head -5 |
